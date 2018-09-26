@@ -27,7 +27,7 @@ if(FALSE){
   setnames(pheno,names(pheno) %>% make.names)
   med <- pheno[grepl("20002\\_",Phenotype.Code) & Sex=='both_sexes',]
   cmds <- sapply(1:nrow(med),function(i){
-    sprintf("Rscript /home/ob219/git/as_basis/R/ic_basis/process_bb_self_reported_disease.R -i %d",i)
+    sprintf("Rscript /home/ob219/git/basis_paper/ichip/process_bb_self_reported_disease.R -i %d",i)
   })
   write(cmds,file="~/tmp/qstuff/bb_disease_proj_ic.txt")
 }
@@ -87,9 +87,10 @@ odir <- '/home/ob219/share/Data/GWAS-summary/uk_biobank_neale_summary_stats/'
 med[,new.cmd:=sprintf("wget %s -O %s%s",Dropbox.File,odir,ofile)]
 med[,phe:=make.names(Phenotype.Description) %>% gsub("Non.cancer.illness.code..self.reported..","",.)]
 
-#if(!file.exists(file.path(odir,med$ofile[i])))
+if(!file.exists(file.path(odir,med$ofile[i])))
   system(med$new.cmd[i])
 
+#q(save="no")
 
 DT<-fread(sprintf("zcat %s",file.path(odir,med$ofile[i])))[variant %in% keep, ]
 
