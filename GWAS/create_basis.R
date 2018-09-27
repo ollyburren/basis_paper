@@ -7,14 +7,16 @@ library(ggplot2)
 library(cowplot)
 library(ggrepel)
 
-SHRINKAGE_METHOD<-'ws_emp'
+SHRINKAGE_METHOD<-'ws_emp_shrinkage'
 REF_GT_DIR <- '/home/ob219/share/as_basis/GWAS/ctrl_gt/by.chr'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/shrinkage_gwas.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/basis_gwas.RDS'
+BASIS_NOSHRINK_FILE <- '/home/ob219/share/as_basis/GWAS/support/basis_noshrink_gwas.RDS'
 GWAS_DATA_DIR <- '/home/ob219/share/as_basis/GWAS/sum_stats'
 SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
 TRAIT_MANIFEST <- '/home/ob219/share/as_basis/GWAS/trait_manifest/as_manifest_gwas.tab'
-VARIANCE_FILE <- '/home/ob219/share/as_basis/ichip/support/analytical_variances_june.RDS'
+VARIANCE_FILE <- '/home/ob219/share/as_basis/GWAS/support/av_june.RDS'
+VARIANCE_NOSHRINK_FILE <- '/home/ob219/share/as_basis/GWAS/support/no_shrink_av_june.RDS'
 
 ## load data
 basis.DT<-get_gwas_data(TRAIT_MANIFEST,SNP_MANIFEST_FILE,GWAS_DATA_DIR,filter_snps_by_manifest=TRUE)
@@ -34,6 +36,22 @@ adj.vars <- data.table(pc=names(analytical.vars),mfactor=analytical.vars)
 #adj.vars <- split(adj.vars,names(adj.vars))
 setkey(adj.vars,pc)
 saveRDS(adj.vars,file=VARIANCE_FILE)
+
+## create a basis just using gamma_hat - need this for figure 1
+## for gamma hat log(or) * 1/ss_emp_maf_se so add this to shrinkage
+#shrink.DT[,recip.ss_emp_maf_se:=1/ss_emp_maf_se]
+basis.mat.noshrink <- create_ds_matrix(basis.DT,shrink.DT,'recip.ss_emp_maf_se')
+basis.mat.noshrink <-rbind(basis.mat.noshrink,control=rep(0,ncol(basis.mat.noshrink)))
+pc.emp.noshrink <- prcomp(basis.mat.noshrink,center=TRUE,scale=FALSE)
+saveRDS(pc.emp.noshrink,file=BASIS_NOSHRINK_FILE)
+w.DT.noshrink <- data.table(pid=rownames(pc.emp.noshrink$rotation),pc.emp.noshrink$rotation)
+analytical.vars.noshrink <- compute_proj_var(man.DT,w.DT.noshrink,shrink.DT,REF_GT_DIR,'recip.ss_emp_maf_se',quiet=FALSE)
+adj.vars.noshrink <- data.table(pc=names(analytical.vars.noshrink),mfactor=analytical.vars.noshrink)
+setkey(adj.vars.noshrink,pc)
+saveRDS(adj.vars.noshrink,file=VARIANCE_NOSHRINK_FILE)
+
+
+
 
 
 pc.DT <- data.table(trait=rownames(pc.emp$x),pc.emp$x)
