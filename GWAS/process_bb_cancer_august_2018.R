@@ -20,26 +20,35 @@ if(!TEST){
 
 i<-args$integer
 
-#SHRINKAGE_METHOD<-'ws_emp_shrinkage'
-SHRINKAGE_METHOD<-'recip.ss_emp_maf_se'
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/shrinkage_gwas.RDS'
-#BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/basis_gwas.RDS'
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/basis_noshrink_gwas.RDS'
-BNEALE_DIR <- '/home/ob219/share/Data/GWAS-summary/uk_biobank_neale_summary_stats'
+## to use maf estimate of se remove ss prefix !
+
+SHRINKAGE_METHOD<-'ws_emp_shrinkage'
+#SHRINKAGE_METHOD<-'recip.emp_maf_se'
+#SHRINKAGE_METHOD<-'none'
+## just the one shrinkage file
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
+#BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_noshrink_gwas.RDS'
+#BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/basis_beta_gwas.RDS'
+BNEALE_DIR <- '/home/ob219/share/Data/GWAS-summary/uk_biobank_neale_summary_stats_2018/'
+BASIS_FILT_DIR <- file.path(BNEALE_DIR,'as_basis_tmp')
 SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
 BB_BASIS_LU_FILE <- '/home/ob219/share/as_basis/GWAS/support//sept_bb_gwas_var_man.RDS'
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/noshrink/'
+OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/ss_shrink_2018/'
+#OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/beta_2018/'
+
 
 ## running on the queue
 if(FALSE){
   bb_phenofile<-'/home/ob219/rds/hpc-work/as_basis/bb/bb_gwas_link_list.20180731.csv'
   pheno <- fread(bb_phenofile)
   setnames(pheno,names(pheno) %>% make.names)
-  med <- pheno[grepl("20002\\_",Phenotype.Code) & Sex=='both_sexes',]
+  med <- pheno[grepl("20001\\_",Phenotype.Code) & Sex=='both_sexes',]
   cmds <- sapply(1:nrow(med),function(i){
-    sprintf("Rscript /home/ob219/git/basis_paper/GWAS/process_bb_self_reported_disease.R -i %d",i)
+  #cmds <- sapply(c(165,159,78,167,116,57,166),function(i){
+    sprintf("Rscript /home/ob219/git/basis_paper/GWAS/process_bb_cancer_august_2018.R -i %d",i)
   })
-  write(cmds,file="~/tmp/qstuff/gwas_bb_disease_proj.txt")
+  write(cmds,file="~/tmp/qstuff/gwas_bb_cancer_proj_2018.txt")
 }
 
 
@@ -65,25 +74,35 @@ keep <- readRDS(BB_BASIS_LU_FILE) %>% gsub("\\_",':',.)
 bb_phenofile<-'/home/ob219/rds/hpc-work/as_basis/bb/bb_gwas_link_list.20180731.csv'
 pheno <- fread(bb_phenofile)
 setnames(pheno,names(pheno) %>% make.names)
-med <- pheno[grepl("20002\\_",Phenotype.Code) & Sex=='both_sexes',]
+med <- pheno[grepl("20001\\_",Phenotype.Code) & Sex=='both_sexes',]
 
 ## load in phenotype file
 
 P <- fread('/home/ob219/rds/hpc-work/as_basis/bb/summary_stats_20180731/phenotypes.both_sexes.tsv')
-P<-P[,.(phenotype,variable_type,non_missing=n_non_missing,cases=n_cases,controls=n_controls)]
+P<-P[,.(phenotype,variable_type,non_missing=n_non_missing,cases=n_cases,controls=n_controls,pheno.source=source)]
 
 
 ## load in manifest
 ## compose a new command
 med[,c('wget','db','o','ofile'):=tstrsplit(wget.command,' ')]
 #odir <- '/home/ob219/rds/hpc-work/as_basis/bb/summary_stats_20180731/self_reported_disease/'
-med[,new.cmd:=sprintf("wget %s -O %s%s",Dropbox.File,BNEALE_DIR,ofile)]
-med[,phe:=make.names(Phenotype.Description) %>% gsub("Non.cancer.illness.code..self.reported..","",.)]
+med[,new.cmd:=sprintf("wget -nv %s -O %s%s",Dropbox.File,BNEALE_DIR,ofile)]
+med[,phe:=make.names(Phenotype.Description) %>% gsub("Cancer.code..self.reported..","",.)]
 
 ## download data if required
-if(!file.exists(file.path(BNEALE_DIR,med$ofile[i])))
-  system(med$new.cmd[i])
-DT<-fread(sprintf("zcat %s",file.path(BNEALE_DIR,med$ofile[i])))[variant %in% keep, ]
+if(!file.exists(file.path(BNEALE_DIR,med$ofile[i]))){
+  message(med$new.cmd[i])
+  system(med$new.cmd[i],ignore.stdout=TRUE,ignore.stderr=FALSE)
+}
+filt.fname <- gsub("\\.tsv\\.bgz",".RDS",med$ofile[i])
+if(!file.exists(file.path(BASIS_FILT_DIR,filt.fname))){
+  message(sprintf("zcat %s",file.path(BNEALE_DIR,med$ofile[i])))
+  DT<-fread(sprintf("zcat %s",file.path(BNEALE_DIR,med$ofile[i])),showProgress=FALSE)[variant %in% keep, ]
+  saveRDS(DT,file=file.path(BASIS_FILT_DIR,filt.fname))
+  q(save="no")
+}else{
+  DT <- readRDS(file.path(BASIS_FILT_DIR,filt.fname))
+}
 
 
 
@@ -160,44 +179,3 @@ res.DT <- data.table(trait = med$phe[i]  %>% gsub("_shrunk.beta","",.),bc)[2,]
 saveRDS(res.DT,file=sprintf("%s%s.RDS",OUT_DIR,med$phe[i]))
 message(sprintf("Wrote to %s%s.RDS",OUT_DIR,med$phe[i]))
 #file.remove(file.path(odir,med$ofile[i]))
-
-if(FALSE){
-  ## some had numerical errors - code to identify and rerun
-  OUT_DIR <- '/home/ob219/rds/hpc-work/as_basis/bb/summary_stats_20180731/self_reported_disease/june_10k/'
-  fs <- list.files(path=OUT_DIR,pattern="*.RDS",full.names=TRUE)
-  all.res <- lapply(fs,readRDS) %>% rbindlist
-  all.res[is.nan(PC1),]
-  missing<-all.res[is.nan(PC1),]$trait
-  cmds <- sapply(which(med$phe %in% missing),function(i){
-    sprintf("Rscript /home/ob219/git/as_basis/R/Individual_projection/process_bb_self_reported_disease.R -i %d",i)
-  })
-  write(cmds,file="~/tmp/qstuff/bb_med_proj.txt")
-  ## what about infinite ones looks as if there was an issue - that I can't repeat !
-  missing<-all.res[is.infinite(PC1),]$trait
-  cmds <- sapply(which(med$phe %in% missing),function(i){
-    sprintf("Rscript /home/ob219/git/as_basis/R/Individual_projection/process_bb_self_reported_disease.R -i %d",i)
-  })
-  write(cmds,file="~/tmp/qstuff/bb_med_proj.txt")
-}
-
-
-if(FALSE){
-  library(cowplot)
-  OUT_DIR <- '/home/ob219/rds/hpc-work/as_basis/bb/summary_stats_20180731/self_reported_disease/june_10k/'
-  BASIS_FILE <- '/home/ob219/rds/hpc-work/as_basis/support/basis_june10k.RDS'
-  fs <- list.files(path=OUT_DIR,pattern="*.RDS",full.names=TRUE)
-  res.DT <- lapply(fs,readRDS) %>% rbindlist
-  pc.emp <- readRDS(BASIS_FILE)
-  basis.DT <- data.table(trait=rownames(pc.emp$x),pc.emp$x,cat='basis')
-  res.DT[,cat:='bb']
-  plot.DT <- rbind(res.DT,basis.DT)
-  plot.DT[,label:=gsub("\\.[0-9]*mg.*","",trait)]
-  ggplot(plot.DT,aes(x=PC1,y=PC4,label=label,col=cat)) + geom_point() + geom_text()
-  ## compute Z scores for chris
-  mdt<-melt(res.DT,id.vars='trait',measure.vars=sprintf("PC%d",1:11))
-  mdt[,c('mean','sd'):=list(mean(value),sd(value)),by='variable']
-  mdt[,Z:=(value-mean)/sd]
-  mdt[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
-  mdt[,p.adj:=p.adjust(p.value,method="fdr"),by=variable]
-  save(mdt,file="/home/ob219/rds/rds-cew54-wallace-share/as_basis/bb/basis_june10k_mself_reported_disease.RDS")
-}

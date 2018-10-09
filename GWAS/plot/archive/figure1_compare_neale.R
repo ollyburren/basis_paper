@@ -3,30 +3,31 @@ library(cowplot)
 library(ggrepel)
 library(data.table)
 library(magrittr)
+load_all("~/git/cupcake")
 
-
+SHRINKAGE_METHOD<-'ws_emp_shrinkage'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/basis_gwas.RDS'
-BASIS_NOSHRINK_FILE <- '/home/ob219/share/as_basis/GWAS/support/basis_noshrink_gwas.RDS'
 TRAIT_MANIFEST <- '/home/ob219/share/as_basis/GWAS/trait_manifest/as_manifest_gwas.tab'
 VARIANCE_FILE <- '/home/ob219/share/as_basis/ichip/support/analytical_variances_june.RDS'
-VARIANCE_NOSHRINK_FILE <- '/home/ob219/share/as_basis/GWAS/support/no_shrink_av_june.RDS'
-BB_DIR_PROJ <- '/home/ob219/share/as_basis/GWAS/bb_projections/'
-BB_DIR_PROJ_NOSHRINK <- '/home/ob219/share/as_basis/GWAS/bb_projections/noshrink/'
+BB_DIR_PROJ_2018 <- '/home/ob219/share/as_basis/GWAS/bb_projections/shrink_2018/'
+BB_DIR_PROJ_2017 <- '/home/ob219/share/as_basis/GWAS/bb_projections/shrink_2017/'
+SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
+GWAS_DATA_DIR <- '/home/ob219/share/as_basis/GWAS/sum_stats'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/shrinkage_gwas.RDS'
 
 
 
 basis <- readRDS(BASIS_FILE)
 basis.DT <- data.table(trait=rownames(basis$x),basis$x)
-noshrink.basis <- readRDS(BASIS_NOSHRINK_FILE)
+shrink.DT <- readRDS(SHRINKAGE_FILE)
 
 ## load in biobank projections
 
-bb.files <- list.files(path=BB_DIR_PROJ,pattern="*.RDS",full.names=TRUE)
+bb.files <- list.files(path=BB_DIR_PROJ_2017,pattern="*.RDS",full.names=TRUE)
 
 bb.DT<-lapply(bb.files,function(bb){
   readRDS(bb)
 }) %>% rbindlist
-
 
 ## bind basis traits to bb traits where they exist
 bb_lu <- list(
@@ -50,6 +51,11 @@ bb.DT.filt[,disease:=names(bb.unl)[midx]]
 plot.DT <- rbind(bb.DT.filt,basis.DT[,c('label','disease'):=list(trait,trait)])
 y.int <- plot.DT[trait=='control',]$PC1
 x.int <- plot.DT[trait=='control',]$PC2
+
+## get the other traits so we can plot on top (or behind)
+
+bb.DT.back <- bb.DT[!trait %in% unlist(bb_lu),]
+
 
 p1.var <- signif(summary(basis)[['importance']][2,]['PC1']*100,digits=3) %>% sprintf("%s (%.1f%%)",'PC1',.)
 p2.var <- signif(summary(basis)[['importance']][2,]['PC2']*100,digits=3) %>% sprintf("%s (%.1f%%)",'PC2',.)
@@ -97,13 +103,15 @@ labs.DT <- lapply(n.cases,function(nc){
 
 
 
-pp1 <- ggplot(plot.DT,aes(x=PC1,y=PC2,col=disease,label=label)) + geom_point() + geom_text_repel() +
+pp1 <- ggplot(plot.DT,aes(x=PC1,y=PC2,col=disease,label=label)) + geom_point() + geom_text_repel(box.padding=0.5) +
 #coord_cartesian(xlim=c(-0.06,0.06),ylim=c(-0.06,0.06),expand=TRUE) +
 scale_color_discrete(guide=FALSE) + xlab(p1.var) + ylab(p2.var) +
 geom_hline(yintercept = x.int,col='black',size=0.5,lty=2,alpha=0.5) +
 geom_vline(xintercept = y.int,col='black',size=0.5,lty=2,alpha=0.5) +
 geom_path(data=ci.DT,aes(x=x,y=y,group=ncases),inherit.aes=FALSE,lty=2,alpha=0.5) +
-geom_text(data=labs.DT,aes(x=x,y=y,group=NULL,label=label),inherit.aes=FALSE,alpha=0.3,cex=3)
+geom_text(data=labs.DT,aes(x=x,y=y,group=NULL,label=label),inherit.aes=FALSE,alpha=0.3,cex=3) +
+ggtitle("Neale 2017") +
+geom_point(data=bb.DT.back,aes(x=PC1,y=PC2),inherit.aes=FALSE,alpha=0.05)
 
 
 ## This stuff to compute p.values based on sample size and
@@ -142,12 +150,12 @@ if(FALSE){
 ## NO SHRINK !!!
 
 
-basis <- readRDS(BASIS_NOSHRINK_FILE)
-basis.DT <- data.table(trait=rownames(basis$x),basis$x)
+#basis <- readRDS(BASIS_FILE)
+#basis.DT <- data.table(trait=rownames(basis$x),basis$x)
 
 ## load in biobank projections
 
-bb.files <- list.files(path=BB_DIR_PROJ_NOSHRINK,pattern="*.RDS",full.names=TRUE)
+bb.files <- list.files(path=BB_DIR_PROJ_2018,pattern="*.RDS",full.names=TRUE)
 
 bb.DT<-lapply(bb.files,function(bb){
   readRDS(bb)
@@ -180,8 +188,9 @@ x.int <- plot.DT[trait=='control',]$PC2
 p1.var <- signif(summary(basis)[['importance']][2,]['PC1']*100,digits=3) %>% sprintf("%s (%.1f%%)",'PC1',.)
 p2.var <- signif(summary(basis)[['importance']][2,]['PC2']*100,digits=3) %>% sprintf("%s (%.1f%%)",'PC2',.)
 
+bb.DT.back <- bb.DT[!trait %in% unlist(bb_lu),]
 
- adj.vars <- readRDS(VARIANCE_NOSHRINK_FILE)
+ adj.vars <- readRDS(VARIANCE_FILE)
 
 computeEllipse <- function(a,b,x,y,n.points=100){
   rad <- seq(0,2 * pi,length.out=n.points)
@@ -221,12 +230,15 @@ labs.DT <- lapply(n.cases,function(nc){
   data.table(x=xe,y=ye,label=format(nc,big.mark=',',trim=TRUE))
 }) %>% rbindlist
 
-pp2 <- ggplot(plot.DT,aes(x=PC1,y=PC2,col=disease,label=label)) + geom_point() + geom_text_repel() +
+pp2 <- ggplot(plot.DT,aes(x=PC1,y=PC2,col=disease,label=label)) + geom_point() + geom_text_repel(box.padding=0.5) +
 #coord_cartesian(xlim=c(0,0.1),ylim=c(-0.4,-0.1),expand=TRUE) +
 scale_color_discrete(guide=FALSE) + xlab(p1.var) + ylab(p2.var) +
 geom_hline(yintercept = x.int,col='black',size=0.5,lty=2,alpha=0.5) +
 geom_vline(xintercept = y.int,col='black',size=0.5,lty=2,alpha=0.5) +
-geom_path(data=ci.DT,aes(x=x,y=y,group=ncases),inherit.aes=FALSE,lty=2,alpha=0.5) #+
+geom_path(data=ci.DT,aes(x=x,y=y,group=ncases),inherit.aes=FALSE,lty=2,alpha=0.5) +
+ggtitle("Neale 2018") +
+geom_point(data=bb.DT.back,aes(x=PC1,y=PC2),inherit.aes=FALSE,alpha=0.05)
+#+
 #geom_text(data=labs.DT,aes(x=x,y=y,group=NULL,label=label),inherit.aes=FALSE,alpha=0.5,cex=5)
 
 
@@ -239,5 +251,5 @@ geom_path(data=ci.DT,aes(x=x,y=y,group=ncases),inherit.aes=FALSE,lty=2,alpha=0.5
 geom_text(data=labs.DT,aes(x=x,y=y,group=NULL,label=label),inherit.aes=FALSE,alpha=0.5,cex=5)
 
 
-
+#pp1
 plot_grid(pp2,pp1)
