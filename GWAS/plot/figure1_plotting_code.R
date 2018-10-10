@@ -135,7 +135,9 @@ plot_bb_hclust <- function(proj_dir,basis_file,variance_file,bb_lu,ptitle){
   #bb.DT.back <- bb.DT[!trait %in% unlist(bb_lu),]
 
   proj <- plot.DT[trait!='control',paste0('PC',1:11),] %>% as.matrix
-  rownames(proj) <- plot.DT[trait!='control',]$trait
+  #rownames(proj) <-
+  proj<-rbind(proj,rep(0,ncol(proj)))
+  rownames(proj) <- c(plot.DT[trait!='control',]$trait,'control')
   dist(proj) %>% hclust %>% plot(.,main=ptitle)
 }
 
@@ -161,15 +163,19 @@ variance_file='/home/ob219/share/as_basis/GWAS/support/ss_av_june.RDS',bb_lu=BB_
 ptitle = 'Shrinkage 2018 UKBB'
 )
 
+dev.print(pdf,"~/tmp/figure1.pdf")
+
 ## use the analytical variance estimations to compute Z scores - take traits forward for hclust if they show
 ## significant loading on at least one principal component after multiple testing
 
 
-get_phenotype_annotation <- function(){
+get_phenotype_annotation <- function(filter='20002\\_'){
   bb_phenofile<-'/home/ob219/rds/hpc-work/as_basis/bb/bb_gwas_link_list.20180731.csv'
   pheno <- fread(bb_phenofile)
   setnames(pheno,names(pheno) %>% make.names)
-  med <- pheno[grepl("2000[23]\\_",Phenotype.Code) & Sex=='both_sexes',]
+
+  #med <- pheno[grepl("2000[23]\\_",Phenotype.Code) & Sex=='both_sexes',]
+  med <- pheno[grepl(filter,Phenotype.Code) & Sex=='both_sexes',]
   ## load in phenotype file
   P <- fread('/home/ob219/rds/hpc-work/as_basis/bb/summary_stats_20180731/phenotypes.both_sexes.tsv')
   P<-P[,.(phenotype,variable_type,non_missing=n_non_missing,cases=n_cases,controls=n_controls)]
@@ -180,10 +186,6 @@ get_phenotype_annotation <- function(){
 }
 
 
-proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/ss_shrink_2018/'
-basis_file='/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
-variance_file='/home/ob219/share/as_basis/GWAS/support/ss_av_june.RDS'
-ptitle='Shrinkage 2018 UKBB'
 
 
 plot_bb_Z_hclust <- function(proj_dir,basis_file,variance_file,ptitle,p.adj.thresh=0.05){
@@ -214,7 +216,8 @@ plot_bb_Z_hclust <- function(proj_dir,basis_file,variance_file,ptitle,p.adj.thre
   ## all other conditions may not be null and may contain associations
   bb.DT.m[,Z:=(value-control.loading)/sqrt(variance)]
   bb.DT.m[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
-  bb.DT.m[,p.adj:=p.adjust(p.value),by='variable']
+  #bb.DT.m[,p.adj:=p.adjust(p.value),by='variable']
+  bb.DT.m[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 
   ## we can try and use the distribution to estimate the parameters we need
 
@@ -234,17 +237,18 @@ plot_bb_Z_hclust <- function(proj_dir,basis_file,variance_file,ptitle,p.adj.thre
 
   mat.DT <- dcast(bb.DT.m[trait %in% traits.of.interest,],trait~variable)
   mat <- as.matrix(mat.DT[,paste('PC',1:11,sep=''),with=FALSE])
-  rownames(mat) <- mat.DT$trait
+  mat <- rbind(mat,rep(0,ncol(mat)))
+  rownames(mat) <- c(mat.DT$trait,'control')
   dist(mat) %>% hclust %>% plot(.,main=ptitle)
 }
 
-par(mfrow=c(1,1))
+#par(mfrow=c(1,1))
 
-plot_bb_Z_hclust(proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/beta_2018/',
-basis_file='/home/ob219/share/as_basis/GWAS/support/basis_beta_gwas.RDS',
-variance_file='/home/ob219/share/as_basis/GWAS/support/beta_av_june.RDS',
-ptitle='Beta 2018 UKBB'
-)
+#plot_bb_Z_hclust(proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/beta_2018/',
+#basis_file='/home/ob219/share/as_basis/GWAS/support/basis_beta_gwas.RDS',
+#variance_file='/home/ob219/share/as_basis/GWAS/support/beta_av_june.RDS',
+#ptitle='Beta 2018 UKBB'
+#)
 
 par(mfrow=c(1,1))
 
@@ -254,6 +258,14 @@ variance_file='/home/ob219/share/as_basis/GWAS/support/ss_av_june.RDS',
 ptitle='Shrinkage 2018 UKBB'
 )
 
+plot_bb_Z_hclust(proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/ss_shrink_2018/',
+basis_file='/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS',
+variance_file='/home/ob219/share/as_basis/GWAS/support/ss_av_june.RDS',
+ptitle='Shrinkage 2018 UKBB',
+p.adj.thresh=0.01
+)
+
+dev.print(pdf,"~/tmp/figure1b.pdf")
 
 #plot_bb_Z_hclust(proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/ss_noshrink_2018/',
 #basis_file='/home/ob219/share/as_basis/GWAS/support/ss_basis_noshrink_gwas.RDS',
