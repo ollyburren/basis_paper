@@ -36,14 +36,22 @@ pred.DT[,ci.95:=sqrt((n/(n1 * (n-n1))) * mfactor) * 1.96  ]
 pred.DT[,c('ci.lo','ci.hi'):=list(value-ci.95,value+ci.95)]
 pred.DT[,variable:=factor(variable,levels=paste0('PC',1:11))]
 ctrl.DT <- data.table(variable=rownames(tmp)[-1],control.loading=as.numeric(tmp[-1,1]))
-pred.DT <- merge(pred.DT.m,ctrl.DT,by='variable')
+pred.DT <- merge(pred.DT,ctrl.DT,by='variable')
 pred.DT[,variance:=(n/(n1 * (n-n1))) * mfactor]
 pred.DT[,Z:=(value-control.loading)/sqrt(variance)]
+pred.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
+#bb.DT.m[,p.adj:=p.adjust(p.value),by='variable']
+pred.DT[,p.adj:=p.adjust(p.value),by='variable']
+pred.DT[,variable:=factor(variable,levels=paste0('PC',1:11))]
+pred.DT[,short.trait:=substr(trait,1,15),]
 
-
-pd <- position_dodge(0.3)
-pp <- ggplot(pred.DT,aes(x=variable,y=value,group=trait,col=trait)) + geom_point(position=pd) +
+saveRDS(pred.DT,file="~/share/as_basis/GWAS/tmp/jia_plot.RDS")
+pd <- position_dodge(0.1)
+pa <- ggplot(pred.DT,aes(x=variable,y=value,group=trait,col=trait)) + geom_point(position=pd) +
 geom_errorbar(aes(ymin=ci.lo, ymax=ci.hi), width=.1, position=pd) + geom_line(position=pd)
+## here we use 0.05 rather than doing BF over all tests for all PC's
+pb <- ggplot(pred.DT,aes(x=variable,y=value-control.loading,group=trait,col=trait,pch=p.value<0.05)) + geom_point(position=pd,aes(size=-log10(p.value))) +
+geom_line(position=pd)
 
 
 
@@ -70,7 +78,8 @@ get_phenotype_annotation <- function(filter='20002\\_'){
   med
 }
 
-p.DT <- get_phenotype_annotation(filter='20002_1477|20002_1453|20002_1464')
+#p.DT <- get_phenotype_annotation(filter='20002_1477|20002_1453|20002_1464')
+p.DT <- get_phenotype_annotation()
 bb.files <- list.files(path='/home/ob219/share/as_basis/GWAS/bb_projections/ss_shrink_2018/',pattern="*.RDS",full.names=TRUE)
 bb.DT<-lapply(bb.files,function(bb){
   readRDS(bb)
@@ -84,12 +93,54 @@ bb.DT.m [,variable:=factor(variable,levels=paste0('PC',1:11))]
 bb.DT.m <- merge(bb.DT.m,ctrl.DT,by='variable')
 bb.DT.m [,variance:=(n/(n1 * (n-n1))) * mfactor]
 bb.DT.m [,Z:=(value-control.loading)/sqrt(variance)]
+bb.DT.m[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
+#bb.DT.m[,p.adj:=p.adjust(p.value),by='variable']
+bb.DT.m[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
+bb.DT.m[,variable:=factor(variable,levels=paste0('PC',1:11))]
+bb.DT.m[,short.trait:=substr(trait,1,15),]
+
+## we can try and use the distribution to estimate the parameters we need
+
+#bb.DT.m[,Z:=(value-mean(value))/sd(value),by='variable']
+#bb.DT.m[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
+#bb.DT.m[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
+
+
+
+traits.of.interest <- bb.DT.m[,list(sum(p.adj<0.01)),by='trait'][V1!=0,]$trait
+bb.DT.m <- bb.DT.m[trait %in% traits.of.interest,]
 
 
 
 z.DT <- melt(rbind(pred.DT,bb.DT.m),id.vars=c('variable','trait'),measure.vars='Z')
+
 mat.DT <- dcast(z.DT ,trait~variable)
 mat <- as.matrix(mat.DT[,paste('PC',1:11,sep=''),with=FALSE])
 mat <- rbind(mat,rep(0,ncol(mat)))
 rownames(mat) <- c(mat.DT$trait,'control')
 dist(mat) %>% hclust %>% plot
+
+
+groups <- dist(mat) %>% hclust %>% cutree(h=10)
+groups <- split(names(groups),groups)
+## plot loadings for group 11 and group 7
+all <- rbind(bb.DT.m,pred.DT)
+
+## plot a line plot of cluster to see which PC's are driving the cluster.
+g1 <- ggplot(all[trait %in% c(groups[['7']],'rheumatoid.arthritis'),],aes(x=variable,y=value-control.loading,group=trait,col=short.trait,pch=p.value<0.05)) + geom_point(position=pd,aes(size=-log10(p.value))) +
+geom_line(position=pd) + guides(size=FALSE)
+g2 <- ggplot(all[trait %in% groups[['11']],],aes(x=variable,y=value-control.loading,group=trait,col=short.trait,pch=p.value<0.05)) + geom_point(position=pd,aes(size=-log10(p.value))) +
+geom_line(position=pd) + guides(size=FALSE)
+plot_grid(g1,g2,nrow=2)
+
+## compare between PC's to see which are significantly different between the two clusters
+
+c1 <- all[trait %in% groups[['7']],]
+c1 <- split(c1$value-c1$control.loading,c1$variable)
+c2 <- all[trait %in% groups[['11']],]
+c2 <- split(c2$value-c2$control.loading,c2$variable)
+
+res <- lapply(names(c2),function(x){
+  tres <- t.test(c1[[x]],c2[[x]])
+  data.table(p.value=tres$p.value,pc=x)
+}) %>% rbindlist

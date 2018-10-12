@@ -1,5 +1,7 @@
 ## uk10k data as our reference data set
 
+## THIS IS FOR REFERENCE ONLY !!!! NOT RUN IN THIS LOCATION
+
 ## process PBC
 
 ## first convert to annotSnpStats

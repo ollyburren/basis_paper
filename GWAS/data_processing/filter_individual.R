@@ -23,10 +23,10 @@ option_list = list(
 
 if(TEST){
   args <- list(
-    manifest_file='/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/snp_manifest/june_10k.tab',
-    file = "/home/ob219/rds/rds-who1000-wgs10k/analysis/pid/gt_snps_maf05/pid_cases/annotSnpStats/chr9.RData",
-    outdir = "/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/individual_gt/pid",
-    sample_filter='',
+    manifest_file='/home/ob219/share/as_basis/GWAS/trait_manifest/as_manifest_gwas.tab',
+    file = "/home/ob219/rds/rds-cew54-wallace-share/Data/GWAS/JIA-2017-data/as_basis/chr6.RData",
+    outdir = "/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/individual_gt//jiasys",
+    sample_filter='alt_ilar_code:sys',
     chr_col='chromosome',
     position_col='position'
 )
@@ -76,10 +76,10 @@ saveRDS(Xf,file=ofile)
 if(FALSE){
   ## run JIA
   library(annotSnpStats)
-  DATA.DIR <- '/home/ob219/rds/rds-cew54-wallace-share/Data/GWAS/JIA-2017-data/as_basis/'
-  OUT_DIR <- '/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/individual_gt/'
-  RSCRIPT <- '/home/ob219/git/as_basis/R/Individual_projection/filter_individual.R'
-  MANIFEST_FILE <- '/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/snp_manifest/june_10k.tab'
+  DATA.DIR <- '/home/ob219/share/as_basis/GWAS/individual_data/gt/jia/'
+  OUT_DIR <- '//home/ob219/share/as_basis/GWAS/individual_data/filtered_gt'
+  RSCRIPT <- '/home/ob219/git/basis_paper/GWAS/data_processing/filter_individual.R'
+  SNP_MANIFEST_FILE <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
   X<-get(load(file.path(DATA.DIR,'chr22.RData')))
   all.files <- list.files(path=DATA.DIR,pattern="*.RData",full.names=TRUE)
   ilar <- unique(samples(X)$alt_ilar_code) %>% paste('alt_ilar_code',.,sep=':')
@@ -91,7 +91,7 @@ if(FALSE){
   cmds <- lapply(ilar,function(i){
     lapply(all.files,function(f){
       dname <- gsub("alt_ilar_code:","",i) %>% paste0('jia',.) %>% file.path(OUT_DIR,.)
-      sprintf("Rscript %s --file %s --manifest_file %s --sample_filter %s --outdir %s",RSCRIPT,f,MANIFEST_FILE,i,dname)
+      sprintf("Rscript %s --file %s --manifest_file %s --sample_filter %s --outdir %s --chr_col chromosome",RSCRIPT,f,SNP_MANIFEST_FILE,i,dname)
     }) %>% do.call('c',.)
   }) %>% do.call('c',.)
   write(cmds,file="~/tmp/qsub/filter_jia.txt")
