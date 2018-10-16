@@ -109,6 +109,10 @@ bb.DT.m[,short.trait:=substr(trait,1,15),]
 
 traits.of.interest <- bb.DT.m[,list(sum(p.adj<0.01)),by='trait'][V1!=0,]$trait
 bb.DT.m <- bb.DT.m[trait %in% traits.of.interest,]
+## drop unclassifiable - what is this ?
+
+## join with jia stuff and save as an RDS as useful for pooled variance approach
+saveRDS(rbind(bb.DT.m,pred.DT),file="/home/ob219/share/as_basis/GWAS/tmp/jia_bb_summary.RDS")
 
 
 
