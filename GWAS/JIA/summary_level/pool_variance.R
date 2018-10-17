@@ -11,8 +11,9 @@
 ## the min(n_i,n_j) then our calculations will be conservative.
 
 ## from li and sullivan we can compute
+## here C is the sharing freq between cases for a disease
 
-compute_cor_bb <- function(n_i1,n_j1,n_i0,n_j0){
+compute_cor_bb <- function(n_i1,n_j1,n_i0,n_j0,C=10){
   #shared controls
   n_ij0 <- min(n_i0,n_j0)
   #shared cases
@@ -38,72 +39,71 @@ compute_cor_jia <- function(n_i1,n_j1,n_i0,n_j0){
   t1/sqrt(n_i * n_j)
 }
 
+## under  assumptions that shared controls are similar between studies
+## which hold for bb and JIA we can cancel terms
+## this will overestimate the correlation so give us a
+## conservative estimate
+
+compute_conservative_cor_bb <- function(n_i1,n_j1,n_i0,n_j0){
+  n_i <- n_i1 + n_i0
+  n_j <- n_j1 + n_j0
+  (sqrt(n_i1 * n_j1) + sqrt(n_i0 * n_j0))/sqrt(n_i * n_j)
+  ## this is what chris wrote on slack but I think wrong
+  #(sqrt(n_i1 + n_j1) + sqrt(n_i0 + n_j0))/sqrt(n_i * n_j)
+  ## note that for bb where n is fixed across studies
+  #(sqrt(n_i1 * n_j1) + sqrt(n_i0 * n_j0))/n_i ## or n_j
+}
+
+compute_cov <- function(DT){
+  M <- matrix(0,nrow=nrow(DT),ncol=nrow(DT),dimnames=list(DT$trait,DT$trait))
+  for(i in 1:nrow(DT)){
+    for(j in 1:nrow(DT)){
+      if(i==j){
+        break()
+      }
+      smix <- DT$bb[i] + DT$bb[j]
+      if(smix == 2){
+        ## both biobank
+        #cor <- compute_conservative_cor_bb(
+        cor <- compute_cor_bb(
+          n_i1=DT$n1[i],
+          n_j1=DT$n1[j],
+          n_i0=DT$n0[i],
+          n_j0=DT$n0[j])
+        }else if(smix == 1){
+          ## jia and bb assume no correlation
+          cor <- 0
+        }else{
+          ## both jia
+          cor <- compute_cor_jia(
+            n_i1=DT$n1[i],
+            n_j1=DT$n1[j],
+            n_i0=DT$n0[i],
+            n_j0=DT$n0[j])
+          }
+          M[i,j] <- cor
+        }
+      }
+      ## create a symmetrical matrix
+      M[upper.tri(M,diag=FALSE)] <- t(M)[upper.tri(M,diag=FALSE)]
+      ## note that the diag is 1
+      diag(M) <- 1
+      #pheatmap(M)
+      ## 3 compute covariance matrix by multipying elements by sqrt(v_i * v_j)
+      ## note for actual application this will depend on principal axis that we
+      ## are using
+      (tcrossprod(DT$variance,DT$variance) %>% sqrt) * M
+}
+
 ## 1 for all traits in clustering get loading and variance at
 ## each PC along with number of cases and controls
 dat.DT <- readRDS("~/share/as_basis/GWAS/tmp/jia_bb_summary.RDS")
-cor.DT <- dat.DT[variable=='PC1',.(trait,value,n1,n0=n-n1,variance)]
-cor.DT <- cor.DT[trait!='unclassifiable',]
 
-## 2 compute covariance matrix by first estimating M a matrix of correlations
-## there are three comparisons
-## bb vs bb  - compute_cor_bb routine,
-## bb vs jia (E(correlation) = 0)
-## and jia vs jia compute_cor_jia routine
-
-cor.DT[,bb:=!grepl("^jia",trait)]
-
-M <- matrix(0,nrow=nrow(cor.DT),ncol=nrow(cor.DT))
-for(i in 1:nrow(cor.DT)){
-  for(j in 1:nrow(cor.DT)){
-    if(i==j){
-      break()
-    }
-    smix <- cor.DT$bb[i] + cor.DT$bb[j]
-    if(smix == 2){
-      ## both biobank
-      cor <- compute_cor_bb(
-        n_i1=cor.DT$n1[i],
-        n_j1=cor.DT$n1[j],
-        n_i0=cor.DT$n0[i],
-        n_j0=cor.DT$n0[j])
-    }else if(smix == 1){
-      ## jia and bb assume no correlation
-      cor <- 0
-    }else{
-      ## both jia
-      cor <- compute_cor_jia(
-        n_i1=cor.DT$n1[i],
-        n_j1=cor.DT$n1[j],
-        n_i0=cor.DT$n0[i],
-        n_j0=cor.DT$n0[j])
-    }
-    M[i,j] <- cor
-  }
-}
-## create a symmetrical matrix
-M[upper.tri(M,diag=FALSE)] <- t(M)[upper.tri(M,diag=FALSE)]
-## note that the diag is 1
-diag(M) <- 1
-
-## 3 compute covariance matrix by multipying elements by sqrt(v_i + v_j)
-## note for actual application this will depend on principal axis that we
-## are using
-
-covM <- (tcrossprod(cor.DT$variance,cor.DT$variance) %>% sqrt) * M
-
-## with this covariance matrix we can now estimate the pooled variance for any arb group of diseases
-
-### in action !
-
-## here for top level grouping i.e. asthma etc. vs the rest we see if PC1 has utility
-## in separating traits (i.e. do the mean loadings between groups significantly differ on PC1)
-
-## code to compute groups - we use complete linkage to start with
-z.DT <- melt(dat.DT[trait!='unclassifiable',],id.vars=c('variable','trait'),measure.vars='Z')
-mat.DT <- dcast(z.DT ,trait~variable)
+z.DT <- melt(dat.DT[trait!='unclassifiable',],id.vars=c('variable','short.trait'),measure.vars='Z')
+mat.DT <- dcast(z.DT ,short.trait~variable)
 mat <- as.matrix(mat.DT[,paste('PC',1:11,sep=''),with=FALSE])
 mat <- rbind(mat,rep(0,ncol(mat)))
-rownames(mat) <- c(mat.DT$trait,'control')
+rownames(mat) <- c(mat.DT$short.trait,'control')
 ## complete linkage !
 hc <- dist(mat) %>% hclust
 
@@ -113,37 +113,59 @@ ct <- cutree(hc,k=2)
 
 ## create a lookup of trait groupings
 tg <- split(names(ct),ct)
-ind <- lapply(tg,function(tl){
-  idx <- which(cor.DT$trait %in% tl)
-}
 
-## using the covariance matrix between all traits computed above compute the pooled
-## variance across both groups
-gvar <- lapply(ind,function(i){
-  var <- sum(covM[i,i])
-})
+tg<-list(g1=c('jia_ERA','jia_sys'),g2=c('jia_EO','jia_PO','jia_PsA','jia_RFneg','jia_RFpos'))
 
-## compute the pooled mean for both samples
-pmean <- lapply(ind,function(i){
-  cor.DT[i,list(sum(value)/.N)]$V1
-})
-## compute the difference
-diffMean <- pmean[[1]] - pmean[[2]]
-## t-test assesses the difference in means but these are still correlated as group 1 and group 2 still covary
-## (mean(X_1),V_1), (mean(X_2),V_2)
-## d = X_1 - X_2
-## v(d) = V_1 + V_2 + 2cov(mean(X_1),mean(X_2))
-## we have to adjust the pooled variance to take this into account
-V_1 <- gvar[[1]]
-V_2 <- gvar[[2]] ## for this special case (where there are two groups) V_1 + V_2 = sum(covM) !
 
-btw_sample_cov <- covM[ind[[1]],ind[[2]]] %>% sum
-## const is 2/n_1^2,n_2^2 - here n is the number of traits in each group
-const <- 2/(sapply(ind,function(x) length(x)^2) %>% prod)
-var_d <- V_1 + V_2 + (const * btw_sample_cov)
-n <- sapply(ind,length)
-t.stat <- diffMean/(sqrt(var_d) * sqrt(1/n[[1]] + 1/n[[2]]))
-## compute number of degrees of freedom
-df <- (n[[1]] + n[[2]]-2)
-## assess significance
-pt(t.stat, df=df,lower.tail = TRUE)
+res <- lapply(paste0('PC',1:11),function(pc){
+  message(pc)
+  cor.DT <- dat.DT[variable==pc,.(trait=short.trait,value,n1,n0=n-n1,variance)]
+  cor.DT <- cor.DT[trait!='unclassifiable',]
+
+  ## 2 compute covariance matrix by first estimating M a matrix of correlations
+  ## there are three comparisons
+  ## bb vs bb  - compute_cor_bb routine,
+  ## bb vs jia (E(correlation) = 0)
+  ## and jia vs jia compute_cor_jia routine
+
+  cor.DT[,bb:=!grepl("^jia",trait)]
+
+  covM <- compute_cov(cor.DT)
+  #pheatmap(covM)
+
+  ## with this covariance matrix we can now estimate the pooled variance for any arb group of diseases
+  ## code to compute groups - we use complete linkage to start with
+  ind <- lapply(tg,function(tl){
+    idx <- which(cor.DT$trait %in% tl)
+  })
+  ## using the covariance matrix between all traits computed above compute the pooled
+  ## variance across both groups
+  gvar <- lapply(ind,function(i){
+    var <- sum(covM[i,i])
+  })
+
+  ## compute the pooled mean for both samples
+  pmean <- lapply(ind,function(i){
+    cor.DT[i,list(mean(value))]$V1
+  })
+  ## compute the difference
+  diffMean <- pmean[[1]] - pmean[[2]]
+  ## t-test assesses the difference in means but these are still correlated as group 1 and group 2 still covary
+  ## (mean(X_1),V_1), (mean(X_2),V_2)
+  ## d = X_1 - X_2
+  ## v(d) = V_1 + V_2 + 2cov(mean(X_1),mean(X_2))
+  ## we have to adjust the pooled variance to take this into account
+  V_1 <- gvar[[1]]
+  V_2 <- gvar[[2]] ## for this special case (where there are two groups) V_1 + V_2 = sum(covM) !
+  btw_sample_cov <- covM[ind[[1]],ind[[2]]] %>% sum
+  ## const is 2/n_1^2,n_2^2 - here n is the number of traits in each group
+  const <- 2/(sapply(ind,function(x) length(x)^2) %>% prod)
+  var_d <- V_1 + V_2 - (const * btw_sample_cov)
+  n <- sapply(ind,length)
+  t.stat <- diffMean/(sqrt(var_d) * sqrt(1/n[[1]] + 1/n[[2]]))
+  ## compute number of degrees of freedom
+  df <- (n[[1]] + n[[2]]-2)
+  ## assess significance
+  P <- pt(t.stat, df=df,lower.tail = FALSE)
+  data.table(p.value=P,t.stat=t.stat,df=df,pc=pc,diff.mean=diffMean,var1=V_1,var2=V_2,overall_var=var_d)
+}) %>% rbindlist
