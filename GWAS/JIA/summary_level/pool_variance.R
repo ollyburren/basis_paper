@@ -13,11 +13,11 @@
 ## from li and sullivan we can compute
 ## here C is the sharing freq between cases for a disease
 
-compute_cor_bb <- function(n_i1,n_j1,n_i0,n_j0,C=10){
+compute_cor_bb <- function(n_i1,n_j1,n_i0,n_j0,C=100){
   #shared controls
   n_ij0 <- min(n_i0,n_j0)
   #shared cases
-  n_ij1 <- min(n_i1,n_j1)
+  n_ij1 <- min(n_i1,n_j1)/C
   n_i <- n_i1 + n_i0
   n_j <- n_j1 + n_j0
   t1 <- n_ij0 * sqrt( (n_i1 * n_j1)/(n_i0 * n_j0 ) )
@@ -114,7 +114,7 @@ ct <- cutree(hc,k=2)
 ## create a lookup of trait groupings
 tg <- split(names(ct),ct)
 
-tg<-list(g1=c('jia_ERA','jia_sys'),g2=c('jia_EO','jia_PO','jia_PsA','jia_RFneg','jia_RFpos'))
+#tg<-list(g1=c('jia_ERA','jia_sys'),g2=c('jia_EO','jia_PO','jia_PsA','jia_RFneg','jia_RFpos'))
 
 
 res <- lapply(paste0('PC',1:11),function(pc){
@@ -155,17 +155,16 @@ res <- lapply(paste0('PC',1:11),function(pc){
   ## d = X_1 - X_2
   ## v(d) = V_1 + V_2 + 2cov(mean(X_1),mean(X_2))
   ## we have to adjust the pooled variance to take this into account
-  V_1 <- gvar[[1]]
-  V_2 <- gvar[[2]] ## for this special case (where there are two groups) V_1 + V_2 = sum(covM) !
+  V_1 <- gvar[[1]] * (1/n[[1]]^2)
+  V_2 <- gvar[[2]] * (1/n[[2]]^2) ## for this special case (where there are two groups) V_1 + V_2 = sum(covM) !
   btw_sample_cov <- covM[ind[[1]],ind[[2]]] %>% sum
   ## const is 2/n_1^2,n_2^2 - here n is the number of traits in each group
   const <- 2/(sapply(ind,function(x) length(x)^2) %>% prod)
   var_d <- V_1 + V_2 - (const * btw_sample_cov)
   n <- sapply(ind,length)
-  t.stat <- diffMean/(sqrt(var_d) * sqrt(1/n[[1]] + 1/n[[2]]))
-  ## compute number of degrees of freedom
-  df <- (n[[1]] + n[[2]]-2)
-  ## assess significance
-  P <- pt(t.stat, df=df,lower.tail = FALSE)
-  data.table(p.value=P,t.stat=t.stat,df=df,pc=pc,diff.mean=diffMean,var1=V_1,var2=V_2,overall_var=var_d)
+  #t.stat <- diffMean/(sqrt(var_d) * sqrt(1/n[[1]] + 1/n[[2]]))
+  t.stat <- diffMean/(sqrt(var_d))
+  P <- pnorm(abs(t.stat),lower.tail=FALSE) * 2
+  #data.table(p.value=P,t.stat=t.stat,df=df,pc=pc,diff.mean=diffMean,var1=V_1,var2=V_2,overall_var=var_d)
+  data.table(pc=pc,p.value=P,t.stat=t.stat)
 }) %>% rbindlist
