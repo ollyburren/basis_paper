@@ -34,7 +34,7 @@ mock_header <- "##fileformat=VCFv4.2
 ## PROCESS INDIVIDUAL DATA FIRST
 ## NOTE different formats
 
-ind.out.dir <- '/home/ob219/share/as_basis/ichip/BCF/ind_stats_test'
+ind.out.dir <- '/home/ob219/share/as_basis/ichip/BCF/ind_stats'
 #MANIFEST_FILE <- '/home/ob219/rds/hpc-work/as_basis/support_tab/ind_proj_manifest.tab'
 BCFTOOLS <- 'bcftools'
 
@@ -68,7 +68,7 @@ createBCFInd <- function(ind_dir,out_dir,trait,keep.ambig=FALSE){
   #DT.f <- DT[,.(CHROM,POS,ID=pid,REF=a1,ALT=a2,QUAL='.',FILTER='.',INFO=sprintf("CLASS=%s",class),FORMAT='GT',study='1|1')]
   DT.f <- DT[,.(CHROM=chromosome,POS=position,ID=pid,REF=a1,ALT=a2,QUAL='.',FILTER='.',INFO='.',FORMAT='GT',study='1|1')]
   DT.f <- DT.f[order(CHROM,POS),]
-  fname <- file.path(out.dir,sprintf("%s.vcf",trait))
+  fname <- file.path(out_dir,sprintf("%s.vcf",trait))
   write(sprintf(mock_header,trait),file=fname)
   write.table(DT.f,file=fname,append=TRUE,quote=FALSE,row.names=FALSE,col.names=FALSE,sep="\t")
   bcfname <- gsub("vcf$","bcf",fname)
@@ -115,7 +115,7 @@ createBCFSum <- function(sum_file,out_dir,trait,keep.ambig=FALSE){
   #DT.f <- DT[,.(CHROM,POS,ID=pid,REF=a1,ALT=a2,QUAL='.',FILTER='.',INFO=sprintf("CLASS=%s",class),FORMAT='GT',study='1|1')]
   DT.f <- DT[,.(CHROM=chromosome,POS=position,ID=pid,REF=a1,ALT=a2,QUAL='.',FILTER='.',INFO='.',FORMAT='GT',study='1|1')]
   DT.f <- DT.f[order(CHROM,POS),]
-  fname <- file.path(out.dir,sprintf("%s.vcf",trait))
+  fname <- file.path(out_dir,sprintf("%s.vcf",trait))
   write(sprintf(mock_header,trait),file=fname)
   write.table(DT.f,file=fname,append=TRUE,quote=FALSE,row.names=FALSE,col.names=FALSE,sep="\t")
   bcfname <- gsub("vcf$","bcf",fname)
@@ -129,7 +129,7 @@ createBCFSum <- function(sum_file,out_dir,trait,keep.ambig=FALSE){
 
 in.dir <- '/home/ob219/share/as_basis/ichip/sum_stats/'
 sum.files <- list.files(path=in.dir,pattern='*.tab',full.names=TRUE)
-sum.out.dir <- '/home/ob219/share/as_basis/ichip/BCF/sum_stats_test'
+sum.out.dir <- '/home/ob219/share/as_basis/ichip/BCF/sum_stats'
 
 for(f in sum.files){
   trait <- basename(f) %>% gsub(".tab","",.)
@@ -148,10 +148,10 @@ if(FALSE){
   files <- c(files.summary,files.ind)
   write(files,file='~/tmp/as_basis_merged.txt')
   ## hand edit to remove generated files !!!
-  system('bcftools merge -l ~/tmp/as_basis_merged.txt -Ob -o /home/ob219/share/as_basis/ichip/BCF/test_all.bcf -m snps')
+  system('bcftools merge -l ~/tmp/as_basis_merged.txt -Ob -o /home/ob219/share/as_basis/ichip/BCF/all.bcf -m snps')
   system('export BCFTOOLS_PLUGINS=/usr/local/software/spack/spack-0.11.2/opt/spack/linux-rhel7-x86_64/gcc-5.4.0/bcftools-1.6-6p3lqyearbsrree33gn7blgmuxjiybc5/libexec/bcftools/')
-  system('bcftools plugin missing2ref  -Ob -o /home/ob219/share/as_basis/ichip/BCF/test_all_missing.bcf /home/ob219/share/as_basis/ichip/BCF/test_all.bcf')
-  system('bcftools plugin fill-AN-AC -Ob -o   /home/ob219/share/as_basis/ichip/BCF/test_all_tagged.bcf  /home/ob219/share/as_basis/ichip/BCF/test_all_missing.bcf')
+  system('bcftools plugin missing2ref  -Ob -o /home/ob219/share/as_basis/ichip/BCF/all_missing.bcf /home/ob219/share/as_basis/ichip/BCF/all.bcf')
+  system('bcftools plugin fill-AN-AC -Ob -o   /home/ob219/share/as_basis/ichip/BCF/all_tagged.bcf  /home/ob219/share/as_basis/ichip/BCF/all_missing.bcf')
   ## this add tags
   # export BCFTOOLS_PLUGINS=/usr/local/software/spack/spack-0.11.2/opt/spack/linux-rhel7-x86_64/gcc-5.4.0/bcftools-1.6-6p3lqyearbsrree33gn7blgmuxjiybc5/libexec/bcftools/
   #bcftools plugin missing2ref  -Ob -o all_missing.bcf all.bcf
@@ -174,7 +174,7 @@ if(FALSE){
   #traits <- paste(c(basis.traits$disease,'ind:jia'),sep=',',collapse=',')
   #write(traits,file=tfile)
   tot_traits <- length(files) * 2
-  BCF_FILE <- '/home/ob219/share/as_basis/ichip/BCF/test_all_tagged.bcf'
+  BCF_FILE <- '/home/ob219/share/as_basis/ichip/BCF/all_tagged.bcf'
   #cmd <- sprintf("bcftools view -c %d -s %s -Ov -G %s ",tot_traits,traits,BCF_FILE)
   cmd <- sprintf("bcftools view -c %d -Ov -G %s ",tot_traits,BCF_FILE)
 
@@ -183,7 +183,7 @@ if(FALSE){
   # build manifest - this file comes from 'process_basis_traits.R in this dir'
   # for the time stick to using old LD block designations (i.e. not the ones for ichip)
   #snps <- fread('/home/ob219/rds/hpc-work/as_basis/gwas_stats/ichip/snp_manifest/ichip_september.tab')
-  man.DT <- test.DT[pid %in% DT$ID,]
-  man.DT[,g.class:=NULL]
+  man.DT <- fread('/home/ob219/share/as_basis/ichip/snp_manifest/ichip_summary_stats.tab')
+  man.DT <- man.DT[pid %in% DT$ID,]
   write.table(man.DT,file='/home/ob219/share/as_basis/ichip/snp_manifest/ichip_all.tab',row.names=FALSE,quote=FALSE)
 }

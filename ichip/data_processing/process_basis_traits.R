@@ -5,12 +5,14 @@ library(rtracklayer)
 
 LD_FILE <- "/home/ob219/rds/hpc-work/DATA/JAVIERRE_GWAS/support/0.1cM_regions.b37_ordered.bed"
 #SNP_MANIFEST_FILE <- '/home/ob219/rds/hpc-work/as_basis/gwas_stats/ichip/snp_manifest/ichip_september.tab'
-SNP_MANIFEST_FILE <- '/home/ob219/share/as_basis/ichip/snp_manifest/ichip_september.tab'
+SNP_MANIFEST_FILE <- '/home/ob219/share/as_basis/ichip/snp_manifest/ichip_october.tab'
 ICHIP_DIR <- '/home/ob219/share/as_basis/ichip/sum_stats'
-GT_DIR <- '/home/ob219/share/as_basis/ichip/ctrl_gt'
+GT_DIR <- '/home/ob219/share/as_basis/ichip/ctrl_gt/by.chr+psa'
 
 ## aligned odds ratios
 ss <- fread('~/share/Projects/coloccc/aligned13.csv')
+psa <- fread('~/share/Projects/coloccc/aligned13+psa.csv')[,.(pid37,beta.PSA,se.PSA)]
+ss <- merge(ss,psa,by.x='pid37',by.y='pid37')
 ## build an overall manifest
 traits <- names(ss)[grep("beta",names(ss))] %>% gsub("beta\\.","",.)
   ## genotype data
@@ -43,7 +45,7 @@ keep <- which(rownames(snps(Y)) %in% man.DT$pid)
 Y <- Y[,keep]
 ## keep a copy moved to build 37
 X<-Y
-save(X,file="/home/ob219/share/as_basis/ichip/ctrl_gt/aligned13_filt_b37.RData")
+save(X,file="/home/ob219/share/as_basis/ichip/ctrl_gt/aligned13+psa_filt_b37.RData")
 ## check things are OK
 #identical(snps(Y) %>% rownames,man.DT$pid)
 #[1] TRUE

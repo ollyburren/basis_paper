@@ -4,15 +4,21 @@ library(magrittr)
 library(cupcake)
 library(optparse)
 
-CAL_FILE <- '/home/ob219/share/as_basis/ichip/support/por_2500_2.0_0.01.RDS'
-POR_OUT_DIR <- '/home/ob219/share/as_basis/ichip/individual_por/'
-ICHIP_DATA_DIR <- '/home/ob219/share/as_basis/ichip/sum_stats'
+SHRINKAGE_METHOD<-'ws_emp_shrinkage'
 SNP_MANIFEST_FILE <- '/home/ob219/share/as_basis/ichip/snp_manifest/ichip_all.tab'
-SHRINKAGE_METHOD<-'ws_emp'
-SAMP_CHUNK_SIZE <- 100
-PROJ_OUT_DIR <- '/home/ob219/share/as_basis/ichip/individual_projections'
+TRAIT_MANIFEST <- '/home/ob219/share/as_basis/ichip/trait_manifest/as_manifest_ichip.tsv'
+#CAL_FILE <- '/home/ob219/share/as_basis/ichip/support/por_2500_2.0_0.01.RDS'
+CAL_FILE <- '/home/ob219/share/as_basis/ichip/support/por_2500_2.0_0.01.RDS'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/ichip/support/shrinkage_ic.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/ichip/support/basis_ic.RDS'
+POR_OUT_DIR <- '/home/ob219/share/as_basis/ichip/individual_data/individual_por/'
+PROJ_OUT_DIR <- '/home/ob219/share/as_basis/ichip/individual_data/individual_proj/'
+ICHIP_DATA_DIR <- '/home/ob219/share/as_basis/ichip/sum_stats'
 
-TEST <- TRUE
+
+SAMP_CHUNK_SIZE <- 100
+
+TEST <- FALSE
 
 option_list = list(
   make_option(c("-d", "--data_dir"), type="character",default='',
@@ -20,7 +26,7 @@ option_list = list(
 
 if(TEST){
   args <- list(
-    data_dir='/home/ob219/share/as_basis/ichip/individual_gt/iim'
+    data_dir='/home/ob219/share/as_basis/ichip/individual_data/filtered_gt/ERA'
   )
 }else{
   opt_parser = OptionParser(option_list=option_list);
@@ -59,32 +65,6 @@ obj <- list(snps=snps,proj.lor=proj.lor,samples=samples)
 trait <- basename(args$data_dir)
 fname <- file.path(POR_OUT_DIR,sprintf("%s_por.RDS",trait))
 saveRDS(obj,file=fname)
-
-## a bit of a hack here so we can get projections to work given that
-## we are missing some SNPs
-
-#man <- man[pid %in% obj$snps$pid,]
-#write.table(man,file='/home/ob219/rds/hpc-work/as_basis/gwas_stats/ichip/snp_manifest/august_iim.tab',row.names=FALSE,quote=FALSE)
-
-
-create_ds_matrix <- function(bDT,sDT,method=c('emp','est','memp','mest')){
-  if(missing(method)){
-    method='emp'
-  }
-  message(sprintf("Using %s",method))
-  vmethod = sprintf("%s_shrinkage",method)
-  stmp<-sDT[,c('pid',vmethod),with=FALSE]
-  tmp<-bDT[stmp]
-  tmp$metric <- tmp[[vmethod]] * log(tmp$or)
-  B <- dcast(tmp,pid ~ trait,value.var='metric')
-  snames <- B[,1]$pid
-  tmp.mat <- as.matrix(B[,-1]) %>% t()
-  colnames(tmp.mat) <- snames
-  return(tmp.mat)
-}
-
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/ichip/support/shrinkage_ic.RDS'
-BASIS_FILE <- '/home/ob219/share/as_basis/ichip/support/basis_ic.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 shrink.DT <- readRDS(SHRINKAGE_FILE)
 
@@ -106,7 +86,11 @@ setnames(ind.proj.DT,'variable','trait')
 by.samp <- split(ind.proj.DT,ind.proj.DT$trait)
 samp.no <- length(names(by.samp))
 group.size <- ceiling(samp.no/SAMP_CHUNK_SIZE)
-samp.groups <- split(names(by.samp),cut(1:samp.no,group.size))
+if(group.size==1){
+  samp.groups <- list(1:length(names(by.samp)))
+}else{
+  samp.groups <- split(names(by.samp),cut(1:samp.no,group.size))
+}
 
 all.proj <- lapply(samp.groups,function(ss){
   message(length(ss))
@@ -121,6 +105,15 @@ all.proj <- lapply(samp.groups,function(ss){
 
 fname <- file.path(PROJ_OUT_DIR,sprintf("%s_projection.RDS",trait))
 saveRDS(all.proj,file=fname)
+
+if(FALSE){
+  R_SCRIPT <- '/home/ob219/git/basis_paper/ichip/compute_posterior_OR_and_project_ic.R'
+  dirs <- list.files(path='/home/ob219/share/as_basis/ichip/individual_data/filtered_gt',pattern="*",full.names=TRUE)
+  cmds <- lapply(dirs,function(d){
+      sprintf("Rscript %s -d  %s",R_SCRIPT,d)
+  }) %>% do.call('c',.)
+  write(cmds,"~/tmp/qstuff/ind_proj.txt")
+}
 
 ## example single use
 #Rscript   /home/ob219/git/as_basis/R/Individual_projection/compute_posterior_OR_and_project.R -d /home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/individual_gt/gtex
