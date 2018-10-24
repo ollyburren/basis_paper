@@ -267,12 +267,79 @@ p.adj.thresh=0.01
 
 dev.print(pdf,"~/tmp/figure1b.pdf")
 
+proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/ss_shrink_2018/'
+basis_file='/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
+variance_file='/home/ob219/share/as_basis/GWAS/support/ss_av_june.RDS'
+bb_lu=BB_LU
+
+plot_bb_pca_hclust <- function(proj_dir,basis_file,variance_file,ptitle,p.adj.thresh=0.01){
+  basis <- readRDS(basis_file)
+  basis.DT <- data.table(trait=rownames(basis$x),basis$x)
+  adj.vars <- readRDS(variance_file)
+
+  bb.files <- list.files(path=proj_dir,pattern="*.RDS",full.names=TRUE)
+  bb.DT<-lapply(bb.files,function(bb){
+    readRDS(bb)
+  }) %>% rbindlist
+  # problematic as two entries in phenotype file with same descriptor
+  bb.DT <- bb.DT[trait!='vitamin.c.product',]
+
+  ## need to be able to map trait names onto sample sizes !
+  p.DT <- get_phenotype_annotation()
+
+  bb.DT.m <- melt(bb.DT,id.vars='trait')
+  bb.DT.m <- merge(bb.DT.m,p.DT,by.x='trait',by.y='phe')
+  bb.DT.m <- merge(bb.DT.m,adj.vars,by.x='variable',by.y='pc')
+  bb.DT.m[,variance:=((n1+n0)/(n1 * n0)) * mfactor]
+  tmp <- basis.DT[trait=='control',] %>% t
+  ctrl.DT <- data.table(variable=rownames(tmp)[-1],control.loading=as.numeric(tmp[-1,1]))
+  bb.DT.m <- merge(bb.DT.m,ctrl.DT,by='variable')
+
+  ## this seems to not work there appears to be significant inflation
+  ## this could be due to the fact that we have simulated under the null whereas
+  ## all other conditions may not be null and may contain associations
+  bb.DT.m[,Z:=(value-control.loading)/sqrt(variance)]
+  bb.DT.m[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
+  #bb.DT.m[,p.adj:=p.adjust(p.value),by='variable']
+  bb.DT.m[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
+
+  ## we can try and use the distribution to estimate the parameters we need
+
+  #bb.DT.m[,Z:=(value-mean(value))/sd(value),by='variable']
+  #bb.DT.m[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
+  #bb.DT.m[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
+
+  traits.of.interest <- bb.DT.m[,list(sum(p.adj<p.adj.thresh)),by='trait'][V1!=0,]$trait
+  traits.of.interest <- traits.of.interest[traits.of.interest!='unclassifiable']
+  ## this messes up bb.DT.m
+  #bb.DT.m[,value:=Z]
+
+  ## not all pc's are equal
+  #vexp <- summary(basis)[['importance']][2,]
+  #vexp.DT <- data.table(variable=names(vexp),vexp=vexp)
+  #bb.DT.m <- merge(bb.DT.m,vexp.DT,by='variable')
+  #bb.DT.m[,value:=value * vexp]
+
+  mat.DT <- dcast(bb.DT.m[trait %in% traits.of.interest,],trait~variable)
+  mat <- as.matrix(mat.DT[,paste('PC',1:11,sep=''),with=FALSE])
+  mat <- rbind(mat,rep(0,ncol(mat)))
+  rownames(mat) <- c(mat.DT$trait,'control')
+  dist(mat) %>% hclust %>% plot(.,main=ptitle)
+}
+
 #plot_bb_Z_hclust(proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/ss_noshrink_2018/',
 #basis_file='/home/ob219/share/as_basis/GWAS/support/ss_basis_noshrink_gwas.RDS',
 #variance_file='/home/ob219/share/as_basis/GWAS/support/ss_no_shrink_av_june.RDS'
 #)
 
+plot_bb_pca_hclust(proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/ss_shrink_2018/',
+basis_file='/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS',
+variance_file='/home/ob219/share/as_basis/GWAS/support/ss_av_june.RDS',
+ptitle='2018 UKBB PCA Loading',
+p.adj.thresh=0.01
+)
 
+dev.print(pdf,"~/tmp/figure1bpca.pdf")
 
 # plot for Chris
 

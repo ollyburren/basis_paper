@@ -9,10 +9,10 @@ SHRINKAGE_METHOD<-'ws_emp_shrinkage'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/ichip/support/shrinkage_ic.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/ichip/support/basis_ic.RDS'
 GWAS_DATA_DIR <- '/home/ob219/share/as_basis/ichip/sum_stats'
-SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
-TRAIT_MANIFEST <- '/home/ob219/share/as_basis/GWAS/trait_manifest/as_manifest_gwas.tab'
-VARIANCE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_av_june.RDS'
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia.RDS'
+SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/ichip/snp_manifest/ichip_all.tab'
+TRAIT_MANIFEST <- '/home/ob219/share/as_basis/ichip/trait_manifest/as_manifest_ichip.tsv'
+VARIANCE_FILE <- '/home/ob219/share/as_basis/ichip/support/shrink_av_ichip.RDS'
+OUT_DIR <- '/home/ob219/share/as_basis/ichip/jia_projections/summary/jia.RDS'
 
 
 shrink.DT <- readRDS(SHRINKAGE_FILE)
@@ -34,7 +34,7 @@ pred.DT <- merge(pred.DT,proj.traits[,.(trait,n1=cases,n=cases+controls)],by.x='
 pred.DT <- merge(pred.DT,var.DT,by.x='variable',by.y='pc')
 pred.DT[,ci.95:=sqrt((n/(n1 * (n-n1))) * mfactor) * 1.96  ]
 pred.DT[,c('ci.lo','ci.hi'):=list(value-ci.95,value+ci.95)]
-pred.DT[,variable:=factor(variable,levels=paste0('PC',1:11))]
+pred.DT[,variable:=factor(variable,levels=paste0('PC',1:13))]
 ctrl.DT <- data.table(variable=rownames(tmp)[-1],control.loading=as.numeric(tmp[-1,1]))
 pred.DT <- merge(pred.DT,ctrl.DT,by='variable')
 pred.DT[,variance:=(n/(n1 * (n-n1))) * mfactor]
@@ -42,19 +42,41 @@ pred.DT[,Z:=(value-control.loading)/sqrt(variance)]
 pred.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 #bb.DT.m[,p.adj:=p.adjust(p.value),by='variable']
 pred.DT[,p.adj:=p.adjust(p.value),by='variable']
-pred.DT[,variable:=factor(variable,levels=paste0('PC',1:11))]
+pred.DT[,variable:=factor(variable,levels=paste0('PC',1:13))]
 pred.DT[,short.trait:=substr(trait,1,15),]
 
-saveRDS(pred.DT,file="~/share/as_basis/GWAS/tmp/jia_plot.RDS")
+saveRDS(pred.DT,file="~/share/as_basis/ichip/tmp/jia_plot.RDS")
 pd <- position_dodge(0.1)
 pa <- ggplot(pred.DT,aes(x=variable,y=value,group=trait,col=trait)) + geom_point(position=pd) +
 geom_errorbar(aes(ymin=ci.lo, ymax=ci.hi), width=.1, position=pd) + geom_line(position=pd)
 ## here we use 0.05 rather than doing BF over all tests for all PC's
+
+## so we can compare with previous plot
+pred.DT[trait=='jia_ERA',trait:='ERA']
+pred.DT[trait=='jia_EO',trait:='ext_oligo']
+pred.DT[trait=='jia_PO',trait:='pers_oligo']
+pred.DT[trait=='jia_PsA',trait:='jPsA']
+pred.DT[trait=='jia_RFneg',trait:='RFneg_poly']
+pred.DT[trait=='jia_RFpos',trait:='RFpos_poly']
+pred.DT[trait=='jia_systemic',trait:='systemic']
+
+
+
+
 pb <- ggplot(pred.DT,aes(x=variable,y=value-control.loading,group=trait,col=trait,pch=p.value<0.05)) + geom_point(position=pd,aes(size=-log10(p.value))) +
 geom_line(position=pd)
 
+## plot basis.DT in a similar setup
+
+basis.DT <- melt(basis.DT,id.vars=c('trait'))
+basis.DT <- merge(basis.DT,ctrl.DT,by='variable')
+basis.DT[,variable:=factor(variable,levels=paste0('PC',1:13))]
+basis.DT <- basis.DT[trait!='control',]
 
 
+pc <- ggplot(basis.DT,aes(x=variable,y=value-control.loading,group=trait,col=trait,label=trait)) + geom_point(position=pd) +
+geom_line(position=pd) + geom_text()
+pc
 
 ## do hclust
 
@@ -80,7 +102,7 @@ get_phenotype_annotation <- function(filter='20002\\_'){
 
 #p.DT <- get_phenotype_annotation(filter='20002_1477|20002_1453|20002_1464')
 p.DT <- get_phenotype_annotation()
-bb.files <- list.files(path='/home/ob219/share/as_basis/GWAS/bb_projections/ss_shrink_2018/',pattern="*.RDS",full.names=TRUE)
+bb.files <- list.files(path='/home/ob219/share/as_basis/ichip/bb_projections/shrink_2018/',pattern="*.RDS",full.names=TRUE)
 bb.DT<-lapply(bb.files,function(bb){
   readRDS(bb)
 }) %>% rbindlist
@@ -89,14 +111,14 @@ bb.DT.m <- merge(bb.DT.m,p.DT[,.(trait=phe,n1=n1,n=n1+n0)],by.x='trait',by.y='tr
 bb.DT.m <- merge(bb.DT.m,var.DT,by.x='variable',by.y='pc')
 bb.DT.m[,ci.95:=sqrt((n/(n1 * (n-n1))) * mfactor) * 1.96  ]
 bb.DT.m [,c('ci.lo','ci.hi'):=list(value-ci.95,value+ci.95)]
-bb.DT.m [,variable:=factor(variable,levels=paste0('PC',1:11))]
+bb.DT.m [,variable:=factor(variable,levels=paste0('PC',1:13))]
 bb.DT.m <- merge(bb.DT.m,ctrl.DT,by='variable')
 bb.DT.m [,variance:=(n/(n1 * (n-n1))) * mfactor]
 bb.DT.m [,Z:=(value-control.loading)/sqrt(variance)]
 bb.DT.m[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 #bb.DT.m[,p.adj:=p.adjust(p.value),by='variable']
 bb.DT.m[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
-bb.DT.m[,variable:=factor(variable,levels=paste0('PC',1:11))]
+bb.DT.m[,variable:=factor(variable,levels=paste0('PC',1:13))]
 bb.DT.m[,short.trait:=substr(trait,1,15),]
 
 ## we can try and use the distribution to estimate the parameters we need
@@ -116,13 +138,13 @@ saveRDS(rbind(bb.DT.m,pred.DT),file="/home/ob219/share/as_basis/GWAS/tmp/jia_bb_
 
 
 
-z.DT <- melt(rbind(pred.DT,bb.DT.m),id.vars=c('variable','trait'),measure.vars='Z')
+z.DT <- melt(rbind(pred.DT,bb.DT.m),id.vars=c('variable','trait'),measure.vars='value')
 
 mat.DT <- dcast(z.DT ,trait~variable)
 mat <- as.matrix(mat.DT[,paste('PC',1:11,sep=''),with=FALSE])
 mat <- rbind(mat,rep(0,ncol(mat)))
 rownames(mat) <- c(mat.DT$trait,'control')
-dist(mat) %>% hclust %>% plot
+dist(mat) %>% hclust(.,method="ward") %>% plot
 
 
 groups <- dist(mat) %>% hclust %>% cutree(h=10)
