@@ -15,10 +15,10 @@ if(!TEST){
 	    stop("Supply an file containing a list of genes to process", call.=FALSE)
     }
 }else{
-  args <- list(integer=89)
+  args <- list(fname='/home/ob219/tmp/qstuff/eqtlgen/genelists/gene_90.txt')
 }
 
-gene.list <- read(args$fname,"character")
+gene.list <- scan(args$fname,"character")
 
 #gene.list <- c('ENSG00000270170','ENSG00000270172','ENSG00000270175','ENSG00000270177','ENSG00000270179','ENSG00000270184')
 
@@ -30,7 +30,7 @@ SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
 DATA_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sum_stats/eqtlgen'
 SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
-OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/eqtlgen_projections'
+OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/eqtlgen_projections/'
 
 
 ## running on the queue
@@ -46,9 +46,9 @@ if(FALSE){
   files <- list.files(path='/home/ob219/tmp/qstuff/eqtlgen/genelists',pattern="*.txt",full.names=TRUE)
   cmds <- sapply(files,function(f){
   #cmds <- sapply(c(165,159,78,167,116,57,166),function(i){
-    sprintf("Rscript /home/ob219/git/basis_paper/GWAS/process_bb_self_reported_disease_august_2018.R -i %d",i)
+    sprintf("Rscript /home/ob219/git/basis_paper/GWAS/eqtlgen/process_eqtlgen.R -f %s",f)
   })
-  write(cmds,file="~/tmp/qstuff/gwas_bb_disease_proj_2018.txt")
+  write(cmds,file="~/tmp/qstuff/gwas_eqtlgen.txt")
 }
 
 shrink.DT <- readRDS(SHRINKAGE_FILE)
@@ -76,7 +76,7 @@ bc <- predict(pc.emp,newdata=t(mat))
 res.DT <- data.table(trait = rownames(bc)  %>% gsub("_shrunk.beta","",.),bc)[trait!='DUMMY:-999',]
 
 
-
+fname <- basename(args$fname) %>% gsub("\\.txt","",.)
 
 saveRDS(res.DT,file=sprintf("%s%s.RDS",OUT_DIR,fname))
 message(sprintf("Wrote to %s%s.RDS",OUT_DIR,fname))
