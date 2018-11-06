@@ -10,7 +10,7 @@ option_list = list(
 if(!TEST){
   opt_parser = OptionParser(option_list=option_list);
   args = parse_args(opt_parser)
-  if (is.null(args$integer)){
+  if (is.null(args$fname)){
 	   print_help(opt_parser)
 	    stop("Supply an file containing a list of genes to process", call.=FALSE)
     }
