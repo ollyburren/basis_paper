@@ -67,7 +67,10 @@ align.class[idx] <- g.class(x.alleles,y.alleles)
 print(table(align.class))
 alleles[,g.class:=align.class]
 M <- merge(M,alleles[,.(pid,g.class)],by='pid',all.x=TRUE)
-M[g.class=='rev',der.beta:=der.beta*-1]
+## for basis a2 is the risk allele this means flipped alleles are OK but
+## matched alleles are the wrong way round
+#M[g.class=='rev',der.beta:=der.beta*-1]
+M[g.class=='match',der.beta:=der.beta*-1]
 M.out <- M[,.(pid,a1=ref_a1,a2=ref_a2,or=der.beta,p.value=2*pnorm(abs(Zscore),lower.tail=FALSE),ensg)]
 by.gene<-split(M.out,M.out$ensg)
 OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sum_stats/eqtlgen/'
