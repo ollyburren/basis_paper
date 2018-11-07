@@ -16,7 +16,7 @@ write(keep.id,file=ID_FILE)
 CIS_FILE <- '/home/ob219/share/Data/expr/eqtlgen/cis-eQTLs_full_20180905.txt.gz'
 OUT_FILE <- '/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.txt'
 cmd <- sprintf("zcat %s | grep -f %s > %s",CIS_FILE,ID_FILE,OUT_FILE)
-system(cmd)
+#system(cmd)
 #zcat /home/ob219/share/Data/expr/eqtlgen/cis-eQTLs_full_20180905.txt.gz | grep -f /home/ob219/share/as_basis/GWAS/eqtlgen/gwas_june_match.tab > /home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.txt
 ## above does not work as get out of mem error instead us data.table
 if(!file.exists("/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.RDS")){
