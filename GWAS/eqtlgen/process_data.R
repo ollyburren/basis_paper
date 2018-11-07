@@ -19,11 +19,13 @@ cmd <- sprintf("zcat %s | grep -f %s > %s",CIS_FILE,ID_FILE,OUT_FILE)
 system(cmd)
 #zcat /home/ob219/share/Data/expr/eqtlgen/cis-eQTLs_full_20180905.txt.gz | grep -f /home/ob219/share/as_basis/GWAS/eqtlgen/gwas_june_match.tab > /home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.txt
 ## above does not work as get out of mem error instead us data.table
-DT<-fread("zcat /home/ob219/share/Data/expr/eqtlgen/cis-eQTLs_full_20180905.txt.gz")
-f.DT<-DT[SNP %in% keep.id,]
-
+if(!file.exists("/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.RDS")){
+  DT<-fread("zcat /home/ob219/share/Data/expr/eqtlgen/cis-eQTLs_full_20180905.txt.gz")
+  f.DT<-DT[SNP %in% keep.id,]
 saveRDS(f.DT,"/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.RDS")
-f.DT<-readRDS("/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.RDS")
+}else{
+  f.DT<-readRDS("/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.RDS")
+}
 ## next do the same for trans eqtl
 EQTL_GEN_MAN_TRANS <- '/home/ob219/share/Data/expr/eqtlgen/trans_manifest.tab'
 DT.t<-fread("/home/ob219/share/Data/expr/eqtlgen/trans-eQTLs_full_20180905.txt")
