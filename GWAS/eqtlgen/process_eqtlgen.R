@@ -86,21 +86,15 @@ message(sprintf("Wrote to %s%s.RDS",OUT_DIR,fname))
 
 if(FALSE){
   library(cowplot)
-  OUT_DIR <- '/home/ob219/rds/hpc-work/as_basis/bb/summary_stats_20180731/self_reported_disease/june_10k/'
+  OUT_DIR <- '/home/ob219/share/as_basis/GWAS/eqtlgen_projections'
   BASIS_FILE <- '/home/ob219/rds/hpc-work/as_basis/support/basis_june10k.RDS'
   fs <- list.files(path=OUT_DIR,pattern="*.RDS",full.names=TRUE)
   res.DT <- lapply(fs,readRDS) %>% rbindlist
-  pc.emp <- readRDS(BASIS_FILE)
-  basis.DT <- data.table(trait=rownames(pc.emp$x),pc.emp$x,cat='basis')
-  res.DT[,cat:='bb']
-  plot.DT <- rbind(res.DT,basis.DT)
-  plot.DT[,label:=gsub("\\.[0-9]*mg.*","",trait)]
-  ggplot(plot.DT,aes(x=PC1,y=PC4,label=label,col=cat)) + geom_point() + geom_text()
-  ## compute Z scores for chris
-  mdt<-melt(res.DT,id.vars='trait',measure.vars=sprintf("PC%d",1:11))
-  mdt[,c('mean','sd'):=list(mean(value),sd(value)),by='variable']
-  mdt[,Z:=(value-mean)/sd]
-  mdt[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
-  mdt[,p.adj:=p.adjust(p.value,method="fdr"),by=variable]
-  save(mdt,file="/home/ob219/rds/rds-cew54-wallace-share/as_basis/bb/basis_june10k_mself_reported_disease.RDS")
+  ## define a Z score for loading to see if any are significant across pc's
+  M <- melt(res.DT,id.vars='trait')
+  M[,Z:=(value-mean(value))/sqrt(var(value)),by='variable']
+  ## use biomart to get gene information of name, entrez_id and biotype
+  library(biomart)
+  test <- M[variable=='PC3',]
+
 }
