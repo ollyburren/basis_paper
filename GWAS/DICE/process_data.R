@@ -4,7 +4,7 @@
 
 library(optparse)
 
-TEST<-TRUE
+TEST<-FALSE
 option_list = list(
         make_option(c("-f", "--fname"), type="character", default=NULL,
               help="index of phenotype to process ", metavar="character")
@@ -18,6 +18,15 @@ if(!TEST){
     }
 }else{
   args <- list(fname='/home/ob219/share/Data/GWAS-summary/DICE/CD4_STIM.vcf')
+}
+
+if(FALSE){
+  BASE_DIR <- '/home/ob219/share/Data/GWAS-summary/DICE/'
+  fs<-list.files(path=BASE_DIR,pattern="*.vcf",full.names=TRUE)
+  cmds <- sapply(fs,function(f){
+    sprintf("Rscript /home/ob219/git/basis_paper/GWAS/DICE/process_data.R -f %s",f)
+  })
+  write(cmds,"~/tmp/qstuff/dice.txt")
 }
 
 
