@@ -33,7 +33,7 @@ SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
 DATA_DIR <- args$dir
 SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
-OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/eqtlgen_projections/'
+OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/DICE_projections/'
 
 
 ## running on the queue
@@ -87,8 +87,10 @@ res.DT <- data.table(trait = rownames(bc)  %>% gsub("_shrunk.beta","",.),bc)[tra
 
 fname <- basename(args$fname) %>% gsub("\\.txt","",.)
 
-saveRDS(res.DT,file=sprintf("%s%s.RDS",OUT_DIR,fname))
-message(sprintf("Wrote to %s%s.RDS",OUT_DIR,fname))
+odir <- file.path(OUT_DIR,basename(DATA_DIR))
+dir.create(odir)
+saveRDS(res.DT,file=sprintf("%s%s.RDS",odir,fname))
+message(sprintf("Wrote to %s%s.RDS",odir,fname))
 #file.remove(file.path(odir,med$ofile[i]))
 
 
