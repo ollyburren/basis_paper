@@ -6,7 +6,7 @@ TEST<-TRUE
 option_list = list(
         make_option(c("-f", "--fname"), type="character", default=NULL,
               help="index of genes to process ", metavar="character"),
-              c("-d", "--dir"), type="character", default=NULL,
+        make_option(c("-d", "--dir"), type="character", default=NULL,
                     help="dirname to process", metavar="character")
             )
 if(!TEST){
