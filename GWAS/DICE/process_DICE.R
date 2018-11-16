@@ -89,8 +89,8 @@ fname <- basename(args$fname) %>% gsub("\\.txt","",.)
 
 odir <- file.path(OUT_DIR,basename(DATA_DIR))
 dir.create(odir)
-saveRDS(res.DT,file=sprintf("%s%s.RDS",odir,fname))
-message(sprintf("Wrote to %s%s.RDS",odir,fname))
+saveRDS(res.DT,file=sprintf("%s/%s.RDS",odir,fname))
+message(sprintf("Wrote to %s/%s.RDS",odir,fname))
 #file.remove(file.path(odir,med$ofile[i]))
 
 
