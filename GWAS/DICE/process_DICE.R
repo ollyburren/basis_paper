@@ -17,7 +17,7 @@ if(!TEST){
 	    stop("Supply an file containing a list of genes to process", call.=FALSE)
     }
 }else{
-  args <- list(fname='/home/ob219/tmp/qstuff/eqtlgen/genelists/gene_90.txt',
+  args <- list(fname='/home/ob219/share/as_basis/GWAS/sum_stats/DICE/CD4_STIM/gene_1.txt',
                 dir = '/home/ob219/share/as_basis/GWAS/sum_stats/DICE/CD4_STIM')
 }
 
@@ -57,6 +57,7 @@ if(FALSE){
       sprintf("Rscript /home/ob219/git/basis_paper/GWAS/DICE/process_DICE.R -f %s -d %s",f,d)
     })
     write(cmds,file="~/tmp/qstuff/gwas_DICE.txt",append=TRUE)
+  }
 }
 
 shrink.DT <- readRDS(SHRINKAGE_FILE)
