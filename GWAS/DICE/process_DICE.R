@@ -2,7 +2,7 @@
 
 library(optparse)
 
-TEST<-TRUE
+TEST<-FALSE
 option_list = list(
         make_option(c("-f", "--fname"), type="character", default=NULL,
               help="index of genes to process ", metavar="character"),
