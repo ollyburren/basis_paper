@@ -6,9 +6,9 @@ library(cowplot)
 library(ggrepel)
 
 SHRINKAGE_METHOD<-'ws_emp_shrinkage'
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/ichip/support/shrinkage_ic.RDS'
-BASIS_FILE <- '/home/ob219/share/as_basis/ichip/support/basis_ic.RDS'
-GWAS_DATA_DIR <- '/home/ob219/share/as_basis/ichip/sum_stats'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
+GWAS_DATA_DIR <- '/home/ob219/share/as_basis/GWAS/sum_stats'
 SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
 TRAIT_MANIFEST <- '/home/ob219/share/as_basis/GWAS/trait_manifest/as_manifest_gwas.tab'
 VARIANCE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_av_june.RDS'
@@ -48,11 +48,15 @@ pred.DT[,short.trait:=substr(trait,1,15),]
 saveRDS(pred.DT,file="~/share/as_basis/GWAS/tmp/jia_plot.RDS")
 pd <- position_dodge(0.1)
 pa <- ggplot(pred.DT,aes(x=variable,y=value,group=trait,col=trait)) + geom_point(position=pd) +
-geom_errorbar(aes(ymin=ci.lo, ymax=ci.hi), width=.1, position=pd) + geom_line(position=pd)
+geom_errorbar(aes(ymin=ci.lo, ymax=ci.hi), width=.1, position=pd) + geom_line(position=pd) +
+ylab(expression(Delta*"Control Loading"))
 ## here we use 0.05 rather than doing BF over all tests for all PC's
-pb <- ggplot(pred.DT,aes(x=variable,y=value-control.loading,group=trait,col=trait,pch=p.value<0.05)) + geom_point(position=pd,aes(size=-log10(p.value))) +
-geom_line(position=pd)
+pred.DT[,Subtype:=gsub("jia\\_","",trait)]
+pb <- ggplot(pred.DT,aes(x=variable,y=value-control.loading,group=Subtype,col=Subtype,pch=p.adj<0.05)) + geom_point(position=pd,aes(size=-log10(p.value))) +
+geom_line(position=pd) + ylab(expression(Delta*"Control Loading")) + xlab("Principal Component") + geom_hline(yintercept=0,color="black")
 
+#save_plot("~/tmp/jia_2018.pdf",pb)
+dev.print(pdf,"~/tmp/jia_2018.pdf")
 
 
 

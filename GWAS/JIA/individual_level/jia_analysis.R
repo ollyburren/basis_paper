@@ -1,3 +1,5 @@
+library(cowplot)
+
 ## analyse jia projections
 
 DATA.DIR <- '/home/ob219/share/as_basis/GWAS/individual_data/individual_proj'
@@ -35,16 +37,20 @@ summ.DT[,p.adj:=p.adjust(p.value),by='variable']
 summ.DT[,variable:=factor(variable,levels=paste0('PC',1:11))]
 summ.DT[,short.trait:=substr(trait,1,15),]
 
-
+summ.DT[,Subtype:=gsub("^jia","",trait)]
 pd <- position_dodge(0.1)
-pa <- ggplot(summ.DT[!trait %in% c('jiaUnA','jiamissing'),],aes(x=variable,y=mean.load-control.loading,group=trait,col=short.trait)) + geom_point(position=pd) +
-geom_line(position=pd) + guides(size=FALSE)
+pa <- ggplot(summ.DT[!trait %in% c('jiaUnA','jiamissing'),],aes(x=variable,y=mean.load-control.loading,group=Subtype,col=Subtype)) + geom_point(position=pd) +
+geom_line(position=pd) + guides(size=FALSE) + xlab("Principal Component") + ylab(expression(Delta~"Control Loading"))
+
+
 
 jia.sum <- readRDS("~/share/as_basis/GWAS/tmp/jia_plot.RDS")
-pb <- ggplot(jia.sum[!trait %in% c('jiaUnA','jiamissing'),],aes(x=variable,y=value-control.loading,group=trait,col=short.trait)) + geom_point(position=pd) +
-geom_line(position=pd) + guides(size=FALSE)
+jia.sum[,Subtype:=gsub("jia\\_","",trait)]
+pb <- ggplot(jia.sum[!trait %in% c('jiaUnA','jiamissing'),],aes(x=variable,y=value-control.loading,group=Subtype,col=Subtype)) + geom_point(position=pd) +
+geom_line(position=pd) + guides(size=FALSE) +  xlab("Principal Component") + ylab(expression(Delta~"Control Loading"))
 ## comparison between summary and individual data
-plot_grid(pa + ggtitle("mean.individual"),pb + ggtitle("summary stats"), nrow=2)
+plot_grid(pa + ggtitle("Genotypes") + geom_hline(yintercept=0,color='black'),pb + ggtitle("Summary statistics") + geom_hline(yintercept=0,color='black'), nrow=2)
+dev.print(pdf,"~/tmp/gt_vs_summ.pdf")
 
 
 ## next do t.test of sys and era and the rest to see which PC's are important to discern between

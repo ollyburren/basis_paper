@@ -5,7 +5,7 @@ library(parallel)
 library(grid)
 library(gridExtra)
 
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/eqtlgen_projections'
+OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/DICE_projections/CD4_STIM'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
 fs <- list.files(path=OUT_DIR,pattern="*.RDS",full.names=TRUE)
 res.DT <- lapply(fs,readRDS) %>% rbindlist

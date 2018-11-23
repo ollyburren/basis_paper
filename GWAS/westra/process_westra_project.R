@@ -24,20 +24,35 @@ DT.37 <- data.table(id=westra.37.gr$id,position.37=start(westra.37.gr))
 snps <- merge(snps,DT.37,by.x='id',by.y='id',all.x=TRUE)
 ## 173 snps don't match after coord conversion
 snps <- snps[!is.na(position.37),]
+
+
+library(annotSnpStats)
 snps[,c('tmp.a1','tmp.a2'):=tstrsplit(alleles,'/')]
 snps[eallele==tmp.a1,c('a1','a2'):=list(tmp.a2,tmp.a1)]
 snps[eallele==tmp.a2,c('a1','a2'):=list(tmp.a1,tmp.a2)]
 snps <- snps[,.(id,chr,position=position.37,a1,a2)]
 snps[,pid:=paste(chr,position,sep=':')]
 ## next add in UK10K stuff so we can align
-snp.DT <- fread('/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/snp_manifest/june_10k.tab')
-m.DT <- merge(snp.DT,snps,by.x='pid',by.y='pid')
-m.DT[ref_a1==a1 & ref_a2==a2,flip:=FALSE]
-m.DT[ref_a1==a2 & ref_a2==a1,flip:=TRUE]
-
+snp.DT <- fread('/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab')
+M <- merge(snp.DT,snps,by.x='pid',by.y='pid')
+alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
+alleles <- alleles[!duplicated(pid),]
+#alleles <- M[,list(al.x=paste(uk10_A1,uk10_A2,sep='/'),al.y=paste(a1,a2,sep='/')),by='pid']
+## to make quick
+align.class <- rep('match',nrow(alleles))
+idx<-which(alleles$al.x!=alleles$al.y)
+x.alleles <- alleles[idx,]$al.x
+names(x.alleles)<-alleles[idx,]$pid
+y.alleles <-  alleles[idx,]$al.y
+names(y.alleles)<-names(x.alleles)
+align.class[idx] <- g.class(x.alleles,y.alleles)
+print(table(align.class))
+alleles[,g.class:=align.class]
+M <- merge(M,alleles[,.(pid,g.class)],by='pid',all.x=TRUE)
+M<-M[g.class!='impossible']
 ## get the list of variants where we need to flip the effect !
 
-flip.snps <- m.DT[flip==TRUE,]$id
+flip.snps <- M[g.class=='rev',]$id
 exp.DT <- DT[,.(id=SNPName,Z=OverallZScore,P=PValue,Gene=HUGO,probe=ProbeName)]
 ## add in extra rows for where genes are covered by the same probes
 sgenes <- strsplit(exp.DT$Gene,',')
@@ -54,8 +69,11 @@ f.DT <- merge(m.DT,exp.DT,by.x='id',by.y='id')
 ## split out genes that are annotated to more than one gene
 ## compute betas
 f.DT[,maf:=ifelse(ref_a1.af>0.5,1-ref_a1.af,ref_a1.af)]
-f.DT[,beta:=Z/sqrt(maf * (1-maf))]
+##8086 - total sample size
+NrSamples <- 8086
+f.DT[,beta:=1/(sqrt(2 * NrSamples) * sqrt(maf * (1-maf))) * Z]
 ##
+f.DT[id %in% flip.snps,flip:=TRUE]
 f.DT[flip==TRUE,beta:=beta*-1]
 f.DT[,uid:=paste(Gene,probe,sep=':')]
 
@@ -63,12 +81,13 @@ f.DT[,uid:=paste(Gene,probe,sep=':')]
 ## alternative method to create input for projection
 
 
-SHRINKAGE_METHOD<-'ws_emp'
-SHRINKAGE_FILE <- '/home/ob219/rds/hpc-work/as_basis/support/shrinkage_june10k.RDS'
-BASIS_FILE <- '/home/ob219/rds/hpc-work/as_basis/support/basis_june10k.RDS'
+SHRINKAGE_METHOD<-'ws_emp_shrinkage'
+## just the one shrinkage file
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
 
 shrink.DT <- readRDS(SHRINKAGE_FILE)
-shrink.DT<-shrink.DT[,c('pid',shrink=sprintf("%s_shrinkage",SHRINKAGE_METHOD)),with=FALSE]
+shrink.DT<-shrink.DT[,c('pid',shrink=SHRINKAGE_METHOD),with=FALSE]
 setkey(shrink.DT,'pid')
 pc.emp <- readRDS(BASIS_FILE)
 all.DT <- f.DT[,.(pid,uid,beta)]
@@ -95,6 +114,9 @@ res.DT <- mclapply(chunk.gene,function(gc){
   data.table(trait = rownames(bc) %>% gsub("_shrunk.beta","",.),bc)
   ## these are now ready for projection but need checking
 },mc.cores=8) %>% rbindlist
+
+saveRDS(res.DT,file="/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/westra_projections/proj.RDS")
+
 library(cowplot)
 
 basis.DT <- data.table(trait=rownames(pc.emp$x),pc.emp$x,cat='basis')
