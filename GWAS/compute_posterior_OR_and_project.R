@@ -22,7 +22,7 @@ option_list = list(
 
 if(TEST){
   args <- list(
-    data_dir='/home/ob219/share/as_basis/GWAS/individual_data/filtered_gt/raj'
+    data_dir='/home/ob219/share/as_basis/GWAS/individual_data/filtered_gt/raj/cd14'
   )
 }else{
   opt_parser = OptionParser(option_list=option_list);
@@ -44,8 +44,6 @@ print(args)
 fls <- list.files(path=args$data_dir,pattern="^chr[^\\.]+\\.RDS",full.names=TRUE)
 cal <- readRDS(CAL_FILE)[,2:4,with=FALSE] %>% as.matrix
 man<-fread(SNP_MANIFEST_FILE)
-
-f <- '/home/ob219/share/as_basis/GWAS/individual_data/filtered_gt/raj/chr1.RDS'
 
 get_por <- function(f){
   message(sprintf("Processing %s",f))
@@ -92,10 +90,16 @@ DT.lor <- data.table(obj$proj.lor)
 setnames(DT.lor,rownames(obj$samples))
 DT.lor[,pid:=obj$snps$pid]
 ### but wait what if there are some variants missing that need filling in here is the place to do it
-
-
+all.snps <- rownames(pc.emp$rotation)
+missing <- all.snps[!all.snps %in% DT.lor$pid]
 ind.proj.DT <- melt(DT.lor,id.vars='pid')[,or:=exp(value)]
 setnames(ind.proj.DT,'variable','trait')
+if(length(missing) > 0){
+  samples <- rep(rownames(obj$samples),length(missing)) %>% sort
+  mpid <-  rep(missing,nrow(obj$samples))
+  mdt <- data.table(pid=mpid,trait=samples,value=0,or=1)
+  ind.proj.DT <- rbind(ind.proj.DT,mdt)
+}
 
 by.samp <- split(ind.proj.DT,ind.proj.DT$trait)
 samp.no <- length(names(by.samp))

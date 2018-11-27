@@ -79,9 +79,9 @@ switcheroo <- function(x,y,mafdiff=0.1,do.plot=FALSE){
 
 DATA_DIR <-  '/home/ob219/share/Projects/twas'
 SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
-GT_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/individual_data/filtered_gt/raj/cd4/'
+GT_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/individual_data/filtered_gt/raj/cd14'
 ## loads in as X
-load(file.path(DATA_DIR,'raj-cd4-genotypes.RData'))
+load(file.path(DATA_DIR,'raj-cd14-genotypes.RData'))
 raj.snps <- snps(X) %>% data.table
 raj.snps[,snp.idx:=1:nrow(raj.snps)]
 ## add positions for variants
@@ -117,8 +117,6 @@ uk10m <- uk10[,.(CHR,BP=POS,uk10_A1=REF,uk10_A2=ALT,uk10_A2_AF=AF)]
 uk10m[,pid:=paste(CHR,BP,sep=':')]
 ruk10m <- uk10m[pid %in% snps(bf)$snp.name,]
 
-files <- list.files(path=GT_OUT_DIR,pattern="^chr[0-9]+.RDS",full.names=TRUE)
-
 for(chr in names(sn)){
   idx <- sn[[chr]]
   fsnps <- bf[,idx]
@@ -126,6 +124,10 @@ for(chr in names(sn)){
   sprintf("Writing to %s",ofile) %>% message
   saveRDS(fsnps,file=ofile)
 }
+
+files <- list.files(path=GT_OUT_DIR,pattern="*.RDS",full.names=TRUE)
+
+
 
 processRAJ <- function(f,out.dir=GT_OUT_DIR){
   message(f)
