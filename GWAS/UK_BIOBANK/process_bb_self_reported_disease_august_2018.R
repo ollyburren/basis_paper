@@ -197,4 +197,35 @@ if(FALSE){
   mdt[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
   mdt[,p.adj:=p.adjust(p.value,method="fdr"),by=variable]
   save(mdt,file="/home/ob219/rds/rds-cew54-wallace-share/as_basis/bb/basis_june10k_mself_reported_disease.RDS")
+  traits <- mdt[p.adj<0.05,]$trait
+  tplot <- mdt[trait %in% traits,]
+    ggplot(tplot,aes(y=variable,x=trait,fill=Z,label=signif(p.adj,digits=2))) + geom_tile() + geom_text() +
+    scale_fill_gradientn(colours=c('green','white','red')) +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + xlab("Trait") + ylab("PC")
+}
+
+if(FALSE){
+  library(cowplot)
+  OUT_DIR <- '/home/ob219/rds/hpc-work/as_basis/bb/summary_stats_20180731/medications/june_10k/'
+  BASIS_FILE <- '/home/ob219/rds/hpc-work/as_basis/support/basis_june10k.RDS'
+  fs <- list.files(path=OUT_DIR,pattern="*.RDS",full.names=TRUE)
+  res.DT <- lapply(fs,readRDS) %>% rbindlist
+  pc.emp <- readRDS(BASIS_FILE)
+  basis.DT <- data.table(trait=rownames(pc.emp$x),pc.emp$x,cat='basis')
+  res.DT[,cat:='bb']
+  plot.DT <- rbind(res.DT,basis.DT)
+  plot.DT[,label:=gsub("\\.[0-9]*mg.*","",trait)]
+  ggplot(plot.DT,aes(x=PC1,y=PC4,label=label,col=cat)) + geom_point() + geom_text()
+  ## compute Z scores for chris
+  mdt<-melt(res.DT,id.vars='trait',measure.vars=sprintf("PC%d",1:11))
+  mdt[,c('mean','sd'):=list(mean(value),sd(value)),by='variable']
+  mdt[,Z:=(value-mean)/sd]
+  mdt[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
+  mdt[,p.adj:=p.adjust(p.value,method="fdr"),by=variable]
+  save(mdt,file="/home/ob219/rds/rds-cew54-wallace-share/as_basis/bb/basis_june10k_medications.RDS")
+  traits <- mdt[p.adj<0.05,]$trait
+  tplot <- mdt[trait %in% traits,]
+    ggplot(tplot,aes(y=variable,x=trait,fill=Z,label=signif(p.adj,digits=2))) + geom_tile() + geom_text() +
+    scale_fill_gradientn(colours=c('green','white','red')) +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + xlab("Trait") + ylab("PC")
 }

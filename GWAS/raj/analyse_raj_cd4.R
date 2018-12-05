@@ -27,8 +27,8 @@ setkey(expr.DT,sample_id)
 setkey(res,ind)
 
 ggplot(for.reg[variable=='PC1',],aes(x=value,y=P_7896908)) + geom_point() + geom_smooth(method='lm')
-saveRDS(for.reg,file="/home/ob219/scratch/as_basis/raj_cd4_ind_analysis/regression_analysis/cd4.RDS")
-for.reg <- readRDS("/home/ob219/scratch/as_basis/raj_cd4_ind_analysis/regression_analysis/cd4.RDS")
+saveRDS(for.reg,file="/home/ob219/share/as_basis/GWAS/raj/cd4/cd4.RDS")
+for.reg <- readRDS("/home/ob219/share/as_basis/GWAS/raj/cd4/cd4.RDS")
 
 probes <- names(for.reg)[grep("P\\_[0-9]",names(for.reg))]
 

@@ -21,6 +21,8 @@ genedesc <- genedesc[genedesc[ , .I[which.min(entrezgene)], by = 'ensembl_gene_i
 M <- merge(M,genedesc,by.x='trait',by.y='ensembl_gene_id')
 
 Mf <- M[gene_biotype=='protein_coding' & !chromosome_name %in% c('X','Y'),]
+
+
 universe <- Mf$entrezgene %>% as.integer
 
 if(FALSE){
@@ -111,6 +113,26 @@ pl[[2]] <- gsea(hm,test.type='bartlett.test',fdr.method="fdr") %>% phwrap(.,main
 #pl[[2]] <- gsea(hm,test.type='t.test',fdr.method="fdr") %>% phwrap(.,main="T Test Hallmark")
 g<-grid.arrange(grobs=pl,ncol=2)
 dev.print(pdf,"~/tmp/hallmark_f_eqtlgen.pdf")
+
+## add in reactome just in case
+
+f <- scan("~/tmp/c2.cp.reactome.v6.2.entrez.gmt","character()",sep="\n") %>% strsplit(.,"\t")
+react <- lapply(f,function(x) {
+  genes <- x[c(-1,-2)] %>% as.integer
+  genes <- genes[genes %in% universe]
+})
+names(react) <- sapply(f,'[[',1)
+## remove genesets with no members !
+react <- react[sapply(react,length) > 5]
+
+pl <- list()
+pl[[1]] <- gsea(react,test.type='f.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Reactome")
+#pl[[2]] <- gsea(lom,test.type='f.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
+pl[[2]] <- gsea(react,test.type='bartlett.test',fdr.method="fdr") %>% phwrap(.,main="Bartlett Test Reactome")
+#pl[[4]] <- gsea(lom,test.type='bartlett.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
+#pl[[2]] <- gsea(hm,test.type='t.test',fdr.method="fdr") %>% phwrap(.,main="T Test Hallmark")
+g<-grid.arrange(grobs=pl,ncol=2)
+
 
 ## do mean
 #gsea(hm,test.type='t.test',fdr.method="fdr") %>% phwrap(.,main="t Test Hallmark")
@@ -216,4 +238,11 @@ ggplot(gi,aes(x=trait,y=variable,fill=Z,label=signif(delta,digits=2))) + geom_ti
 
 
 
-M[variable=='PC3' & gene_biotype=='protein_coding',.(external_gene_name,value,Z)][order(abs(Z),decreasing=TRUE)] %>% head(.,n=10)
+## create a heatmap of all genes
+
+Mf[,raw.p:=pnorm(abs(Z),lower.tail=FALSE) * 2]
+Mf[,fdr:=p.adjust(raw.p,method="fdr"),by='variable']
+keep.trait <- Mf[fdr<0.05,]$trait
+plot.t <- Mf[trait %in% keep.trait,]
+ggplot(plot.t,aes(x=external_gene_name,y=variable,fill=Z,label=signif(fdr,digits=1))) + geom_tile() + geom_text() +
+scale_fill_gradientn("mlp",colours=c('green','white','blue')) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
