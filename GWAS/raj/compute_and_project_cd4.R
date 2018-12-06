@@ -26,7 +26,7 @@ if(!TEST){
   args <- list(integer=39)
 }
 
-if(FALSE)
+if(FALSE){
   SCRIPT <- '/home/ob219/git/basis_paper/GWAS/raj/compute_and_project_cd4.R'
   cmds <- sapply(1:39,function(i){
     sprintf("Rscript %s -i %s",SCRIPT,i)
