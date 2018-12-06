@@ -24,7 +24,7 @@ if(!TEST){
 	    stop("Supply an integer for phenotype to process", call.=FALSE)
     }
 }else{
-  args <- list(integer=89)
+  args <- list(integer=39)
 }
 
 
@@ -60,7 +60,7 @@ all.probes <- colnames(texpr)
 split.probe <- split(all.probes, ceiling(seq_along(all.probes)/500))
 all.probes <- split.probe[[args$integer]]
 
-all.lm <- mclapply(all.probes[1:10],function(prob){
+all.lm <- mclapply(all.probes,function(prob){
   message(prob)
   res <- snp.rhs.estimates(sprintf("%s~sex",prob) %>% formula,family="gaussian",data=samp,snp.data=sm(merged.gt))
   all.beta <- sapply(res,'[[','beta')
@@ -93,3 +93,4 @@ all.proj <- predict(pc.emp,newdata=mat.emp)
 
 all.proj.DT <- data.table(probe=rownames(all.proj),all.proj)
 all.proj.m <- melt(all.proj.DT,id.var='probe')
+saveRDS(all.proj.m,file=file.path("/home/ob219/share/as_basis/GWAS/raj/cd4/summary_projections",paste("cd4%s.RDS",args$integer))
