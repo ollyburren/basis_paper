@@ -11,7 +11,7 @@ BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
 
 library(optparse)
 
-TEST<-TRUE
+TEST<-FALSE
 option_list = list(
         make_option(c("-i", "--integer"), type="numeric", default=NULL,
               help="index of probesets to process", metavar="numeric")
