@@ -1,6 +1,7 @@
 library(annotSnpStats)
 library(parallel)
 library(cupcake)
+library(optparse)
 
 SHRINKAGE_METHOD<-'ws_emp_shrinkage'
 SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
@@ -8,8 +9,6 @@ TRAIT_MANIFEST <- '/home/ob219/share/as_basis/GWAS/trait_manifest/as_manifest_gw
 CAL_FILE <- '/home/ob219/rds/hpc-work/as_basis/support//por_2500_2.0_0.01.RDS'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
-
-library(optparse)
 
 TEST<-FALSE
 option_list = list(
@@ -25,6 +24,14 @@ if(!TEST){
     }
 }else{
   args <- list(integer=39)
+}
+
+if(FALSE)
+  SCRIPT <- '/home/ob219/git/basis_paper/GWAS/raj/compute_and_project_cd4.R'
+  cmds <- sapply(1:39,function(i){
+    sprintf("Rscript %s -i %s",SCRIPT,i)
+  })
+  write(cmds,file="~/tmp/qstuff/raj_summ.txt")
 }
 
 
@@ -60,7 +67,7 @@ all.probes <- colnames(texpr)
 split.probe <- split(all.probes, ceiling(seq_along(all.probes)/500))
 all.probes <- split.probe[[args$integer]]
 
-all.lm <- mclapply(all.probes,function(prob){
+all.lm <- lapply(all.probes,function(prob){
   message(prob)
   res <- snp.rhs.estimates(sprintf("%s~sex",prob) %>% formula,family="gaussian",data=samp,snp.data=sm(merged.gt))
   all.beta <- sapply(res,'[[','beta')
@@ -69,7 +76,7 @@ all.lm <- mclapply(all.probes,function(prob){
   res.DT[,variant:=gsub("([^\\.]+)\\..*","\\1",variant)]
   res.DT[,p:=pnorm(abs(Z),lower.tail=FALSE) * 2]
   res.DT
-},mc.cores=8)
+})
 
 pc.emp <- readRDS(BASIS_FILE)
 shrink.DT <- readRDS(SHRINKAGE_FILE)
