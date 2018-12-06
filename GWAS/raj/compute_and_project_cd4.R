@@ -93,6 +93,6 @@ all.proj <- predict(pc.emp,newdata=mat.emp)
 
 all.proj.DT <- data.table(probe=rownames(all.proj),all.proj)
 all.proj.m <- melt(all.proj.DT,id.var='probe')
-ofile <- file.path("/home/ob219/share/as_basis/GWAS/raj/cd4/summary_projections",paste("cd4%s.RDS",args$integer))
+ofile <- file.path("/home/ob219/share/as_basis/GWAS/raj/cd4/summary_projections",sprintf("cd4%s.RDS",args$integer))
 saveRDS(all.proj.m,file=ofile)
 message(sprintf("Wrote %s",ofile))
