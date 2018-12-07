@@ -103,3 +103,42 @@ all.proj.m <- melt(all.proj.DT,id.var='probe')
 ofile <- file.path("/home/ob219/share/as_basis/GWAS/raj/cd4/summary_projections",sprintf("cd4%s.RDS",args$integer))
 saveRDS(all.proj.m,file=ofile)
 message(sprintf("Wrote %s",ofile))
+
+if(FALSE){
+  dat.dir <- '/home/ob219/share/as_basis/GWAS/raj/cd4/summary_projections'
+  dat <- lapply(list.files(path=dat.dir,pattern="*.RDS",full.names=TRUE),readRDS) %>% rbindlist
+  dat[,Z:=(value-mean(value))/sd(value),by='variable']
+
+  ## load in individual datasets
+  all.lms <- readRDS("/home/ob219/share/as_basis/GWAS/raj/cd4/regression_models.RDS")
+  names(all.lms)<-paste('PC',1:11,sep="")
+  for.reg <- readRDS("/home/ob219/share/as_basis/GWAS/raj/cd4/cd4.RDS")
+  pc.t <- lapply(seq_along(names(all.lms)),function(i){
+    pc<-names(all.lms)[i]
+    all.p <- sapply(all.lms[[i]],function(x){
+      summary(x)$coefficient["value",3]
+    })
+    DT <- data.table(PC=pc,probe=names(for.reg)[grep('^P\\_',names(for.reg))],t.stat=all.p)
+  })
+
+  pc.t <- rbindlist(pc.t)
+
+  M <- merge(pc.t,dat,by.x=c('PC','probe'),by.y=c('variable','probe'))
+  pap <- fread("~/tmp/tableS4_eu_cd4T_cis_fdr05.tsv")
+  M[,supp.table:=probe %in% paste('P',pap$PROBESET_ID,sep='_')]
+  library(cowplot)
+  M[,PC:=paste('PC',1:11)]
+  ggplot(M,aes(x=Z,y=t.stat,col=supp.table)) + geom_point(alpha=0.5) +
+  facet_wrap(~PC) + xlab("Individual T.stat") + ylab("Summary Empirical Z score")
+
+
+  ## obvious issue could be that we have the alignment wrong
+
+  cosum <- col.summary(merged.gt)
+  cosum.DT <- data.table(SNP=rownames(cosum),cosum)
+  ## add the pid
+  cosum.DT[,pid:=snps(merged.gt)$snp.name]
+  ## load in the snp manifest
+  snp.man <- fread(SNP_MANIFEST_FILE)
+  Mmaf <- merge(snp.man[,.(pid,ref_a1.af)],cosum.DT[,.(pid,RAF)],by='pid')
+}

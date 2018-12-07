@@ -132,6 +132,20 @@ all.proj <- predict(pc.emp,newdata=mat.emp)
 all.proj.DT <- data.table(probe=rownames(all.proj),all.proj)
 all.proj.m <- melt(all.proj.DT,id.var='probe')
 
+## compute the mean projection across a component
+
+meany <- all.proj.m[,list(mval=mean(value)),by=variable]
+pc.emp.DT <- data.table(trait=rownames(pc.emp$x),pc.emp$x) %>% melt(.,id.vars='trait')
+ctrl.DT <- pc.emp.DT[trait=='control',]
+
+## next compute empirical Z scores
+
+pc.emp.DT[,Z:=(value-mean(value))/sd(value),by=variable]
+
+
+
+
+
 data.path <- '/home/ob219/share/as_basis/GWAS/raj/cd4'
 saveRDS(all.proj,file.path(data.path,'summ_chr1_proj_IL6.RDS'))
 
@@ -259,3 +273,8 @@ pc.emp <- readRDS(BASIS_FILE)
 ## pc3 max rotation
 
 pc3 <- pc.emp$rotation[,"PC3"]
+
+## what could cause this ? Perhaps the effect sizes are so small and local such that
+## even with weighting they disappear into the background ?
+
+## there is no signal in bulk cd4 - you need to stimulate them or something ?
