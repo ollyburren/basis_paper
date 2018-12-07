@@ -28,7 +28,7 @@ if(!TEST){
 
 if(FALSE){
   SCRIPT <- '/home/ob219/git/basis_paper/GWAS/raj/compute_and_project_cd4.R'
-  cmds <- sapply(1:39,function(i){
+  cmds <- sapply(1:387,function(i){
     sprintf("Rscript %s -i %s",SCRIPT,i)
   })
   write(cmds,file="~/tmp/qstuff/raj_summ.txt")
@@ -64,7 +64,7 @@ all.probes <- colnames(texpr)
 
 ## do in batches of 500
 
-split.probe <- split(all.probes, ceiling(seq_along(all.probes)/500))
+split.probe <- split(all.probes, ceiling(seq_along(all.probes)/50))
 all.probes <- split.probe[[args$integer]]
 
 all.lm <- lapply(all.probes,function(prob){
