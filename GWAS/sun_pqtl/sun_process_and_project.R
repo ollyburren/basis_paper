@@ -100,7 +100,8 @@ processPQTL <- function(dir){
 }
 
 
-dirlist <- scan(args$file,"character") %>% head(.,n=5)
+#dirlist <- scan(args$file,"character") %>% head(.,n=5)
+dirlist <- scan(args$file,"character")
 for(d in dirlist){
   tryCatch({
     processPQTL(d)
