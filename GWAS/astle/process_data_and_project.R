@@ -28,7 +28,7 @@ if(FALSE){
   sprintf("Rscript %s -f %s",RSCRIPT,files) %>% write(.,file="~/tmp/qstuff/astle.txt")
 }
 
-files <- list.files(path=DATA_DIR,pattern="*.gz",full.names=TRUE)
+#files <- list.files(path=DATA_DIR,pattern="*.gz",full.names=TRUE)
 man.DT <- fread(SNP_MANIFEST)
 paste(man.DT$pid,as.numeric(gsub("[0-9]+:","",man.DT$pid))+1,sep=':') %>% gsub(":"," ",.) %>% write(.,"~/tmp/gwas_june_tabix.tab")
 header<-c('VARIANT','ID','CHR','BP','REF','ALT','ALT_MINOR','DIRECTION','EFFECT','SE','P','MLOG10P','ALT_FREQ','MA_FREQ')
