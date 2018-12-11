@@ -30,7 +30,7 @@ if(FALSE){
 
 #files <- list.files(path=DATA_DIR,pattern="*.gz",full.names=TRUE)
 man.DT <- fread(SNP_MANIFEST)
-paste(man.DT$pid,as.numeric(gsub("[0-9]+:","",man.DT$pid))+1,sep=':') %>% gsub(":"," ",.) %>% write(.,"~/tmp/gwas_june_tabix.tab")
+#paste(man.DT$pid,as.numeric(gsub("[0-9]+:","",man.DT$pid))+1,sep=':') %>% gsub(":"," ",.) %>% write(.,"~/tmp/gwas_june_tabix.tab")
 header<-c('VARIANT','ID','CHR','BP','REF','ALT','ALT_MINOR','DIRECTION','EFFECT','SE','P','MLOG10P','ALT_FREQ','MA_FREQ')
 f <- args$file
 cmd <- sprintf("/home/ob219/bin/htslib/tabix -R ~/tmp/gwas_june_tabix.tab %s",f)
