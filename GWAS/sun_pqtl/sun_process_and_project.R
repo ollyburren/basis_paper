@@ -101,7 +101,7 @@ dirlist <- scan(args$file,"character")
 for(d in dirlist){
   ofile <- file.path(OUT_DIR,sprintf("%s.RDS",basename(d)))
   if(file.exists(ofile)){
-    sprintf("Directory %s already exists skipping",dir) %>% message
+    sprintf("Directory %s already exists skipping",d) %>% message
   }else{
     tryCatch({
       processPQTL(d)
