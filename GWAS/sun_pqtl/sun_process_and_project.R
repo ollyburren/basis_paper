@@ -39,10 +39,6 @@ if(FALSE){
 processPQTL <- function(dir){
   sprintf("Processing %s",dir) %>% message
   ofile <- file.path(OUT_DIR,sprintf("%s.RDS",basename(dir)))
-  if(file.exists(ofile)){
-    sprintf("Directory %s already exists skipping",dir) %>% message
-    next
-  }
   files <- list.files(path=dir,pattern="*.gz",full.names=TRUE)
   p.DT <- lapply(files,function(f){
     sprintf("zcat %s",f) %>%  fread
@@ -103,7 +99,12 @@ processPQTL <- function(dir){
 #dirlist <- scan(args$file,"character") %>% head(.,n=5)
 dirlist <- scan(args$file,"character")
 for(d in dirlist){
-  tryCatch({
-    processPQTL(d)
-  }, error=function(e){sprintf("Error %s with %s",e,d) %>% message})
+  ofile <- file.path(OUT_DIR,sprintf("%s.RDS",basename(d)))
+  if(file.exists(ofile)){
+    sprintf("Directory %s already exists skipping",dir) %>% message
+  }else{
+    tryCatch({
+      processPQTL(d)
+    }, error=function(e){sprintf("Error %s with %s",e,d) %>% message})
+  }
 }
