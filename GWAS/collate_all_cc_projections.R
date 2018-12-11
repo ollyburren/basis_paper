@@ -96,7 +96,6 @@ rownames(delta.mat) <- deltas$trait
 delta.hc <- dist(delta.mat) %>% hclust
 out.DT[,trait:=factor(trait,levels=delta.hc$labels[delta.hc$order])]
 out.DT[,PC:=factor(PC,levels=paste('PC',1:11,sep=""))]
-out.DT[,Zplot:=]
 
 library(cowplot)
 ggplot(out.DT[p.adj<0.05 & !PC %in% c('PC10','PC11'),],aes(x=trait,y=PC,fill= (pmax(Z,-11) %>% pmin(.,11)),label=signif(delta,digits=1))) + geom_tile(color='black') +
