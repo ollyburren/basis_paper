@@ -78,9 +78,11 @@ pc.emp <- readRDS(BASIS_FILE)
 if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
   stop("Something wrong basis and projection matrix don't match")
 all.proj <- predict(pc.emp,newdata=mat.emp)
-
-
 all.proj.DT <- data.table(trait=rownames(all.proj),all.proj)
+
+saveRDS(all.proj.DT,file="/home/ob219/share/as_basis/GWAS/ferreira_projections/ferreira_asthma.RDS")
+
+
 all.proj.m <- melt(all.proj.DT,id.var='trait')
 all.proj.m[,variable:=factor(variable,levels=paste('PC',1:11,sep=''))]
 
@@ -93,6 +95,10 @@ VARIANCE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_av_june.RDS'
 var.DT <- readRDS(VARIANCE_FILE)
 
 proj.traits <- all.DT[!is.na(n0) & !is.na(n1),list(controls=max(n0),cases=max(n1)),by='trait']
+ferreira_samples <- all.DT[!is.na(n0) & !is.na(n1),list(n1=max(n1),n0=max(n0)),by='trait']
+saveRDS(ferreira_samples,file="/home/ob219/share/as_basis/GWAS/ferreira_projections/sample_size.RDS")
+
+
 
 pred.DT <- merge(all.proj.m,proj.traits[,.(trait,n1=cases,n=cases+controls)],by.x='trait',by.y='trait')
 pred.DT <- merge(pred.DT,var.DT,by.x='variable',by.y='pc')

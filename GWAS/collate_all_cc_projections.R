@@ -98,6 +98,32 @@ out.DT[,trait:=factor(trait,levels=delta.hc$labels[delta.hc$order])]
 out.DT[,PC:=factor(PC,levels=paste('PC',1:11,sep=""))]
 
 library(cowplot)
-ggplot(out.DT[p.adj<0.05 & !PC %in% c('PC10','PC11'),],aes(x=trait,y=PC,fill= (pmax(Z,-11) %>% pmin(.,11)),label=signif(delta,digits=1))) + geom_tile(color='black') +
+ggplot(out.DT[p.adj<0.05 & !PC %in% c('PC11'),],aes(x=trait,y=PC,fill= (pmax(Z,-11) %>% pmin(.,11)),label=signif(delta,digits=1))) + geom_tile(color='black') +
 geom_text(size=5,angle=90) + scale_fill_gradientn("Z",colours=c('green','white','red')) +
 theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+dev.print(pdf,"~/tmp/all_cc.pdf")
+
+#out.DT[p.adj>0.05, Z:=0]
+
+#ggplot(out.DT[PC != 'PC11',],aes(x=trait,y=PC,fill= (pmax(Z,-11) %>% pmin(.,11)),label=signif(delta,digits=1))) + geom_tile(color='black') +
+#geom_text(size=5,angle=90) + scale_fill_gradientn("Z",colours=c('green','white','red')) +
+#theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+## print a similar for projected traits
+
+## work out hclust order for basis
+setnames(basis.DT,'variable','PC')
+deltas.basis <- melt(basis.DT,id.vars=c('trait','PC'),measure.vars='value') %>% dcast(.,trait~PC+variable)
+delta.basis.mat <- as.matrix(deltas.basis[,-1])
+rownames(delta.basis.mat) <- deltas.basis$trait
+delta.basis.hc <- dist(delta.basis.mat) %>% hclust
+basis.DT[,trait:=factor(trait,levels=delta.basis.hc$labels[delta.basis.hc$order])]
+basis.DT[,PC:=factor(PC,levels=paste('PC',1:11,sep=""))]
+
+
+
+ggplot(basis.DT[trait!='control',],aes(x=trait,y=PC,fill= Z,label=signif(value,digits=1))) + geom_tile(color='black') +
+geom_text(size=5,angle=90) + scale_fill_gradientn("Z",colours=c('green','white','red')) +
+theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+dev.print(pdf,"~/tmp/basis.pdf")
