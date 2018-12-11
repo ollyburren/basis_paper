@@ -9,7 +9,7 @@ option_list = list(
 if(!TEST){
   opt_parser = OptionParser(option_list=option_list);
   args = parse_args(opt_parser)
-  if (is.null(args$fname)){
+  if (is.null(args$file)){
 	   print_help(opt_parser)
 	    stop("Supply a vcf file to process", call.=FALSE)
     }
@@ -25,7 +25,7 @@ if(FALSE){
   DATA_DIR <- '/home/ob219/share/Data/GWAS-summary/blood-ukbiobank-2016-12-12'
   RSCRIPT <- '/home/ob219/git/basis_paper/GWAS/astle/process_data_and_project.R'
   files <- list.files(path=DATA_DIR,pattern="*.gz$",full.names=TRUE)
-  sprintf("Rscript %s -f %s",RSCRIPT,files) %>% write(.,"~/tmp/qstuff/astle.txt")
+  sprintf("Rscript %s -f %s",RSCRIPT,files) %>% write(.,file="~/tmp/qstuff/astle.txt")
 }
 
 files <- list.files(path=DATA_DIR,pattern="*.gz",full.names=TRUE)
