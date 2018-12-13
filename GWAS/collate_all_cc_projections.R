@@ -56,8 +56,23 @@ ferriera <- melt(ferriera,id.var='trait')
 ferriera <- merge(ferriera,ferreira_samples,by='trait')
 
 
+## load in astle data
 
-all.proj <- list(ferriera=ferriera,tian=tian,jia=jia,ukbb=ukbb) %>% rbindlist
+## first get sample sizes - note that because of assumptions in converting linear coefficient
+## to OR the cases and control size are equal to the median/mean of the sample size i.e round(ss/2)
+ASTLE_DIR <- '/home/ob219/share/as_basis/GWAS/astle'
+astle <- lapply(list.files(path=ASTLE_DIR,pattern="*.RDS",full.names=TRUE),readRDS) %>% do.call('rbind',.)
+astle <- data.table(trait=rownames(astle),astle)
+astle <- melt(astle,id.var='trait')
+
+DATA_DIR <- '/home/ob219/share/Data/GWAS-summary/blood-ukbiobank-2016-12-12'
+afiles <- list.files(path=DATA_DIR,pattern="*.gz$",full.names=FALSE)
+astle_samples <- data.table(trait = gsub("(.*)\\_build37\\_[0-9]+\\_20161212.tsv.gz","\\1",afiles),
+ss = as.numeric(gsub("(.*)\\_build37\\_([0-9]+)\\_20161212.tsv.gz","\\2",afiles)))
+astle_samples[,c('n0','n1','ss'):=list(round(ss/2),round(ss/2),NULL)]
+astle <- merge(astle,astle_samples)
+
+all.proj <- list(ferriera=ferriera,tian=tian,jia=jia,ukbb=ukbb,astle=astle) %>% rbindlist
 all.proj[,n:=n1+n0]
 
 ## load in basis and variance
@@ -102,7 +117,7 @@ ggplot(out.DT[p.adj<0.05 & !PC %in% c('PC11'),],aes(x=trait,y=PC,fill= (pmax(Z,-
 geom_text(size=5,angle=90) + scale_fill_gradientn("Z",colours=c('green','white','red')) +
 theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
-dev.print(pdf,"~/tmp/all_cc.pdf")
+#dev.print(pdf,"~/tmp/all_cc.pdf")
 
 #out.DT[p.adj>0.05, Z:=0]
 
