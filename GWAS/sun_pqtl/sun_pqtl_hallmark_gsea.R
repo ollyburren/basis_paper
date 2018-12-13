@@ -5,10 +5,11 @@ library(parallel)
 library(grid)
 library(gridExtra)
 
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/eqtlgen_projections'
+OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
 fs <- list.files(path=OUT_DIR,pattern="*.RDS",full.names=TRUE)
-res.DT <- lapply(fs,readRDS) %>% rbindlist
+res <- lapply(fs,readRDS) %>% do.call('rbind',.)
+res.DT <- data.table(trait=rownames(res),res)
 ## define a Z score for loading to see if any are significant across pc's
 M <- melt(res.DT,id.vars='trait')
 M[,Z:=(value-mean(value))/sqrt(var(value)),by='variable']

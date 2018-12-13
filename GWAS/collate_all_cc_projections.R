@@ -72,7 +72,75 @@ ss = as.numeric(gsub("(.*)\\_build37\\_([0-9]+)\\_20161212.tsv.gz","\\2",afiles)
 astle_samples[,c('n0','n1','ss'):=list(round(ss/2),round(ss/2),NULL)]
 astle <- merge(astle,astle_samples)
 
-all.proj <- list(ferriera=ferriera,tian=tian,jia=jia,ukbb=ukbb,astle=astle) %>% rbindlist
+## load in ig titres
+
+eff <- readRDS('/home/ob219/share/as_basis/GWAS/effrosyni_ig/effrosyni_ig.RDS')
+eff <- melt(eff,id.var='trait')
+eff[,c('n0','n1'):=list(3969,3969)]
+
+## load in CD prognosis
+cd.prog <- readRDS('/home/ob219/share/as_basis/GWAS/cd_prognosis/cd_prognosis.RDS')
+cd.prog <- data.table(trait=rownames(cd.prog),cd.prog)
+cd.prog <- melt(cd.prog,id.var='trait')
+cd.prog[,c('n0','n1'):=list(389 + 583,669 + 1093)]
+
+## load in bp,adhd, and scz
+
+files <- list.files(path="/home/ob219/share/as_basis/GWAS/psych/",pattern="*.RDS",full.names=TRUE)
+
+psy <- lapply(files,readRDS) %>% do.call('rbind',.)
+psy <- data.table(trait=rownames(psy),psy)
+psy <- melt(psy,id.var='trait')
+psy[trait=='ADHD',c('n0','n1'):=list(34194,19099)]
+psy[trait=='SCZ',c('n0','n1'):=list(32541,33426)]
+psy[trait=='BIP',c('n0','n1'):=list(21524,20129)]
+
+## myogen_myositis
+myogen <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis.RDS')
+myogen <- data.table(trait=rownames(myogen),myogen)
+myogen <- melt(myogen,id.var='trait')
+myogen[,c('n0','n1'):=list(4726,1818)]
+
+## NMO - Neuromyelitis Optica
+files <- list.files(path="/home/ob219/share/as_basis/GWAS/nmo/",pattern="*.RDS",full.names=TRUE)
+nmo <- lapply(files,readRDS) %>% do.call('rbind',.)
+#nmo <- readRDS('/home/ob219/share/as_basis/GWAS/nmo/nmo.RDS')
+nmo <- data.table(trait=rownames(nmo),nmo)
+nmo <- melt(nmo,id.var='trait')
+nmo[trait=='NMO_combined',c('n0','n1'):=list(1244,215)]
+nmo[trait=='NMO_IgGPos',c('n0','n1'):=list(1244,66+66)]
+nmo[trait=='NMO_IgGNeg',c('n0','n1'):=list(1244,20+63)]
+
+## load in egpa vasc
+
+files <- list.files(path="/home/ob219/share/as_basis/GWAS/vasc/projections",pattern="*.RDS",full.names=TRUE)
+vasc <- lapply(files,readRDS) %>% do.call('rbind',.)
+vasc <- data.table(trait=rownames(vasc),vasc)
+vasc <- melt(vasc,id.var='trait')
+vasc.samp <- readRDS('/home/ob219/share/as_basis/GWAS/vasc/sample.RDS')
+vasc <- merge(vasc,vasc.samp,by='trait')
+
+## load in abdef
+
+abdef <- readRDS('/home/ob219/share/as_basis/GWAS/abdef/abdef.RDS')
+abdef <- data.table(trait=rownames(abdef),abdef)
+abdef <- melt(abdef,id.var='trait')
+abdef[,c('n0','n1'):=list(9500,733)]
+
+
+all.proj <- list(ferriera=ferriera,
+  tian=tian,
+  jia=jia,
+  ukbb=ukbb,
+  astle=astle,
+  eff=eff,
+  cd.prog=cd.prog,
+  psy=psy,
+  myogen=myogen,
+  nmo=nmo,
+  vasc=vasc,
+  abdef=abdef
+) %>% rbindlist
 all.proj[,n:=n1+n0]
 
 ## load in basis and variance
@@ -96,12 +164,13 @@ all.DT[,variance:=((log(n)-(log(n1) + log(n-n1)))+ log(mfactor)) %>% exp]
 all.DT[,Z:=(value-control.loading)/sqrt(variance)]
 all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
+all.DT[,delta:=value-control.loading]
 
 ## how many traits have a pc score that is less than FDR 5%
 keep.traits <- all.DT[p.adj<0.05,]$trait %>% unique
 out.DT <- all.DT[trait %in% keep.traits,]
 setnames(out.DT,'variable','PC')
-out.DT[,delta:=value-control.loading]
+#out.DT[,delta:=value-control.loading]
 ## vitamin c is in twice remove !
 out.DT <- out.DT[trait!='bb_vitamin.c.product',]
 ## work out hclust order
@@ -113,9 +182,9 @@ out.DT[,trait:=factor(trait,levels=delta.hc$labels[delta.hc$order])]
 out.DT[,PC:=factor(PC,levels=paste('PC',1:11,sep=""))]
 
 library(cowplot)
-ggplot(out.DT[p.adj<0.05 & !PC %in% c('PC11'),],aes(x=trait,y=PC,fill= (pmax(Z,-11) %>% pmin(.,11)),label=signif(delta,digits=1))) + geom_tile(color='black') +
+ggplot(out.DT[p.adj<0.05 & !PC %in% c('PC10','PC11'),],aes(x=trait,y=PC,fill= (pmax(Z,-11) %>% pmin(.,11)),label=signif(delta,digits=1))) + geom_tile(color='black') +
 geom_text(size=5,angle=90) + scale_fill_gradientn("Z",colours=c('green','white','red')) +
-theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 #dev.print(pdf,"~/tmp/all_cc.pdf")
 
@@ -128,6 +197,7 @@ theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ## print a similar for projected traits
 
 ## work out hclust order for basis
+if(FALSE){
 setnames(basis.DT,'variable','PC')
 deltas.basis <- melt(basis.DT,id.vars=c('trait','PC'),measure.vars='value') %>% dcast(.,trait~PC+variable)
 delta.basis.mat <- as.matrix(deltas.basis[,-1])
@@ -142,3 +212,4 @@ ggplot(basis.DT[trait!='control',],aes(x=trait,y=PC,fill= Z,label=signif(value,d
 geom_text(size=5,angle=90) + scale_fill_gradientn("Z",colours=c('green','white','red')) +
 theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 dev.print(pdf,"~/tmp/basis.pdf")
+}
