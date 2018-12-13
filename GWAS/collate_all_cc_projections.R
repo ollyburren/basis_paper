@@ -125,10 +125,11 @@ vasc <- merge(vasc,vasc.samp,by='trait')
 abdef <- readRDS('/home/ob219/share/as_basis/GWAS/abdef/abdef.RDS')
 abdef <- data.table(trait=rownames(abdef),abdef)
 abdef <- melt(abdef,id.var='trait')
-abdef[,c('n0','n1'):=list(9500,733)]
+abdef[,c('n0','n1'):=list(9225,733)]
 
 
-all.proj <- list(ferriera=ferriera,
+all.proj <- list(
+  ferriera=ferriera,
   tian=tian,
   jia=jia,
   ukbb=ukbb,
