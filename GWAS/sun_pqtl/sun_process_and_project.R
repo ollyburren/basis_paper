@@ -23,8 +23,12 @@ if(!TEST){
 OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl'
 
 if(FALSE){
+  OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl'
   PQTL_DIR <- '/home/ob219/share/as_basis/sun_pqtl/gwas_basis_june10k_pqtl'
+  ## remove dirs that we have already processed
   all.dirs <- list.dirs(path=PQTL_DIR,recursive = FALSE)
+  done <- list.files(path=OUT_DIR,pattern="*.RDS") %>% gsub("\\.RDS","",.) %>% file.path(PQTL_DIR,.)
+  all.dirs <- all.dirs[!all.dirs %in% done]
   ## process 50 at a time
   spdir <- split(all.dirs,ceiling(seq_along(all.dirs)/50))
   for(i in seq_along(spdir)){
