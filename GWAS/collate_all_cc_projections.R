@@ -200,7 +200,7 @@ all.proj <- list(
   tian=tian,
   jia=jia,
   ukbb=ukbb,
-  #astle=astle,
+  astle=astle,
   #eff=eff,
   cd.prog=cd.prog,
   psy=psy,
@@ -263,7 +263,7 @@ disease.DT[p.adj>=0.05,delta:=NA]
 # rownames(delta.mat) <- deltas$trait
 # delta.hc <- dist(delta.mat) %>% hclust
 
-out.DT[,trait:=factor(trait,levels=delta.hc$labels[delta.hc$order])]
+#out.DT[,trait:=factor(trait,levels=delta.hc$labels[delta.hc$order])]
 
 
 library(cowplot)

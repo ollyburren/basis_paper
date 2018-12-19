@@ -13,18 +13,19 @@ res.DT <- data.table(trait=rownames(res),res)
 ## define a Z score for loading to see if any are significant across pc's
 M <- melt(res.DT,id.vars='trait')
 M[,Z:=(value-mean(value))/sqrt(var(value)),by='variable']
+M[,hgnc:=gsub("([^\\.]+)\\..*","\\1",trait)]
 ensembl = useEnsembl(host="grch37.ensembl.org", biomart="ENSEMBL_MART_ENSEMBL",dataset="hsapiens_gene_ensembl")
 genedesc <- getBM(attributes=c('ensembl_gene_id','gene_biotype','external_gene_name','entrezgene','chromosome_name'),
-filters = 'ensembl_gene_id', values = M$trait, mart =ensembl) %>% data.table
+filters = 'external_gene_name', values = M$hgnc, mart =ensembl) %>% data.table
 genedesc <- genedesc[chromosome_name %in% c(1:22,'X'),]
 genedesc <- genedesc[genedesc[ , .I[which.min(entrezgene)], by = 'ensembl_gene_id']$V1]
 
-M <- merge(M,genedesc,by.x='trait',by.y='ensembl_gene_id')
+M <- merge(M,genedesc,by.x='hgnc',by.y='external_gene_name')
 
 Mf <- M[gene_biotype=='protein_coding' & !chromosome_name %in% c('X','Y'),]
 
 
-universe <- Mf$entrezgene %>% as.integer
+universe <- Mf$entrezgene %>% as.integer %>% unique
 
 if(FALSE){
   basis <- readRDS(BASIS_FILE)
@@ -72,7 +73,7 @@ gsea <- function(gl,geneid='entrezgene',test.type=c('t.test','f.test','wilcox.te
   },mc.cores=6) %>% rbindlist
   min.p <- gs.res.t[p!=0,]$p %>% min
   gs.res.t[p==0,p:=min.p]
-  gs.res.t[,p.adj:=p.adjust(gs.res.t$p,method=fdr.method)]
+  gs.res.t[,p.adj:=p.adjust(p,method=fdr.method),by='pc']
   gs.res.t <- gs.res.t[p.adj<fdr.thresh,]
   gs.res.t[,as:=-log10(p.adj) * sign]
   gs.res.t
@@ -107,7 +108,7 @@ names(lom) <- sapply(f,'[[',1)
 lom <- lom[sapply(hm,length) > 5]
 
 pl <- list()
-pl[[1]] <- gsea(hm,test.type='f.test',fdr.method="fdr") %>% phwrap(.,main="F Test Hallmark")
+pl[[1]] <- gsea(geneid='entrezgene',hm,test.type='f.test',fdr.method="fdr",fdr.thresh=0.05) %>% phwrap(.,main="F Test Hallmark")
 #pl[[2]] <- gsea(lom,test.type='f.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
 pl[[2]] <- gsea(hm,test.type='bartlett.test',fdr.method="fdr") %>% phwrap(.,main="Bartlett Test Hallmark")
 #pl[[4]] <- gsea(lom,test.type='bartlett.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
@@ -127,7 +128,7 @@ names(react) <- sapply(f,'[[',1)
 react <- react[sapply(react,length) > 5]
 
 pl <- list()
-pl[[1]] <- gsea(react,test.type='f.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Reactome")
+pl[[1]] <- gsea(react,test.type='f.test',fdr.method="fdr",fdr.thresh=0.05) %>% phwrap(.,main="F Test Reactome")
 #pl[[2]] <- gsea(lom,test.type='f.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
 pl[[2]] <- gsea(react,test.type='bartlett.test',fdr.method="fdr") %>% phwrap(.,main="Bartlett Test Reactome")
 #pl[[4]] <- gsea(lom,test.type='bartlett.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
@@ -145,12 +146,12 @@ g<-grid.arrange(grobs=pl,ncol=2)
 ## next perform the same analysis using the t-cell modules from burren et al.
 
 mod.DT <- fread("/home/ob219/share/as_basis/tcell_modules_burren_et_al/13059_2017_1285_MOESM1_ESM")
-mod.DT.f <- mod.DT[id %in% Mf$trait,]
+mod.DT.f <- mod.DT[geneSymbol %in% Mf$hgnc,]
 
-Mf <- Mf[trait %in% mod.DT.f$id,]
-wgcna <- split(mod.DT.f$id,mod.DT.f$all_12)
+Mf <- Mf[hgnc %in% mod.DT.f$geneSymbol,]
+wgcna <- split(mod.DT.f$i,mod.DT.f$all_12)
 pl <- list()
-pl[[1]] <- gsea(wgcna,geneid='trait',test.type='f.test',fdr.method="bonferroni") %>% phwrap(.,main="F Test Burren et al")
+pl[[1]] <- gsea(wgcna,geneid='',test.type='f.test',fdr.method="bonferroni") %>% phwrap(.,main="F Test Burren et al")
 #pl[[2]] <- gsea(wgcna,geneid='trait',test.type='t.test',fdr.method="bonferroni") %>% phwrap(.,main="t Test Burren et al")
 pl[[2]] <- gsea(wgcna,geneid='trait',test.type='bartlett.test',fdr.method="bonferroni") %>% phwrap(.,main="Bartlett Test Burren et al")
 g<-grid.arrange(grobs=pl,ncol=2)
@@ -163,6 +164,10 @@ dev.print(pdf,"~/tmp/burren_eqtlgen.pdf")
 library(locfdr)
 pc <- Mf[variable=='PC3']
 Mf[,fdr:=locfdr(Z,plot=1)$fdr,by='variable']
+saveRDS(Mf,"~/tmp/pQTL.RDS")
+
+## below here is not used as yet as really didn't find anything.
+
 ## plot a geom tile of Z scores for genes with FDR<0.05
 pt <- Mf[fdr<0.01 & variable=='PC3',]
 pta <- Mf[trait %in% pt$trait,]
