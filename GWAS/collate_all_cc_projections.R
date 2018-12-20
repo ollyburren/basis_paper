@@ -158,11 +158,11 @@ myogen[,c('n0','n1'):=list(4726,1818)]
 myogen[,category:='myogen']
 
 ## myogen_myositis
-myogen.flip <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis_flip.RDS')
-myogen.flip <- data.table(trait=rownames(myogen.flip),myogen.flip)
-myogen.flip <- melt(myogen.flip,id.var='trait')
-myogen.flip[,c('n0','n1'):=list(4726,1818)]
-myogen.flip[,category:='myogen']
+# myogen.flip <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis_flip.RDS')
+# myogen.flip <- data.table(trait=rownames(myogen.flip),myogen.flip)
+# myogen.flip <- melt(myogen.flip,id.var='trait')
+# myogen.flip[,c('n0','n1'):=list(4726,1818)]
+# myogen.flip[,category:='myogen']
 
 ## NMO - Neuromyelitis Optica
 files <- list.files(path="/home/ob219/share/as_basis/GWAS/nmo/",pattern="*.RDS",full.names=TRUE)
@@ -213,7 +213,8 @@ all.proj <- list(
   eff=eff,
   cd.prog=cd.prog,
   psy=psy,
-  myogen=rbind(myogen,myogen.flip),
+  #myogen=rbind(myogen,myogen.flip),
+  myogen=myogen,
   nmo=nmo,
   vasc=vasc,
   abdef=abdef
