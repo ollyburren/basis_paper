@@ -24,7 +24,7 @@ basis.DT[,category:='zzz_basis']
 
 #pc <- 'PC3'
 
-forest_plot_focal <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,fdr_thresh=0.05){
+forest_plot_focal <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,fdr_thresh=0.05,theme=NA){
   dat <- proj.dat[variable==pc & (p.adj<fdr_thresh | trait %in% focal),]
   dat[trait %in% focal,category:='aa_focal_diseases']
   dat[,ci:=1.96 * sqrt(variance)]
@@ -33,12 +33,16 @@ forest_plot_focal <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,fdr_thr
   dat[,trait:=factor(trait,levels=dat[order(category,delta,decreasing=TRUE),]$trait)]
   #ggplot(dat,aes(x=trait,y=delta,colour=category)) + geom_point(aes(size=log10(n1))) + geom_errorbar(aes(ymin=lower,ymax=upper)) +
   #coord_flip() + geom_hline(yintercept=0,col='red',linetype=2) + ggtitle(pc)
+  if(is.na(theme)){
+    theme <- theme(panel.grid.major.y=element_line(colour='lightgrey',linetype=3))
+  }
   ggplot(dat,aes(x=trait,y=delta,colour=category)) + geom_point() + geom_errorbar(aes(ymin=lower,ymax=upper)) +
-  coord_flip() + geom_hline(yintercept=0,col='red',linetype=2) + ggtitle(title) + theme(panel.grid.major.y=element_line(colour='lightgrey',linetype=3)) +
+  coord_flip() + geom_hline(yintercept=0,col='red',linetype=2) + ggtitle(title) + theme +
   xlab("Trait") + ylab("Change in basis loading from control")
 }
 
-forest_plot_focal(res.DT,pc='PC1',focal=all.traits[['myogen']],title="Myogen Myositis PC1")
+forest_plot_focal(proj.dat=res.DT,pc='PC1',focal=all.traits[['myogen']],title="Myogen Myositis PC1")
+forest_plot_focal(res.DT,pc='PC10',focal=all.traits[['myogen']],title="Myogen Myositis PC10",theme=theme(panel.grid.major.y=element_line(colour='lightgrey',linetype=3),axis.text.y=element_text(size=9)))
 pdf(file="~/tmp/for_wendy_19_12_2018.pdf",paper="a4r",width=14,height=8)
 forest_plot_focal(res.DT,pc='PC3',focal=all.traits[['bowes_jia']],title="JIA subtypes PC3")
 dev.off()

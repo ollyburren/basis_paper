@@ -150,12 +150,48 @@ psy[trait=='SCZ',c('n0','n1'):=list(32541,33426)]
 psy[trait=='BIP',c('n0','n1'):=list(21524,20129)]
 psy[,category:='psyc_consortium']
 
+## have to calculate case and control numbers from samples
+
+# jdm <- fread("jdmall.txt",header=FALSE)
+# pm <- fread("pmall.txt",header=FALSE)
+# dm <- fread("dmall.txt",header=FALSE)
+# ## expect controls to be shared between traits
+# control.ids <- union(intersect(dm$V1,jdm$V1),intersect(pm$V1,dm$V1))
+# jdm[,affected:=0]
+# jdm[!V1 %in% control.ids,affected:=1]
+# dm[,affected:=0]
+# dm[!V1 %in% control.ids,affected:=1]
+# pm[,affected:=0]
+# pm[!V1 %in% control.ids,affected:=1]
+
 ## myogen_myositis
 myogen <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis.RDS')
 myogen <- data.table(trait=rownames(myogen),myogen)
 myogen <- melt(myogen,id.var='trait')
-myogen[,c('n0','n1'):=list(4726,1818)]
+myogen[,c('n0','n1'):=list(4724,1711)]
 myogen[,category:='myogen']
+
+## jdm
+
+jdm <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/jdm_myositis.RDS')
+jdm <- data.table(trait=rownames(jdm),jdm)
+jdm <- melt(jdm,id.var='trait')
+jdm[,c('n0','n1'):=list(4724,473)]
+jdm[,category:='myogen']
+
+dm <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/dm_myositis.RDS')
+dm <- data.table(trait=rownames(dm),dm)
+dm <- melt(dm,id.var='trait')
+dm[,c('n0','n1'):=list(4724,705)]
+dm[,category:='myogen']
+
+pm <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/pm_myositis.RDS')
+pm <- data.table(trait=rownames(pm),pm)
+pm <- melt(pm,id.var='trait')
+pm[,c('n0','n1'):=list(4724,533)]
+pm[,category:='myogen']
+
+myogen <- rbindlist(list(myogen,jdm,dm,pm))
 
 ## myogen_myositis
 # myogen.flip <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis_flip.RDS')
