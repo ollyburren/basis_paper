@@ -1,5 +1,5 @@
 ## FOREST PLOTS FOR particular diseases
-
+library(cowplot)
 RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/19_12_18_summary_results.RDS'
 res.DT <- readRDS(RESULTS.FILE)
 

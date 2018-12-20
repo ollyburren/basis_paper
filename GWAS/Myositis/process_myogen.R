@@ -19,6 +19,8 @@ myo.DT <- merge(myo.DT,DT.37,by.x='id',by.y='id',all.x=TRUE)
 myo.DT <- myo.DT[!is.na(position.37),]
 myo.DT[,pid.37:=paste(CHR,position.37,sep=":")]
 
+## rather than being risk the A1 allele is effect allele as this is plink ! Current software
+## by default assumes that the effect allele is A2 so really this should be flipped !
 myo.DT[,c('a1','a2'):=list(A1_risk,ifelse(A1_risk!=A1_minor,A1_minor,A2_major))]
 
 out <- myo.DT[,.(pid,a1,a2,or=OR,p.value=P)]

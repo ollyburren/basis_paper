@@ -60,8 +60,8 @@ get_hier <- function(DT,id,l,top.node=TRUE){
 }
 
 #root.bb[,bread.crumbs:=sapply(node_id,get_hier,FALSE)]
-srd <- anno.bb[clade=='20002',]
-srd[,top.node:=sapply(coding,get_hier,DT=bb_cod.sr_disease,top.node=TRUE)]
+#srd <- anno.bb[clade=='20002',]
+#srd[,top.node:=sapply(coding,get_hier,DT=bb_cod.sr_disease,top.node=TRUE)]
 #anno.bb[clade=='20002',top.node:=sapply(coding,get_hier,DT=bb_cod.sr_disease,top.node=TRUE)]
 #anno.bb[clade=='20001',top.node:=sapply(coding,get_hier,DT=bb_cod.sr_cancer,top.node=TRUE)]
 anno.bb[clade=='20002',top.node:='bb_disease']
@@ -157,6 +157,13 @@ myogen <- melt(myogen,id.var='trait')
 myogen[,c('n0','n1'):=list(4726,1818)]
 myogen[,category:='myogen']
 
+## myogen_myositis
+myogen.flip <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis_flip.RDS')
+myogen.flip <- data.table(trait=rownames(myogen.flip),myogen.flip)
+myogen.flip <- melt(myogen.flip,id.var='trait')
+myogen.flip[,c('n0','n1'):=list(4726,1818)]
+myogen.flip[,category:='myogen']
+
 ## NMO - Neuromyelitis Optica
 files <- list.files(path="/home/ob219/share/as_basis/GWAS/nmo/",pattern="*.RDS",full.names=TRUE)
 nmo <- lapply(files,readRDS) %>% do.call('rbind',.)
@@ -206,7 +213,7 @@ all.proj <- list(
   eff=eff,
   cd.prog=cd.prog,
   psy=psy,
-  myogen=myogen,
+  myogen=rbind(myogen,myogen.flip),
   nmo=nmo,
   vasc=vasc,
   abdef=abdef
@@ -238,6 +245,8 @@ all.DT[,delta:=value-control.loading]
 
 saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/19_12_18_summary_results.RDS')
 
+
+if(FALSE){
 ## how many traits have a pc score that is less than FDR 5%
 keep.traits <- all.DT[p.adj<0.05 & !variable %in% c('PC10','PC11'),]$trait %>% unique
 out.DT <- all.DT[trait %in% keep.traits,]
@@ -326,7 +335,7 @@ t.test(x1,x2) # Welch-Satterthwaite
 plot.it <- rbind(data.table(trait=int$trait[1],loadings=x1[,1]),data.table(trait=int$trait[2],loadings=x2[,1]))
 
 ggplot(plot.it,aes(x=trait,y=loadings)) + geom_boxplot()
-
+}
 
 
 

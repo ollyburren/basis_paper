@@ -45,8 +45,13 @@ print(table(align.class))
 M[,g.class:=align.class]
 M[g.class=='comp',c('a1','a2'):=list(ref_a1,ref_a2)]
 sw <- align.class %in% c("rev","revcomp")
-M[sw,c('a1','a2','or','MAF_jdm'):=list(ref_a1,ref_a2,1/OR,1-MAF_jdm)]
-M[!sw,c('a1','a2','or','MAF_jdm'):=list(ref_a1,ref_a2,OR,MAF_jdm)]
+# M[sw,c('a1','a2','or','MAF_jdm'):=list(ref_a1,ref_a2,1/OR,1-MAF_jdm)]
+# M[!sw,c('a1','a2','or','MAF_jdm'):=list(ref_a1,ref_a2,OR,MAF_jdm)]
+
+## note that here effect is wrt to a1 and not allele two - the basis assumes
+## that effect is wrt to allele2 therefore revcomp and rev are OK
+M[!sw,c('a1','a2','or','MAF_jdm'):=list(ref_a1,ref_a2,1/OR,1-MAF_jdm)]
+M[sw,c('a1','a2','or','MAF_jdm'):=list(ref_a1,ref_a2,OR,MAF_jdm)]
 M[align.class=='impossible',c('OR','P'):=list(NA,NA)]
 
 
@@ -58,7 +63,8 @@ tmp <- merge(M,stmp,by='pid',all.y=TRUE)
 tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 ## where snp is missing make it zero
 tmp[is.na(metric),metric:=0]
-tmp[,trait:= 'myositis_myogen']
+#tmp[,trait:= 'myositis_myogen']
+tmp[,trait:= 'myositis_myogen_flip']
 B <- dcast(tmp,pid ~ trait,value.var='metric')
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()
@@ -68,4 +74,5 @@ pc.emp <- readRDS(BASIS_FILE)
 if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
 stop("Something wrong basis and projection matrix don't match")
 all.proj <- predict(pc.emp,newdata=mat.emp)
+#saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis.RDS')
 saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis.RDS')
