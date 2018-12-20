@@ -62,9 +62,11 @@ get_hier <- function(DT,id,l,top.node=TRUE){
 #root.bb[,bread.crumbs:=sapply(node_id,get_hier,FALSE)]
 srd <- anno.bb[clade=='20002',]
 srd[,top.node:=sapply(coding,get_hier,DT=bb_cod.sr_disease,top.node=TRUE)]
-anno.bb[clade=='20002',top.node:=sapply(coding,get_hier,DT=bb_cod.sr_disease,top.node=TRUE)]
-anno.bb[clade=='20001',top.node:=sapply(coding,get_hier,DT=bb_cod.sr_cancer,top.node=TRUE)]
-anno.bb[clade=='20003',top.node:='medications']
+#anno.bb[clade=='20002',top.node:=sapply(coding,get_hier,DT=bb_cod.sr_disease,top.node=TRUE)]
+#anno.bb[clade=='20001',top.node:=sapply(coding,get_hier,DT=bb_cod.sr_cancer,top.node=TRUE)]
+anno.bb[clade=='20002',top.node:='bb_disease']
+anno.bb[clade=='20001',top.node:='bb_cancer']
+anno.bb[clade=='20003',top.node:='bb_medications']
 
 ukbb <- merge(ukbb,anno.bb[,.(phe,n1,n0,category=top.node)],by.x='trait',by.y='phe')
 ukbb <- ukbb[,trait:=paste('bb',trait,sep='_')]
@@ -84,7 +86,7 @@ samp.DT <- samp.DT[,n0:=5181][!is.na(alt_ilar_code),]
 samp.DT[,alt_ilar_code:=paste('jia',alt_ilar_code,sep='_')]
 jia <- melt(jia,id.var='trait')
 jia <- merge(jia,samp.DT,by.x='trait',by.y='alt_ilar_code')
-jia[,category:='immunological/systemic disorders']
+jia[,category:='bowes_jia']
 
 ## load in tian_infectious_disease
 
@@ -93,7 +95,7 @@ tian <- readRDS("/home/ob219/share/as_basis/GWAS/tian_projections/tian_infectiou
 tian_samples <- readRDS("/home/ob219/share/as_basis/GWAS/tian_projections/sample_size.RDS")
 tian <- melt(tian,id.var='trait')
 tian <- merge(tian,tian_samples,by='trait')
-tian[,category:='infections']
+tian[,category:='tian_infectious_disease']
 
 ## load in ferreira_asthma
 
@@ -101,7 +103,7 @@ ferriera <- readRDS("/home/ob219/share/as_basis/GWAS/ferreira_projections/ferrei
 ferreira_samples <- readRDS("/home/ob219/share/as_basis/GWAS/ferreira_projections/sample_size.RDS")
 ferriera <- melt(ferriera,id.var='trait')
 ferriera <- merge(ferriera,ferreira_samples,by='trait')
-ferriera[,category:='immunological/systemic disorders']
+ferriera[,category:='ferreira_asthma']
 
 
 ## load in astle data
@@ -120,7 +122,7 @@ astle_samples <- data.table(trait = gsub("(.*)\\_build37\\_[0-9]+\\_20161212.tsv
 ss = as.numeric(gsub("(.*)\\_build37\\_([0-9]+)\\_20161212.tsv.gz","\\2",afiles)))
 astle_samples[,c('n0','n1','ss'):=list(round(ss/2),round(ss/2),NULL)]
 astle <- merge(astle,astle_samples)
-astle[,category:='astle']
+astle[,category:='astle_blood']
 
 ## load in ig titres
 
@@ -134,7 +136,7 @@ cd.prog <- readRDS('/home/ob219/share/as_basis/GWAS/cd_prognosis/cd_prognosis.RD
 cd.prog <- data.table(trait=rownames(cd.prog),cd.prog)
 cd.prog <- melt(cd.prog,id.var='trait')
 cd.prog[,c('n0','n1'):=list(389 + 583,669 + 1093)]
-cd.prog[,category:='immunological/systemic disorders']
+cd.prog[,category:='lee_CD_prognosis']
 
 ## load in bp,adhd, and scz
 
@@ -146,14 +148,14 @@ psy <- melt(psy,id.var='trait')
 psy[trait=='ADHD',c('n0','n1'):=list(34194,19099)]
 psy[trait=='SCZ',c('n0','n1'):=list(32541,33426)]
 psy[trait=='BIP',c('n0','n1'):=list(21524,20129)]
-psy[,category:='neurology/eye/psychiatry']
+psy[,category:='psyc_consortium']
 
 ## myogen_myositis
 myogen <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis.RDS')
 myogen <- data.table(trait=rownames(myogen),myogen)
 myogen <- melt(myogen,id.var='trait')
 myogen[,c('n0','n1'):=list(4726,1818)]
-myogen[,category:='immunological/systemic disorders']
+myogen[,category:='myogen']
 
 ## NMO - Neuromyelitis Optica
 files <- list.files(path="/home/ob219/share/as_basis/GWAS/nmo/",pattern="*.RDS",full.names=TRUE)
@@ -164,7 +166,7 @@ nmo <- melt(nmo,id.var='trait')
 nmo[trait=='NMO_combined',c('n0','n1'):=list(1244,215)]
 nmo[trait=='NMO_IgGPos',c('n0','n1'):=list(1244,66+66)]
 nmo[trait=='NMO_IgGNeg',c('n0','n1'):=list(1244,20+63)]
-nmo[,category:='immunological/systemic disorders']
+nmo[,category:='estrada_NMO']
 
 ## load in egpa vasc
 
@@ -174,7 +176,7 @@ vasc <- data.table(trait=rownames(vasc),vasc)
 vasc <- melt(vasc,id.var='trait')
 vasc.samp <- readRDS('/home/ob219/share/as_basis/GWAS/vasc/sample.RDS')
 vasc <- merge(vasc,vasc.samp,by='trait')
-vasc[,category:='immunological/systemic disorders']
+vasc[,category:='lyons_vasculitis']
 
 ## load in abdef
 
@@ -182,7 +184,7 @@ abdef <- readRDS('/home/ob219/share/as_basis/GWAS/abdef/abdef.RDS')
 abdef <- data.table(trait=rownames(abdef),abdef)
 abdef <- melt(abdef,id.var='trait')
 abdef[,c('n0','n1'):=list(9225,733)]
-abdef[,category:='immunological/systemic disorders']
+abdef[,category:='ad-pid']
 
 ## for some reason we swapped from n1 to n0 halfway through to n0 n1
 ## we need to fix otherwise everything gets swapped and case
@@ -201,7 +203,7 @@ all.proj <- list(
   jia=jia,
   ukbb=ukbb,
   astle=astle,
-  #eff=eff,
+  eff=eff,
   cd.prog=cd.prog,
   psy=psy,
   myogen=myogen,
@@ -233,6 +235,8 @@ all.DT[,Z:=(value-control.loading)/sqrt(variance)]
 all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
+
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/19_12_18_summary_results.RDS')
 
 ## how many traits have a pc score that is less than FDR 5%
 keep.traits <- all.DT[p.adj<0.05 & !variable %in% c('PC10','PC11'),]$trait %>% unique
