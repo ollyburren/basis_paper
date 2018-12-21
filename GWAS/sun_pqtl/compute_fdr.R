@@ -53,4 +53,4 @@ filtered <- mclapply(seq_along(by.chr),function(i){
 },mc.cores=8)
 
 filtered <- rbindlist(filtered)
-saveRDS(filtered,file="/home/ob219/share/as_basis/sun_pqtl/all_by_chr_fdr0.05.RDS")
+saveRDS(filtered,file="/home/ob219/share/as_basis/GWAS/sun_pqtl/all_by_chr_fdr0.05.RDS")
