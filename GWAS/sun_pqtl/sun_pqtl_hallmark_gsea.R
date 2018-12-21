@@ -15,6 +15,16 @@ res.DT <- data.table(trait=rownames(res),res)
 M <- melt(res.DT,id.vars='trait')
 M[,Z:=(value-mean(value))/sqrt(var(value)),by='variable']
 M[,hgnc:=gsub("([^\\.]+)\\..*","\\1",trait)]
+
+## compile a list of proteins with significant loadings above fdr threshold
+
+M[,p:=pnorm(abs(Z),lower.tail=FALSE) * 2]
+M[,p.adj:=p.adjust(p,method="fdr"),by='variable']
+
+M[p.adj<0.05,]
+
+
+
 ensembl = useEnsembl(host="grch37.ensembl.org", biomart="ENSEMBL_MART_ENSEMBL",dataset="hsapiens_gene_ensembl")
 genedesc <- getBM(attributes=c('ensembl_gene_id','gene_biotype','external_gene_name','entrezgene','chromosome_name'),
 filters = 'external_gene_name', values = M$hgnc, mart =ensembl) %>% data.table
@@ -108,8 +118,53 @@ names(lom) <- sapply(f,'[[',1)
 ## remove genesets with no members !
 lom <- lom[sapply(hm,length) > 5]
 
+pdf("~/tmp/hallmark_sun.pdf",paper="a4r")
+gsea(geneid='entrezgene',hm,test.type='f.test',fdr.method="fdr",fdr.thresh=0.05) %>% phwrap(.,main="F Test Hallmark")
+dev.off()
+
+
+## attempt forest plot of genes
+
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
+pc.emp <- readRDS(BASIS_FILE)
+control.DT <- data.table(PC=names( pc.emp$x["control",]),control.loading= pc.emp$x["control",])
+basis.DT <- data.table(trait=rownames(pc.emp$x),pc.emp$x) %>% melt(.,id.vars='trait')
+basis.DT <- merge(basis.DT,control.DT,by.x='variable',by.y='PC')
+basis.DT[,delta:=(value-control.loading)]
+#basis.DT[,c('lower','upper'):=list(delta,delta)]
+basis.DT[,category:='zzz_basis']
+
+forest_plot <- function(proj.dat,basis.dat=basis.DT,pc,fdr_thresh=0.05,theme=NA){
+  dat <- proj.dat[variable==pc & p.adj<fdr_thresh,]
+  dat[,ci:=1.96 * sqrt(variance)]
+  dat[,c('lower','upper'):=list(delta-ci,delta+ci)]
+  dat <- rbind(basis.DT[variable==pc & trait!='control',],dat,fill=TRUE)
+  dat[,trait:=factor(trait,levels=dat[order(category,delta,decreasing=TRUE),]$trait)]
+  #ggplot(dat,aes(x=trait,y=delta,colour=category)) + geom_point(aes(size=log10(n1))) + geom_errorbar(aes(ymin=lower,ymax=upper)) +
+  #coord_flip() + geom_hline(yintercept=0,col='red',linetype=2) + ggtitle(pc)
+  if(is.na(theme)){
+    theme <- theme(panel.grid.major.y=element_line(colour='lightgrey',linetype=3))
+  }
+  ggplot(dat,aes(x=trait,y=delta,colour=category)) + geom_point() + geom_errorbar(aes(ymin=lower,ymax=upper)) +
+  coord_flip() + geom_hline(yintercept=0,col='red',linetype=2) + ggtitle(sprintf("%s Sun pQTL",pc)) + theme +
+  xlab("Trait") + ylab("Change in basis loading from control")
+}
+
+control.DT <- data.table(PC=names( pc.emp$x["control",]),control.loading= pc.emp$x["control",])
+Mf <- merge(Mf,control.DT,by.x='variable',by.y='PC')
+Mf[,delta:=value-control.loading]
+Mf[,variance:=var(delta),by='variable']
+Mf[,category:='sun_pqtl']
+
+pdf("~/tmp/forest_plot.pdf",paper="a4r")
+lapply(paste('PC',1:10,sep=""),function(pc){
+    forest_plot(Mf,pc=pc)
+})
+dev.off()
+
+
 pl <- list()
-pl[[1]] <- gsea(geneid='entrezgene',hm,test.type='f.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Hallmark")
+pl[[1]] <- gsea(geneid='entrezgene',hm,test.type='f.test',fdr.method="fdr",fdr.thresh=0.05) %>% phwrap(.,main="F Test Hallmark")
 #pl[[2]] <- gsea(lom,test.type='f.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
 pl[[2]] <- gsea(hm,test.type='bartlett.test',fdr.method="fdr") %>% phwrap(.,main="Bartlett Test Hallmark")
 #pl[[4]] <- gsea(lom,test.type='bartlett.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
@@ -129,7 +184,7 @@ names(react) <- sapply(f,'[[',1)
 react <- react[sapply(react,length) > 5]
 
 pl <- list()
-pl[[1]] <- gsea(react,test.type='f.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Reactome")
+pl[[1]] <- gsea(react,test.type='f.test',fdr.method="fdr",fdr.thresh=0.05) %>% phwrap(.,main="F Test Reactome")
 #pl[[2]] <- gsea(lom,test.type='f.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
 pl[[2]] <- gsea(react,test.type='bartlett.test',fdr.method="fdr") %>% phwrap(.,main="Bartlett Test Reactome")
 #pl[[4]] <- gsea(lom,test.type='bartlett.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")

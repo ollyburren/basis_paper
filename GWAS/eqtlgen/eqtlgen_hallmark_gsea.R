@@ -105,10 +105,15 @@ names(lom) <- sapply(f,'[[',1)
 ## remove genesets with no members !
 lom <- lom[sapply(hm,length) > 5]
 
+pdf("~/tmp/hallmark_eqtlgen.pdf",paper="a4r")
+gsea(hm,test.type='f.test',fdr.method="fdr") %>% phwrap(.,main="F Test Hallmark")
+dev.off()
+
+
 pl <- list()
 pl[[1]] <- gsea(hm,test.type='f.test',fdr.method="fdr") %>% phwrap(.,main="F Test Hallmark")
 #pl[[2]] <- gsea(lom,test.type='f.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
-pl[[2]] <- gsea(hm,test.type='bartlett.test',fdr.method="fdr") %>% phwrap(.,main="Bartlett Test Hallmark")
+#pl[[2]] <- gsea(hm,test.type='bartlett.test',fdr.method="fdr") %>% phwrap(.,main="Bartlett Test Hallmark")
 #pl[[4]] <- gsea(lom,test.type='bartlett.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
 #pl[[2]] <- gsea(hm,test.type='t.test',fdr.method="fdr") %>% phwrap(.,main="T Test Hallmark")
 g<-grid.arrange(grobs=pl,ncol=2)

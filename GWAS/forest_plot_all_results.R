@@ -50,7 +50,7 @@ forest_plot_focal(res.DT,pc='PC4',focal=all.traits[['lyons_vasculitis']],title="
 forest_plot_focal(res.DT,pc='PC6',focal=all.traits[['lyons_vasculitis']],title="Lyons et al. Vasculitis PC6")
 
 
-forest_plot <- function(proj.dat,basis.dat=basis.DT,pc,fdr_thresh=0.05){
+forest_plot <- function(proj.dat,basis.dat=basis.DT,pc,fdr_thresh=0.05,theme=NA){
   dat <- proj.dat[variable==pc & p.adj<fdr_thresh,]
   dat[,ci:=1.96 * sqrt(variance)]
   dat[,c('lower','upper'):=list(delta-ci,delta+ci)]
@@ -58,13 +58,20 @@ forest_plot <- function(proj.dat,basis.dat=basis.DT,pc,fdr_thresh=0.05){
   dat[,trait:=factor(trait,levels=dat[order(category,delta,decreasing=TRUE),]$trait)]
   #ggplot(dat,aes(x=trait,y=delta,colour=category)) + geom_point(aes(size=log10(n1))) + geom_errorbar(aes(ymin=lower,ymax=upper)) +
   #coord_flip() + geom_hline(yintercept=0,col='red',linetype=2) + ggtitle(pc)
+  if(is.na(theme)){
+    theme <- theme(panel.grid.major.y=element_line(colour='lightgrey',linetype=3))
+  }
   ggplot(dat,aes(x=trait,y=delta,colour=category)) + geom_point() + geom_errorbar(aes(ymin=lower,ymax=upper)) +
-  coord_flip() + geom_hline(yintercept=0,col='red',linetype=2) + ggtitle(pc) + theme(panel.grid.major.y=element_line(colour='lightgrey',linetype=3)) +
+  coord_flip() + geom_hline(yintercept=0,col='red',linetype=2) + ggtitle(pc) + theme +
   xlab("Trait") + ylab("Change in basis loading from control")
 }
 
 pdf(file="~/tmp/basis_results.pdf",paper="a4r",width=14,height=8)
 lapply(paste('PC',1:10,sep=''),function(pc){
-  forest_plot(res.DT,pc=pc)
+  if(pc != 'PC10'){
+    forest_plot(res.DT,pc=pc)
+  }else{
+    forest_plot(res.DT,pc=pc,theme=theme(panel.grid.major.y=element_line(colour='lightgrey',linetype=3),axis.text.y=element_text(size=6)))
+  }
 })
 dev.off()
