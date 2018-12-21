@@ -33,7 +33,7 @@ if(FALSE){
   ## remove dirs that we have already processed
   ## only bother doing those with at least one pQTL
   all.dirs <- list.dirs(path=PQTL_DIR,recursive = FALSE)
-  all.dirs <- all.dirs[basename(all.dirs) %in% filter.DT$prot]
+  #all.dirs <- all.dirs[basename(all.dirs) %in% filter.DT$prot]
   done <- list.files(path=OUT_DIR,pattern="*.RDS") %>% gsub("\\.RDS","",.) %>% file.path(PQTL_DIR,.)
   all.dirs <- all.dirs[!all.dirs %in% done]
   ## process 50 at a time
@@ -61,7 +61,8 @@ processPQTL <- function(dir,filter){
   p.DT[,pid:=paste(chr,pos,sep=':')]
   p.DT <- p.DT[,.(pid,a1=toupper(a1),a2=toupper(a2),or=exp(effect),p.value=exp(lp))]
   protname <- basename(dir)
-  p.DT <- p.DT[pid %in% filter[prot==protname,]$pid,]
+  #p.DT <- p.DT[pid %in% filter[prot==protname,]$pid,]
+  p.DT <- p.DT[pid %in% filter$pid,]
   M <- merge(p.DT,man.DT,by='pid')
   alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
   #alleles <- alleles[!duplicated(pid),]

@@ -5,7 +5,8 @@ library(parallel)
 library(grid)
 library(gridExtra)
 
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl'
+#OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl_filter'
+OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/fdr_0.05_by_chr_filtered'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
 fs <- list.files(path=OUT_DIR,pattern="*.RDS",full.names=TRUE)
 res <- lapply(fs,readRDS) %>% do.call('rbind',.)
@@ -108,7 +109,7 @@ names(lom) <- sapply(f,'[[',1)
 lom <- lom[sapply(hm,length) > 5]
 
 pl <- list()
-pl[[1]] <- gsea(geneid='entrezgene',hm,test.type='f.test',fdr.method="fdr",fdr.thresh=0.05) %>% phwrap(.,main="F Test Hallmark")
+pl[[1]] <- gsea(geneid='entrezgene',hm,test.type='f.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Hallmark")
 #pl[[2]] <- gsea(lom,test.type='f.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
 pl[[2]] <- gsea(hm,test.type='bartlett.test',fdr.method="fdr") %>% phwrap(.,main="Bartlett Test Hallmark")
 #pl[[4]] <- gsea(lom,test.type='bartlett.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
@@ -128,7 +129,7 @@ names(react) <- sapply(f,'[[',1)
 react <- react[sapply(react,length) > 5]
 
 pl <- list()
-pl[[1]] <- gsea(react,test.type='f.test',fdr.method="fdr",fdr.thresh=0.05) %>% phwrap(.,main="F Test Reactome")
+pl[[1]] <- gsea(react,test.type='f.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Reactome")
 #pl[[2]] <- gsea(lom,test.type='f.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
 pl[[2]] <- gsea(react,test.type='bartlett.test',fdr.method="fdr") %>% phwrap(.,main="Bartlett Test Reactome")
 #pl[[4]] <- gsea(lom,test.type='bartlett.test',fdr.method="fdr",fdr.thresh=0.01) %>% phwrap(.,main="F Test Location")
