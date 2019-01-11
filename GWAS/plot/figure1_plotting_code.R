@@ -67,9 +67,9 @@ plot_bb_pc <- function(pca1='PC1',pca2='PC2',proj_dir,basis_file,variance_file,b
   scale_color_discrete(guide=FALSE) + xlab(p1.var) + ylab(p2.var) +
   geom_hline(yintercept = x.int,col='black',size=0.5,lty=2,alpha=0.5) +
   geom_vline(xintercept = y.int,col='black',size=0.5,lty=2,alpha=0.5) +
-  geom_path(data=ci.DT,aes(x=x,y=y,group=ncases),inherit.aes=FALSE,lty=2,alpha=0.5) +
-  geom_text(data=labs.DT,aes(x=x,y=y,group=NULL,label=label),inherit.aes=FALSE,alpha=0.3,cex=3) +
-  geom_point(data=bb.DT.back,aes(x=PC1,y=PC2),inherit.aes=FALSE,alpha=0.05)
+  #geom_path(data=ci.DT,aes(x=x,y=y,group=ncases),inherit.aes=FALSE,lty=2,alpha=0.5) +
+  #geom_text(data=labs.DT,aes(x=x,y=y,group=NULL,label=label),inherit.aes=FALSE,alpha=0.3,cex=3) +
+  #geom_point(data=bb.DT.back,aes(x=PC1,y=PC2),inherit.aes=FALSE,alpha=0.05)
   if(!missing(lims))
     pp <- pp + coord_cartesian(xlim=lims$x,ylim=lims$y,expand=TRUE)
   pp
@@ -94,6 +94,8 @@ shrink_ss <- plot_bb_pc(
   basis_file='/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS',
   variance_file='/home/ob219/share/as_basis/GWAS/support/ss_av_june.RDS',bb_lu=BB_LU)
 
+save_plot(shrink_ss,file="~/tmp/shrunk_whole_genome.pdf")
+
 noshrink_ss <- plot_bb_pc(
     proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/ss_noshrink_2018/',
     basis_file='/home/ob219/share/as_basis/GWAS/support/ss_basis_noshrink_gwas.RDS',
@@ -103,6 +105,9 @@ beta <- plot_bb_pc(
     proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/beta_2018/',
     basis_file='/home/ob219/share/as_basis/GWAS/support/basis_beta_gwas.RDS',
     variance_file='/home/ob219/share/as_basis/GWAS/support/beta_av_june.RDS',bb_lu=BB_LU)
+
+save_plot(beta,file="~/tmp/beta_whole_genome.pdf")
+
 
 LIMS <- list(x=c(0,0.1),y=c(-0.4,-0.1))
 
@@ -151,18 +156,21 @@ par(mfrow=c(1,2))
 #variance_file='/home/ob219/share/as_basis/GWAS/support/ss_no_shrink_av_june.RDS',bb_lu=BB_LU
 #)
 
+pdf("~/tmp/hclust_beta_whole_genome.pdf")
 plot_bb_hclust(proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/beta_2018/',
 basis_file='/home/ob219/share/as_basis/GWAS/support/basis_beta_gwas.RDS',
 variance_file='/home/ob219/share/as_basis/GWAS/support/beta_av_june.RDS.RDS',bb_lu=BB_LU,
-ptitle = 'Beta 2018 UKBB'
+ptitle = 'log(OR)'
 )
+dev.off()
 
+pdf("~/tmp/hclust_shrunk_beta_whole_genome.pdf")
 plot_bb_hclust(proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/ss_shrink_2018/',
 basis_file='/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS',
 variance_file='/home/ob219/share/as_basis/GWAS/support/ss_av_june.RDS',bb_lu=BB_LU,
-ptitle = 'Shrinkage 2018 UKBB'
+ptitle = 'Shrunk log(OR)'
 )
-
+dev.off()
 dev.print(pdf,"~/tmp/figure1.pdf")
 
 ## use the analytical variance estimations to compute Z scores - take traits forward for hclust if they show

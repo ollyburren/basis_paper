@@ -52,8 +52,46 @@ geom_errorbar(aes(ymin=ci.lo, ymax=ci.hi), width=.1, position=pd) + geom_line(po
 ylab(expression(Delta*"Control Loading"))
 ## here we use 0.05 rather than doing BF over all tests for all PC's
 pred.DT[,Subtype:=gsub("jia\\_","",trait)]
-pb <- ggplot(pred.DT,aes(x=variable,y=value-control.loading,group=Subtype,col=Subtype,pch=p.adj<0.05)) + geom_point(position=pd,aes(size=-log10(p.value))) +
-geom_line(position=pd) + ylab(expression(Delta*"Control Loading")) + xlab("Principal Component") + geom_hline(yintercept=0,color="black")
+#pb <- ggplot(pred.DT,aes(x=variable,y=value-control.loading,group=Subtype,col=Subtype,pch=p.adj<0.05)) + geom_point(position=pd,aes(size=-log10(p.value))) +
+pb <- ggplot(pred.DT,aes(x=variable,y=value-control.loading,group=Subtype,col=Subtype,pch=p.adj<0.05)) + geom_point(size=2,position=pd) +
+geom_line(position=pd) + ylab(expression(Delta*"Control Loading")) + xlab("Principal Component") + geom_hline(yintercept=0,color="black") +
+background_grid(major = "xy", minor = "none") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+save_plot(pb,file="~/tmp/line_jia.pdf",base_aspect=1.3)
+
+forhc <- melt(pred.DT[,.(Subtype,pc=variable,Z,value)],id.vars=c('Subtype','pc'),measure.vars=c('Z','value'))
+
+## do hclust on Z first "Z",colours=c('green','white','red')
+
+bZ <- dcast(forhc[variable=='Z'],Subtype~pc)
+bZm <- bZ[,-1] %>% as.matrix
+rownames(bZm) <- bZ$Subtype
+hc <- dist(bZm) %>% hclust
+pred.DT[,Subtype:=factor(Subtype,levels=hc$labels[hc$order])]
+pred.DT[,plotZ:=0]
+pred.DT[p.adj<0.05,plotZ:=Z]
+pc <- ggplot(pred.DT,aes(x=variable,y=Subtype,fill=plotZ,label=signif(value,digits=1))) +
+geom_tile(color='black') + geom_text(cex=2.1) + scale_fill_gradient2("Z score") + xlab("Principal Component") +
+ylab("Trait") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+save_plot(pc,file="~/tmp/heatmap_jia.pdf",base_aspect=1.3)
+
+## plot the cluster
+
+pdf("~/tmp/hclust_jia.pdf")
+plot(hc)
+dev.off()
+
+plot_grid(pb,pc)
+
+
+## compare with hinks et al.
+
+hinks.DT <- fread("~/tmp/hinks_hla_correlation.csv")
+hinks.m <- as.matrix(hinks.DT[,-1])
+rownames(hinks.m) <- hinks.DT$trait
+dist(hinks.m) %>% hclust(.,method="ward.D2") %>% plot
+
 
 #save_plot("~/tmp/jia_2018.pdf",pb)
 dev.print(pdf,"~/tmp/jia_2018.pdf")

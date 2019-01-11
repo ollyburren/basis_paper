@@ -39,9 +39,13 @@ summ.DT[,short.trait:=substr(trait,1,15),]
 
 summ.DT[,Subtype:=gsub("^jia","",trait)]
 pd <- position_dodge(0.1)
-pa <- ggplot(summ.DT[!trait %in% c('jiaUnA','jiamissing'),],aes(x=variable,y=mean.load-control.loading,group=Subtype,col=Subtype)) + geom_point(position=pd) +
-geom_line(position=pd) + guides(size=FALSE) + xlab("Principal Component") + ylab(expression(Delta~"Control Loading"))
+pa <- ggplot(summ.DT[!trait %in% c('jiaUnA','jiamissing','raj_cd14','raj_cd4'),],aes(x=variable,y=mean.load-control.loading,group=Subtype,col=Subtype)) + geom_point(position=pd) +
+geom_line(position=pd) + guides(size=FALSE) + xlab("Principal Component") + ylab(expression(Delta~"Control Loading")) +
 
+pa <- ggplot(summ.DT[!trait %in% c('jiaUnA','jiamissing','raj_cd14','raj_cd4'),],aes(x=variable,y=mean.load-control.loading,group=Subtype,col=Subtype)) + geom_point(size=2,position=pd) +
+geom_line(position=pd) + ylab(expression(Delta*"Control Loading")) + xlab("Principal Component") + geom_hline(yintercept=0,color="black") +
+background_grid(major = "xy", minor = "none") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+save_plot(pa,file="~/tmp/ind_jia_line.pdf",base_aspect=1.3)
 
 
 jia.sum <- readRDS("~/share/as_basis/GWAS/tmp/jia_plot.RDS")

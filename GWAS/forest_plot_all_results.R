@@ -41,10 +41,19 @@ forest_plot_focal <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,fdr_thr
   xlab("Trait") + ylab("Change in basis loading from control")
 }
 
+## for talk leave out some of the stuff to make figure clearer
+
+talk.DT <- res.DT[category %in% c('bb_medications','astle_blood','bowes_jia','astle_blood','bb_disease')]
+forest_plot_focal(talk.DT,pc='PC1',focal=all.traits[['bowes_jia']],title="JIA subtypes PC1")
+dev.print(pdf,file="~/tmp/pc1_plot.pdf",useDingbats=FALSE)
+forest_plot_focal(talk.DT,pc='PC3',focal=all.traits[['bowes_jia']],title="JIA subtypes PC3")
+dev.print(pdf,file="~/tmp/pc3_plot.pdf",useDingbats=FALSE)
+
+
 forest_plot_focal(proj.dat=res.DT,pc='PC1',focal=all.traits[['myogen']],title="Myogen Myositis PC1")
 forest_plot_focal(res.DT,pc='PC10',focal=all.traits[['myogen']],title="Myogen Myositis PC10",theme=theme(panel.grid.major.y=element_line(colour='lightgrey',linetype=3),axis.text.y=element_text(size=9)))
 pdf(file="~/tmp/for_wendy_19_12_2018.pdf",paper="a4r",width=14,height=8)
-forest_plot_focal(res.DT,pc='PC3',focal=all.traits[['bowes_jia']],title="JIA subtypes PC3")
+forest_plot_focal(res.DT,pc='PC1',focal=all.traits[['bowes_jia']],title="JIA subtypes PC3")
 dev.off()
 forest_plot_focal(res.DT,pc='PC4',focal=all.traits[['lyons_vasculitis']],title="Lyons et al. Vasculitis PC4")
 forest_plot_focal(res.DT,pc='PC6',focal=all.traits[['lyons_vasculitis']],title="Lyons et al. Vasculitis PC6")
