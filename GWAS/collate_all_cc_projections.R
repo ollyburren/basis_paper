@@ -229,6 +229,23 @@ abdef <- melt(abdef,id.var='trait')
 abdef[,c('n0','n1'):=list(9225,733)]
 abdef[,category:='ad-pid']
 
+## load in t1d ab data
+t1d <- readRDS('/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/liley_t1d/proj.RDS')
+## remove age as this would need rescaling to be able to interpret
+t1d <- t1d[trait!='z_age']
+#t1d <- data.table(trait=rownames(t1d),t1d)
+t1d <- melt(t1d,id.var='trait')
+
+t1d[trait=='z_t1d',c('n0','n1'):=list(8825,5908)]
+## data from Vincent Plagnol paper
+t1d[trait=='z_tpo',c('n0','n1'):=list(5908*(1-0.12),5908*0.12)]
+t1d[trait=='z_gad',c('n0','n1'):=list(3208*(1-0.5),3208*0.5)]
+t1d[trait=='z_ia2',c('n0','n1'):=list(3197*(1-0.59),3197*0.59)]
+t1d[trait=='z_pca',c('n0','n1'):=list(2240*(1-0.1),2240*0.1)]
+
+t1d[,category:='liley_t1d']
+
+
 ## for some reason we swapped from n1 to n0 halfway through to n0 n1
 ## we need to fix otherwise everything gets swapped and case
 ## sizes become control sizes
@@ -253,7 +270,8 @@ all.proj <- list(
   myogen=myogen,
   nmo=nmo,
   vasc=vasc,
-  abdef=abdef
+  abdef=abdef,
+  liley=t1d
 ) %>% rbindlist
 all.proj[,n:=n1+n0]
 
@@ -280,7 +298,7 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/19_12_18_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/25_01_19_summary_results.RDS')
 
 
 if(FALSE){

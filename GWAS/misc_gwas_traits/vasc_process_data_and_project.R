@@ -46,6 +46,8 @@ for(f in aav.files){
   ## where snp is missing make it zero
   tmp[is.na(metric),metric:=0]
   tmp[,trait:= trait]
+  pfile <- file.path(OUT_DIR,sprintf("projections/%s_source.RDS",trait))
+  saveRDS(tmp,file=pfile)
   B <- dcast(tmp,pid ~ trait,value.var='metric')
   snames <- B[,1]$pid
   mat.emp <- as.matrix(B[,-1]) %>% t()
@@ -56,7 +58,7 @@ for(f in aav.files){
   stop("Something wrong basis and projection matrix don't match")
   all.proj <- predict(pc.emp,newdata=mat.emp)
   ofile <- file.path(OUT_DIR,sprintf("projections/%s.RDS",trait))
-  saveRDS(all.proj,file=ofile)
+  #saveRDS(all.proj,file=ofile)
 }
 
 samples.DT <- rbindlist(samples)

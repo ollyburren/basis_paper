@@ -300,6 +300,7 @@ ppid<-dcast(melt.DT[variable=="ppi",],pid+chr+position~trait+variable)
 ppi.gr <- with(ppid,GRanges(seqnames=Rle(paste0('chr',chr)),ranges=IRanges(start=position,width=1L)))
 mcols(ppi.gr)<- as.data.frame(ppid[,4:ncol(ppid)]) %>% DataFrame
 
+library('latex2exp')
 
 tracks<-list()
 tracks$itr <- IdeogramTrack(genome="hg19", chromosome=seqlevels(comb.gr),bands=ideo)
@@ -313,18 +314,18 @@ tracks$gene <- BiomartGeneRegionTrack(
         fontcolor.group='black',just.group = "above")
 tracks$mlp<- DataTrack(name="-log10(p)",cex=1,mlp.gr,groups=gsub("_mlp","",names(mcols(mlp.gr))),cex.legend=1)
 displayPars(tracks$mlp)$background.title <- 'black'
-tracks$beta<- DataTrack(name="log(OR)",cex=1,beta.gr,groups=gsub("_beta","",names(mcols(beta.gr))),legend=FALSE)
+tracks$beta<- DataTrack(name="beta",cex=1,beta.gr,groups=gsub("_beta","",names(mcols(beta.gr))),legend=FALSE)
 #displayPars(tracks$combmlp)$background.title <- 'black'
 displayPars(tracks$beta)$background.title <- 'black'
-tracks$ppi <- DataTrack(name="sCVPP",cex=1,ppi.gr,groups=gsub("_ppi","",names(mcols(ppi.gr))),legend=FALSE)
+tracks$ppi <- DataTrack(name="sCVPP",cex=1,ppi.gr,groups=gsub("_ppi","",names(mcols(ppi.gr))),cex.legend=1,legend=FALSE)
 #displayPars(tracks$ppi)$cex <- 1.5
 displayPars(tracks$ppi)$jitter.x <- FALSE
 displayPars(tracks$ppi)$background.title <- 'black'
 #tracks$shrink <- DataTrack(name="PPA Shrink",bshrink.gr,col='dodgerblue')
 #displayPars(tracks$shrink)$background.title <- 'dodgerblue'
-tracks$shrink2 <- DataTrack(name="X-disease sCVPP",wshrink.gr,col='black',cex=1)
+tracks$shrink2 <- DataTrack(name="Weight",wshrink.gr,col='black',cex=1)
 displayPars(tracks$shrink2)$background.title <- 'black'
-tracks$sbeta <- DataTrack(name="Shrunk log(OR)",cex=1,shrunk_beta.gr,groups=gsub("_shrunk_beta","",names(mcols(beta.gr))),legend=FALSE)
+tracks$sbeta <- DataTrack(name="Weighted beta",cex=1,shrunk_beta.gr,groups=gsub("_shrunk_beta","",names(mcols(beta.gr))),legend=FALSE)
 displayPars(tracks$sbeta)$background.title <- 'firebrick'
 #plotTracks(tracks,from=min(raw.dat[ld.block %in% ldb,]$position),to=max(raw.dat[ld.block %in% ldb,]$position))
 
@@ -334,22 +335,37 @@ max.ldb <- tmp.DT[which.max(tot),]$ld.block
 #plotTracks(tracks[names(tracks) %in% c('gene','mlp','beta')],from=204732511-400000,to=204738683+400000)
 #plotTracks(tracks,from=min(raw.dat[ld.block %in% max.ldb,]$position),to=max(raw.dat[ld.block %in% max.ldb,]$position))
 
+
+tsel <- tracks[c('gene','mlp','beta')]
+
 pdf("~/tmp/ctla4_shrinkage_1.pdf",useDingbats=FALSE)
 #plotTracks(tracks[names(tracks) %in% c('gene','mlp','beta','ppi','shrink2')],from=min(raw.dat[ld.block %in% max.ldb,]$position),to=max(raw.dat[ld.block %in% max.ldb,]$position))
-plotTracks(tracks[names(tracks) %in% c('gene','mlp','beta')],from=204571198-20000,to=204826298+20000)
+plotTracks(tsel,from=204571198-20000,to=204826298+20000)
 dev.off()
+
+tsel <- tracks[c('gene','ppi','beta')]
 
 pdf("~/tmp/ctla4_shrinkage_2.pdf",useDingbats=FALSE)
 #plotTracks(tracks[names(tracks) %in% c('gene','mlp','beta','ppi','shrink2')],from=min(raw.dat[ld.block %in% max.ldb,]$position),to=max(raw.dat[ld.block %in% max.ldb,]$position))
-plotTracks(tracks[names(tracks) %in% c('gene','mlp','beta','ppi')],from=204571198-20000,to=204826298+20000)
+plotTracks(tsel,from=204571198-20000,to=204826298+20000)
 dev.off()
+
+tsel <- tracks[c('gene','shrink2','beta')]
 
 pdf("~/tmp/ctla4_shrinkage_3.pdf",useDingbats=FALSE)
 #plotTracks(tracks[names(tracks) %in% c('gene','mlp','beta','ppi','shrink2')],from=min(raw.dat[ld.block %in% max.ldb,]$position),to=max(raw.dat[ld.block %in% max.ldb,]$position))
-plotTracks(tracks[names(tracks) %in% c('gene','mlp','beta','shrink2')],from=204571198-20000,to=204826298+20000)
+plotTracks(tsel,from=204571198-20000,to=204826298+20000)
 dev.off()
+
+tsel <- tracks[c('gene','shrink2','sbeta')]
 
 pdf("~/tmp/ctla4_shrinkage_4.pdf",useDingbats=FALSE)
 #plotTracks(tracks[names(tracks) %in% c('gene','mlp','beta','ppi','shrink2')],from=min(raw.dat[ld.block %in% max.ldb,]$position),to=max(raw.dat[ld.block %in% max.ldb,]$position))
-plotTracks(tracks[names(tracks) %in% c('gene','mlp','beta','sbeta')],from=204571198-20000,to=204826298+20000)
+plotTracks(tsel,from=204571198-20000,to=204826298+20000)
+dev.off()
+
+## this for my thesis
+pdf("~/tmp/shrinkage_example.pdf",useDingbats=FALSE)
+tsel <- tracks[c('gene','mlp','ppi','shrink2','beta','sbeta')]
+plotTracks(tsel,from=204571198-20000,to=204826298+20000)
 dev.off()

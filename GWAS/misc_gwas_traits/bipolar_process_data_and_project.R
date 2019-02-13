@@ -39,6 +39,7 @@ tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 ## where snp is missing make it zero
 tmp[is.na(metric),metric:=0]
 tmp[,trait:= 'BIP']
+saveRDS(tmp,file='/home/ob219/share/as_basis/GWAS/psych/BIP_source.RDS')
 B <- dcast(tmp,pid ~ trait,value.var='metric')
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()

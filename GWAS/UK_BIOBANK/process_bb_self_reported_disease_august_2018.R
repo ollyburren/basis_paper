@@ -2,7 +2,7 @@
 
 library(optparse)
 
-TEST<-FALSE
+TEST<-TRUE
 option_list = list(
         make_option(c("-i", "--integer"), type="numeric", default=NULL,
               help="index of phenotype to process ", metavar="numeric")
@@ -15,27 +15,27 @@ if(!TEST){
 	    stop("Supply an integer for phenotype to process", call.=FALSE)
     }
 }else{
-  args <- list(integer=89)
+  args <- list(integer=57)
 }
 
 i<-args$integer
 
 ## to use maf estimate of se remove ss prefix !
 
-#SHRINKAGE_METHOD<-'ws_emp_shrinkage'
-#SHRINKAGE_METHOD<-'recip.emp_maf_se'
-SHRINKAGE_METHOD<-'none'
+SHRINKAGE_METHOD<-'ws_emp_shrinkage'
+#SHRINKAGE_METHOD<-'recip.ss_emp_maf_se'
+#SHRINKAGE_METHOD<-'none'
 ## just the one shrinkage file
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
-#BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
 #BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_noshrink_gwas.RDS'
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/basis_beta_gwas.RDS'
+#BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/basis_beta_gwas.RDS'
 BNEALE_DIR <- '/home/ob219/share/Data/GWAS-summary/uk_biobank_neale_summary_stats_2018'
 BASIS_FILT_DIR <- file.path(BNEALE_DIR,'as_basis_tmp')
 SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
 BB_BASIS_LU_FILE <- '/home/ob219/share/as_basis/GWAS/support//sept_bb_gwas_var_man.RDS'
 #OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/shrink_2018/'
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/beta_2018/'
+OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/gamma_2018/'
 
 
 ## running on the queue
@@ -46,7 +46,7 @@ if(FALSE){
   med <- pheno[grepl("20002\\_",Phenotype.Code) & Sex=='both_sexes',]
   cmds <- sapply(1:nrow(med),function(i){
   #cmds <- sapply(c(165,159,78,167,116,57,166),function(i){
-    sprintf("Rscript /home/ob219/git/basis_paper/GWAS/process_bb_self_reported_disease_august_2018.R -i %d",i)
+    sprintf("Rscript /home/ob219/git/basis_paper/GWAS/UK_BIOBANK/process_bb_self_reported_disease_august_2018.R -i %d",i)
   })
   write(cmds,file="~/tmp/qstuff/gwas_bb_disease_proj_2018.txt")
 }
@@ -154,6 +154,9 @@ setkey(shrink.DT,'pid')
 pc.emp <- readRDS(BASIS_FILE)
 
 all.DT <- out[!duplicated(pid),.(pid,uid=med$phe[i],beta=log(or))]
+## this part is to get the intermediate for the FDR work
+#M <- merge(out[,.(pid,or,p.value)],shrink.DT,by='pid')
+#saveRDS(M,"~/tmp/bb_t1d.RDS")
 
 
 ## add shrinkage here

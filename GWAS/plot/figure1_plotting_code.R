@@ -143,7 +143,7 @@ plot_bb_hclust <- function(proj_dir,basis_file,variance_file,bb_lu,ptitle){
   #rownames(proj) <-
   proj<-rbind(proj,rep(0,ncol(proj)))
   rownames(proj) <- c(plot.DT[trait!='control',]$trait,'control')
-  dist(proj) %>% hclust %>% plot(.,main=ptitle)
+  dist(proj) %>% hclust %>% plot(.,main=NA,sub=NA,xlab=NA)
 }
 
 
@@ -164,6 +164,19 @@ ptitle = 'log(OR)'
 )
 dev.off()
 
+## what does gamma look like ?
+
+pdf("~/tmp/hclust_gamma_whole_genome.pdf")
+plot_bb_hclust(proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/gamma_2018/',
+basis_file='/home/ob219/share/as_basis/GWAS/support/ss_basis_noshrink_gwas.RDS',
+variance_file='/home/ob219/share/as_basis/GWAS/support/ss_no_shrink_av_june.RDS',bb_lu=BB_LU,
+ptitle = 'log(OR)'
+)
+dev.off()
+
+
+
+
 pdf("~/tmp/hclust_shrunk_beta_whole_genome.pdf")
 plot_bb_hclust(proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/ss_shrink_2018/',
 basis_file='/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS',
@@ -171,7 +184,6 @@ variance_file='/home/ob219/share/as_basis/GWAS/support/ss_av_june.RDS',bb_lu=BB_
 ptitle = 'Shrunk log(OR)'
 )
 dev.off()
-dev.print(pdf,"~/tmp/figure1.pdf")
 
 ## use the analytical variance estimations to compute Z scores - take traits forward for hclust if they show
 ## significant loading on at least one principal component after multiple testing

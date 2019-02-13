@@ -123,6 +123,99 @@ gsea(geneid='entrezgene',hm,test.type='f.test',fdr.method="fdr",fdr.thresh=0.05)
 dev.off()
 
 
+f <- scan("~/tmp/h.all.v6.1.entrez.gmt","character()",sep="\n") %>% strsplit(.,"\t")
+hm <- lapply(f,function(x) {
+  genes <- x[c(-1,-2)] %>% as.integer
+  genes <- genes[genes %in% universe]
+})
+names(hm) <- sapply(f,'[[',1)
+## remove genesets with no members !
+hm <- hm[sapply(hm,length)!=0]
+## molsigdb location
+f <- scan("~/tmp/c1.all.v6.2.entrez.gmt","character()",sep="\n") %>% strsplit(.,"\t")
+lom <- lapply(f,function(x) {
+  genes <- x[c(-1,-2)] %>% as.integer
+  genes <- genes[genes %in% universe]
+})
+names(lom) <- sapply(f,'[[',1)
+## remove genesets with no members !
+lom <- lom[sapply(hm,length) > 5]
+## reactome
+f <- scan("~/tmp/c2.cp.reactome.v6.2.entrez.gmt","character()",sep="\n") %>% strsplit(.,"\t")
+react <- lapply(f,function(x) {
+  genes <- x[c(-1,-2)] %>% as.integer
+  genes <- genes[genes %in% universe]
+})
+names(react) <- sapply(f,'[[',1)
+## remove genesets with no members !
+react <- react[sapply(react,length) > 5]
+
+## plot for talk
+newgsea <- function(gl){
+  gl <- gl[sapply(gl,length)>20]
+  gs.res.t <- mclapply(paste0('PC',c(1:10)),function(pcq){
+    bpc <- Mf[variable==pcq,]
+    pcr <- bpc$Z
+    #pcr <- bpc$Z^2 # use chi.squared distribution
+    names(pcr) <- bpc[['entrezgene']]
+    pall <- lapply(gl,function(gs){
+      inset <- which(names(pcr) %in% gs)
+      K <- var.test(pcr[inset], pcr[-inset])
+      data.table(stat=K$statistic,p=K$p.value,sign=log(K$statistic) %>% sign,lo=K$conf.int[1],hi=K$conf.int[2])
+    }) %>% rbindlist
+    data.table(pc=pcq,gs=names(gl),p=pall$p,stat=log(pall$stat),lo=log(pall$lo),hi=log(pall$hi),sign=pall$sign)
+  },mc.cores=6) %>% rbindlist
+  gs.res.t
+}
+
+
+#gs.res.t[,p.adj:=p.adjust(gs.res.t$p,method='fdr')]
+#gs.res.t <- gs.res.t[p.adj<fdr.thresh,]
+#gs.res.t[,as:=-log10(p.adj) * sign]
+
+
+
+gsea.react.DT <- newgsea(react)
+gsea.hm.DT <- newgsea(hm)
+gsea.hm.DT[,p.adj:=p.adjust(p,method='fdr')]
+gsea.DT <- rbind(gsea.react.DT,gsea.hm.DT)
+## test to see what happens if we just look at one PC
+gsea.DT[,p.adj:=p.adjust(p,method='fdr')]
+gsea.DT <- gsea.DT[pc=='PC3' & p.adj<0.05 & sign>0,]
+gsea.DT[,source:='REACTOME']
+gsea.DT[grep('^HALLMARK_',gs),source:='HALLMARK']
+gsea.DT[,gs:=gsub("(HALLMARK|REACTOME)\\_","",gs) %>% gsub("\\_"," ",.) %>% str_trunc(., 30, "right")]
+gsea.DT[,gs:=factor(gs,levels=gsea.DT[order(stat,decreasing=TRUE),]$gs)]
+
+pp <- ggplot(gsea.DT,aes(y=stat,x=gs,color=source)) + geom_point() + geom_errorbar(aes(ymin=lo,ymax=hi)) + coord_flip() +
+xlab("Gene Set") + ylab("log(F statistic)") + ggtitle(sprintf("Sun et al. pQTL PC3 FDR<0.05")) + theme(axis.text.y = element_text(angle = 0, vjust = 1, hjust=1,size=8)) +
+theme(legend.position="bottom") + guides(color=FALSE)
+save_plot(file="~/tmp/gsea_pqtl_pc3.pdf",pp,base_width=10,useDingbats=FALSE)
+
+
+gsea.react.DT <- newgsea(react)
+gsea.hm.DT <- newgsea(hm)
+gsea.DT <- rbind(gsea.react.DT,gsea.hm.DT)
+#gsea.DT <- gsea.react.DT
+## test to see what happens if we just look at one PC
+gsea.DT[,p.adj:=p.adjust(p,method='fdr')]
+
+
+filt.DT <- gsea.DT[pc %in% c('PC1','PC3')  & p.adj<0.01 & sign>0,]
+filt.DT[,source:='REACTOME']
+filt.DT[grep('^HALLMARK_',gs),source:='HALLMARK']
+filt.DT[,gs:=gsub("(HALLMARK|REACTOME)\\_","",gs) %>% gsub("\\_"," ",.) %>% str_trunc(., 70, "right")]
+filt.DT[,gs:=factor(gs,levels=filt.DT[order(stat,decreasing=FALSE),]$gs)]
+
+pp <- ggplot(filt.DT,aes(y=pc,x=gs,fill=stat)) + geom_tile() + coord_flip() +
+xlab("Component") + ylab("log(F statistic)") + ggtitle(sprintf("Sun et al. pQTL PC3 FDR<0.01")) +
+theme(axis.text.y = element_text(angle = 0, vjust = 1, hjust=1,size=10)) + scale_fill_gradient("log(F-statistic)",low='yellow',high='red')
+save_plot(file="~/tmp/gsea_sun_pc1_3.pdf",pp,base_width=9,useDingbats=FALSE)
+
+
+
+
+
 ## attempt forest plot of genes
 
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'

@@ -135,6 +135,8 @@ for (trait in c('jdm','pm','dm')){
   tmp[is.na(metric),metric:=0]
   #tmp[,trait:= 'myositis_myogen']
   tmp[,trait:= sprintf("%s_myogen",trait)]
+  of <- sprintf('/home/ob219/share/as_basis/GWAS/myogen_myositis/%s_myositis_source.RDS',trait))
+  saveRDS(tmp,file=of)
   B <- dcast(tmp,pid ~ trait,value.var='metric')
   snames <- B[,1]$pid
   mat.emp <- as.matrix(B[,-1]) %>% t()
@@ -144,5 +146,5 @@ for (trait in c('jdm','pm','dm')){
   if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
   stop("Something wrong basis and projection matrix don't match")
   all.proj <- predict(pc.emp,newdata=mat.emp)
-  saveRDS(all.proj,file=sprintf('/home/ob219/share/as_basis/GWAS/myogen_myositis/%s_myositis.RDS',trait))
+  #saveRDS(all.proj,file=sprintf('/home/ob219/share/as_basis/GWAS/myogen_myositis/%s_myositis.RDS',trait))
 }
