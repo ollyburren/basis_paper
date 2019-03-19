@@ -45,7 +45,7 @@ all.lms <- mclapply(paste('PC',1:11,sep=""),function(pc){
 },mc.cores=8)
 ## large amount of reg
 saveRDS(all.lms,"/home/ob219/share/as_basis/GWAS/raj/cd4/regression_models.RDS")
-
+all.lms <- readRDS("/home/ob219/share/as_basis/GWAS/raj/cd4/regression_models.RDS")
 
 names(all.lms)<-paste('PC',1:11,sep="")
 ## for each model we can obtain t-statistics for the beta coefficients as p-values.
@@ -87,8 +87,8 @@ for.qq<-rbindlist(lapply(pc.p,function(x){
 
 for.qq$pc <- factor(for.qq$pc,levels=paste0('PC',1:11))
 
-for.qq <- rbindlist(lapply(pc.p,function(x) cbind(unique(x$PC),get_qq_dt(x$p.coeff))))
-for.qq$V1<-factor(for.qq$V1,levels=paste0('PC',1:10))
+#for.qq <- rbindlist(lapply(pc.p,function(x) cbind(unique(x$PC),get_qq_dt(x$p.coeff))))
+#for.qq$V1<-factor(for.qq$V1,levels=paste0('PC',1:10))
 
 library(cowplot)
 gpl <- ggplot(for.qq,aes(x=x1,y=y1)) +

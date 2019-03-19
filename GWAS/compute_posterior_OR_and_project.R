@@ -22,7 +22,7 @@ option_list = list(
 
 if(TEST){
   args <- list(
-    data_dir='/home/ob219/share/as_basis/GWAS/individual_data/filtered_gt/raj/cd14'
+    data_dir='/home/ob219/share/as_basis/GWAS/individual_data/filtered_gt/raj/cd4'
   )
 }else{
   opt_parser = OptionParser(option_list=option_list);

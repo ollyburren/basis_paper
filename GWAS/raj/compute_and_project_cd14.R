@@ -10,7 +10,7 @@ CAL_FILE <- '/home/ob219/rds/hpc-work/as_basis/support//por_2500_2.0_0.01.RDS'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
 
-TEST<-TRUE
+TEST<-FALSE
 option_list = list(
         make_option(c("-i", "--integer"), type="numeric", default=NULL,
               help="index of probesets to process", metavar="numeric")
@@ -27,7 +27,7 @@ if(!TEST){
 }
 
 if(FALSE){
-  SCRIPT <- '/home/ob219/git/basis_paper/GWAS/raj/compute_and_project_cd4.R'
+  SCRIPT <- '/home/ob219/git/basis_paper/GWAS/raj/compute_and_project_cd14.R'
   cmds <- sapply(1:387,function(i){
     sprintf("Rscript %s -i %s",SCRIPT,i)
   })
@@ -35,7 +35,7 @@ if(FALSE){
 }
 
 
-fs <- list.files(path="/home/ob219/share/as_basis/GWAS/individual_data/filtered_gt/raj/cd4",pattern="^chr[0-9]+.RDS",full.names=TRUE)
+fs <- list.files(path="/home/ob219/share/as_basis/GWAS/individual_data/filtered_gt/raj/cd14",pattern="^chr[0-9]+.RDS",full.names=TRUE)
 all.gt<-lapply(fs,readRDS)
 
 gt <- lapply(all.gt,function(x) x@.Data) %>% do.call('cbind',.) %>% sm
@@ -49,9 +49,9 @@ merged.gt <- new("aSnpMatrix",
    alleles=c("allele.1","allele.2"),
    phenotype="affected")
 
-(load("/home/ob219/share/Projects/twas/raj-cd4-expression.RData"))
+(load("/home/ob219/share/Projects/twas/raj-cd14-expression.RData"))
 texpr <- t(expr)
-translate <- readRDS('/home/ob219/share/Projects/twas/model_output/trans_raj-cd4.rds')
+translate <- readRDS('/home/ob219/share/Projects/twas/model_output/trans_raj-cd14.rds')
 idxy<-match(rownames(texpr),names(translate))
 rownames(texpr) <- translate[idxy]
 
@@ -100,12 +100,12 @@ all.proj <- predict(pc.emp,newdata=mat.emp)
 
 all.proj.DT <- data.table(probe=rownames(all.proj),all.proj)
 all.proj.m <- melt(all.proj.DT,id.var='probe')
-ofile <- file.path("/home/ob219/share/as_basis/GWAS/raj/cd4/summary_projections",sprintf("cd4%s.RDS",args$integer))
+ofile <- file.path("/home/ob219/share/as_basis/GWAS/raj/cd14/summary_projections",sprintf("cd4%s.RDS",args$integer))
 saveRDS(all.proj.m,file=ofile)
 message(sprintf("Wrote %s",ofile))
 
 if(FALSE){
-  dat.dir <- '/home/ob219/share/as_basis/GWAS/raj/cd4/summary_projections'
+  dat.dir <- '/home/ob219/share/as_basis/GWAS/raj/cd14/summary_projections'
   dat <- lapply(list.files(path=dat.dir,pattern="*.RDS",full.names=TRUE),readRDS) %>% rbindlist
   dat[,Z:=(value-mean(value))/sd(value),by='variable']
 

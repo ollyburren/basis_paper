@@ -15,7 +15,43 @@ res <- lapply(all.files,function(f){
   melt.DT[,trait:=trait]
 }) %>% rbindlist
 
-res <- res[!trait %in%  c('jiaUnA','jiamissing'),]
+res <- res[!trait %in%  c('jiaUnA','jiamissing','raj_cd14','raj_cd4'),]
+
+t.test(res[variable=='PC3' & trait %in% c('jiaERA','jiasys')]$value,res[variable=='PC3' & !trait %in% c('jiaERA','jiasys')]$value)
+t.test(res[variable=='PC3' & trait=='jiaERA']$value,res[variable=='PC3' & !trait %in% c('jiaERA','jiasys')]$value)
+t.test(res[variable=='PC3' & trait=='jiasys']$value,res[variable=='PC3' & !trait %in% c('jiaERA','jiasys')]$value)
+
+## look at all of them
+
+traits <- res$trait %>% unique
+
+all.compare <- lapply(paste('PC',1:10,sep=''),function(PC){
+  message(PC)
+  lapply(traits,function(tra){
+    lapply(traits,function(tra2){
+      tt <- t.test(res[variable==PC & trait==tra]$value,res[variable==PC & trait==tra2]$value)
+      data.table(pc=PC,trait1=tra,trait2=tra2,p=tt$p.value,t.stat=tt$statistic)
+    }) %>% rbindlist
+  }) %>% rbindlist
+}) %>% rbindlist
+
+all.compare <- all.compare[trait1 != trait2,]
+## get rid of reciprocal comparisons
+all.compare <- all.compare[which(!duplicated(abs(t.stat))),]
+all.compare[abs(t)]
+all.compare[,fdr:=p.adjust(p,method="fdr")]
+all.compare[fdr<0.05,]
+
+all.compare.rest <- lapply(paste('PC',1:10,sep=''),function(PC){
+  message(PC)
+  lapply(traits,function(tra){
+      tt <- t.test(res[variable==PC & trait==tra]$value,res[variable==PC & trait!=tra]$value)
+      data.table(pc=PC,trait1=tra,p=tt$p.value,t.stat=tt$statistic)
+  }) %>% rbindlist
+}) %>% rbindlist
+
+all.compare.rest[,fdr:=p.adjust(p,method="bonferroni"),by=pc]
+all.compare.rest[fdr<0.05,]
 
 ## get mean and variance across trait and pc
 
@@ -26,10 +62,11 @@ basis.DT <- data.table(trait=rownames(pc.emp$x),pc.emp$x)
 tmp <- basis.DT[trait=='control',] %>% t
 ctrl.DT <- data.table(variable=rownames(tmp)[-1],control.loading=as.numeric(tmp[-1,1]))
 
-var.DT <- readRDS(VARIANCE_FILE)
+#var.DT <- readRDS(VARIANCE_FILE)
 summ.DT[,variable:=factor(variable,levels=paste0('PC',1:11))]
 summ.DT <- merge(summ.DT,ctrl.DT,by='variable')
-summ.DT <- merge(summ.DT,var.DT,by.x='variable',by.y='pc')
+#summ.DT <- merge(summ.DT,var.DT,by.x='variable',by.y='pc')
+summ.DT[,Z:=(mean.load-control.loading)/sqrt()]
 summ.DT[,Z:=(mean.load-control.loading)/sqrt(mfactor)]
 summ.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 #bb.DT.m[,p.adj:=p.adjust(p.value),by='variable']
@@ -39,8 +76,8 @@ summ.DT[,short.trait:=substr(trait,1,15),]
 
 summ.DT[,Subtype:=gsub("^jia","",trait)]
 pd <- position_dodge(0.1)
-pa <- ggplot(summ.DT[!trait %in% c('jiaUnA','jiamissing','raj_cd14','raj_cd4'),],aes(x=variable,y=mean.load-control.loading,group=Subtype,col=Subtype)) + geom_point(position=pd) +
-geom_line(position=pd) + guides(size=FALSE) + xlab("Principal Component") + ylab(expression(Delta~"Control Loading")) +
+#pa <- ggplot(summ.DT[!trait %in% c('jiaUnA','jiamissing','raj_cd14','raj_cd4'),],aes(x=variable,y=mean.load-control.loading,group=Subtype,col=Subtype)) + geom_point(position=pd) +
+#geom_line(position=pd) + guides(size=FALSE) + xlab("Principal Component") + ylab(expression(Delta~"Control Loading")) +
 
 pa <- ggplot(summ.DT[!trait %in% c('jiaUnA','jiamissing','raj_cd14','raj_cd4'),],aes(x=variable,y=mean.load-control.loading,group=Subtype,col=Subtype)) + geom_point(size=2,position=pd) +
 geom_line(position=pd) + ylab(expression(Delta*"Control Loading")) + xlab("Principal Component") + geom_hline(yintercept=0,color="black") +

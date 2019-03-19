@@ -59,6 +59,18 @@ compute_conservative_cor_bb <- function(n_i1,n_j1,n_i0,n_j0){
   #(sqrt(n_i1 * n_j1) + sqrt(n_i0 * n_j0))/n_i ## or n_j
 }
 
+compute_cov_noshare <- function(DT){
+  M <- matrix(0,nrow=nrow(DT),ncol=nrow(DT),dimnames=list(DT$trait,DT$trait))
+  M[upper.tri(M,diag=FALSE)] <- t(M)[upper.tri(M,diag=FALSE)]
+  ## note that the diag is 1
+  diag(M) <- 1
+  #pheatmap(M)
+  ## 3 compute covariance matrix by multipying elements by sqrt(v_i * v_j)
+  ## note for actual application this will depend on principal axis that we
+  ## are using
+  (tcrossprod(DT$variance,DT$variance) %>% sqrt) * M
+}
+
 compute_cov <- function(DT){
   M <- matrix(0,nrow=nrow(DT),ncol=nrow(DT),dimnames=list(DT$trait,DT$trait))
   for(i in 1:nrow(DT)){
@@ -155,9 +167,59 @@ compute_t <- function(tg,pc,covM){
 }
 
 
+compute_t_no_share <- function(tg,pc,covM){
+  cor.DT <-res.DT[variable==pc,.(trait,value,n1,n0=n-n1,variance)]
+  cor.DT <- cor.DT[trait!='unclassifiable',]
+  cor.DT[,bb:=grepl("^bb",trait)]
+  covM <- compute_cov_noshare(cor.DT)
+  ## with this covariance matrix we can now estimate the pooled variance for any arb group of diseases
+  ## code to compute groups - we use complete linkage to start with
+  ind <- lapply(tg,function(tl){
+    idx <- which(cor.DT$trait %in% tl)
+  })
+  ## using the covariance matrix between all traits computed above compute the pooled
+  ## variance across both groups
+  gvar <- lapply(ind,function(i){
+    var <- sum(covM[i,i])
+  })
+  ## compute the pooled mean for both samples
+  pmean <- lapply(ind,function(i){
+    cor.DT[i,list(mean(value))]$V1
+  })
+  n <- lapply(ind,function(i){
+    length(i)
+  })
+  ## compute the difference
+  diffMean <- pmean[[1]] - pmean[[2]]
+  ## t-test assesses the difference in means but these are still correlated as group 1 and group 2 still covary
+  ## (mean(X_1),V_1), (mean(X_2),V_2)
+  ## d = X_1 - X_2
+  ## v(d) = V_1 + V_2 + 2cov(mean(X_1),mean(X_2))
+  ## we have to adjust the pooled variance to take this into account
+  V_1 <- gvar[[1]] * (1/n[[1]]^2)
+  V_2 <- gvar[[2]] * (1/n[[2]]^2) ## for this special case (where there are two groups) V_1 + V_2 = sum(covM) !
+  btw_sample_cov <- covM[ind[[1]],ind[[2]]] %>% sum
+  ## const is 2/n_1^2,n_2^2 - here n is the number of traits in each group
+  const <- 2/(sapply(ind,function(x) length(x)^2) %>% prod)
+  var_d <- V_1 + V_2 - (const * btw_sample_cov)
+  n <- sapply(ind,length)
+  #t.stat <- diffMean/(sqrt(var_d) * sqrt(1/n[[1]] + 1/n[[2]]))
+  t.stat <- diffMean/(sqrt(var_d))
+  P <- pnorm(abs(t.stat),lower.tail=FALSE) * 2
+  #data.table(p.value=P,t.stat=t.stat,df=df,pc=pc,diff.mean=diffMean,var1=V_1,var2=V_2,overall_var=var_d)
+  t.DT <- data.table(pc=pc,p.value=P,t.stat=t.stat,set1=paste(tg[[1]],collapse=','),set2=paste(tg[[2]],collapse=','))
+  return(list(t=t.DT,covM=covM))
+}
+
+
+era_ankspond <- compute_t(tg=list(g1='jia_ERA',g2='bb_ankylosing.spondylitis'),pc='PC1')
 myo.res <- compute_t(tg=list(g1='pm_myogen',g2=c('jdm_myogen','dm_myogen')),pc='PC10')
 egpa.res <- compute_t(tg=list(g1='anca_Neg',g2=c('mpo_Pos')),pc='PC6')
 jia.res <- compute_t(tg=list(g1=c('jia_sys','jia_ERA'),g2=c('jia_EO','jia_PO','jia_PsA','jia_RFneg','jia_RFpos')),pc='PC3')
+jia.res.noshare <- compute_t_no_share(tg=list(g1=c('jia_sys','jia_ERA'),g2=c('jia_EO','jia_PO','jia_PsA','jia_RFneg','jia_RFpos')),pc='PC3')
+
+
+## for pc10 can we compute the shared variance
 
 library(xtable)
 rbindlist(list(myo.res$t,egpa.res$t,jia.res$t)) %>% xtable

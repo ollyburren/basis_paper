@@ -10,7 +10,7 @@ for(f in aav.files){
   a.DT <- fread(f)
   trait=gsub("autosomes\\.([^\\.]+).*","\\1",basename(f))
   samples[[trait]] = data.table(trait=trait,n0=a.DT$controls_total[1],n1=a.DT$cases_total[1])
-  a.DT <- a.DT[,.(pid=paste(CHR,BP,sep=':'),a1=a0,a2=a1,or=OR)]
+  a.DT <- a.DT[,.(pid=paste(CHR,BP,sep=':'),a1=a0,a2=a1,or=OR,p.value=P)]
   SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
   man.DT <- fread(SNP_MANIFEST)
   M <- merge(a.DT,man.DT,by='pid')

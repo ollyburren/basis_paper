@@ -194,6 +194,7 @@ all.DT[,Z:=(value-control.loading)/sqrt(variance)]
 all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
+saveRDS(all.DT,"~/share/myogen_cut_down_projection_results_18_02_2019.RDS")
 
 
 ## plot
