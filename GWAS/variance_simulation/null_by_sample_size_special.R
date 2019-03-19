@@ -54,9 +54,9 @@ DEFAULT.TRAIT <- 'ret_p'
 
 ## perhaps add options for different manifests etc.
 option_list = list(
-        make_option(c("-n","--total"), type="numeric",default=DEFAULT.SUPPORT.DIR,
+        make_option(c("-n","--total"), type="numeric",default=1000,
                     help="Location of support files", metavar="character"),
-        make_option(c("-c", "--ncases"), type="numeric", default=DEFAULT.GWAS.DATA.DIR,
+        make_option(c("-c", "--ncases"), type="numeric", default=500,
                     help="location of OR aligned GWAS source files", metavar="character"),
         make_option(c("-o", "--out_dir"), type="character", default=NULL,
                     help="output directory", metavar="character")
