@@ -77,12 +77,6 @@ for(i in nrow(M)){
 
 }
 
-
-
-
-
-
-
 bZ <- dcast(forhc[variable=='Z'],Subtype~pc)
 bZm <- bZ[,-1] %>% as.matrix
 rownames(bZm) <- bZ$Subtype
@@ -93,3 +87,29 @@ pred.DT[p.adj<0.05,plotZ:=Z]
 pc <- ggplot(pred.DT,aes(x=variable,y=Subtype,fill=plotZ,label=signif(value,digits=1))) +
 geom_tile(color='black') + geom_text(cex=2.1) + scale_fill_gradient2("Z score") + xlab("Principal Component") +
 ylab("Trait") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+
+## do a line plot comparing PsA with UKBB PSO and PsA
+
+
+plot.DT <- res.DT[trait %in% c('bb_psoriasis','bb_psoriatic.arthropathy','jia_PsA'),]
+plot.DT[,c('ci.lo','ci.hi'):=list(delta-(sqrt(variance) * 1.96),delta+(sqrt(variance) * 1.96)),]
+plot.DT[,variable:=factor(variable,levels=paste0('PC',1:11))]
+plot.DT[,trait:=sub("^jia_","",trait)]
+
+pd <- position_dodge(0.2)
+pa <- ggplot(plot.DT,aes(x=variable,y=delta,group=trait,col=trait)) + geom_point(position=pd) +
+geom_errorbar(aes(ymin=ci.lo, ymax=ci.hi),alpha=0.3,position=pd) + geom_line(position=pd) +
+ylab(expression(Delta*~"control score")) + geom_hline(yintercept=0,lty=2,col='black') + xlab('Principal component') +
+theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + scale_colour_discrete("JIA Subtype")
+
+plot.DT <- res.DT[trait %in% c('bb_ankylosing.spondylitis','jia_ERA'),]
+plot.DT[,c('ci.lo','ci.hi'):=list(delta-(sqrt(variance) * 1.96),delta+(sqrt(variance) * 1.96)),]
+plot.DT[,variable:=factor(variable,levels=paste0('PC',1:11))]
+plot.DT[,trait:=sub("^jia_","",trait)]
+
+pd <- position_dodge(0.2)
+pa <- ggplot(plot.DT,aes(x=variable,y=delta,group=trait,col=trait)) + geom_point(position=pd) +
+geom_errorbar(aes(ymin=ci.lo, ymax=ci.hi),alpha=0.3,position=pd) + geom_line(position=pd) +
+ylab(expression(Delta*~"control score")) + geom_hline(yintercept=0,lty=2,col='black') + xlab('Principal component') +
+theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + scale_colour_discrete("JIA Subtype")

@@ -212,7 +212,31 @@ compute_t_no_share <- function(tg,pc,covM){
 }
 
 
+## test where one or more is different from control
+res.DT[trait %in% c('bb_ankylosing.spondylitis','jia_ERA') & p.adj<0.05,]$variable
 era_ankspond <- compute_t(tg=list(g1='jia_ERA',g2='bb_ankylosing.spondylitis'),pc='PC1')
+
+pcs <- res.DT[trait %in% c('bb_psoriatic.arthropathy','bb_psoriasis','jia_PsA') & p.adj<0.05,]$variable
+psa_ukbbpsa <- compute_t(tg=list(g1='jia_PsA',g2='bb_psoriatic.arthropathy'),pc='PC3')
+#psa_ukbbpso <- compute_t(tg=list(g1='jia_PsA',g2='bb_psoriasis'),pc='PC3',psa_ukbbpsa$covM)
+dat <- lapply(pcs,function(pc){
+  compute_t(tg=list(g1='jia_PsA',g2='bb_psoriasis'),pc=pc,psa_ukbbpsa$covM)$t
+}) %>% rbindlist
+dat2 <- lapply(pcs,function(pc){
+  compute_t(tg=list(g1='jia_PsA',g2='bb_psoriatic.arthropathy'),pc=pc,psa_ukbbpsa$covM)$t
+}) %>% rbindlist
+
+dat3 <- lapply(pcs,function(pc){
+  compute_t(tg=list(g1='bb_psoriasis',g2='bb_psoriatic.arthropathy'),pc=pc,psa_ukbbpsa$covM)$t
+}) %>% rbindlist
+
+dat <- rbindlist(list(dat,dat2,dat3))
+dat[,p.adj:=p.adjust(p.value,method="bonferroni")]
+
+
+
+compute_t(tg=list(g1='jia_PsA',g2='bb_psoriasis'),pc='PC1',psa_ukbbpsa$covM)$t
+
 myo.res <- compute_t(tg=list(g1='pm_myogen',g2=c('jdm_myogen','dm_myogen')),pc='PC10')
 egpa.res <- compute_t(tg=list(g1='anca_Neg',g2=c('mpo_Pos')),pc='PC6')
 jia.res <- compute_t(tg=list(g1=c('jia_sys','jia_ERA'),g2=c('jia_EO','jia_PO','jia_PsA','jia_RFneg','jia_RFpos')),pc='PC3')

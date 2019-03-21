@@ -6,7 +6,7 @@ load_all("~/git/cupcake")
 #library(cupcake)
 library(optparse)
 
-TEST <- TRUE # set to true when debugging
+TEST <- FALSE # set to true when debugging
 
 SHRINKAGE_METHOD<-'ws_emp_shrinkage'
 REF_GT_DIR <- '/home/ob219/share/as_basis/GWAS/ctrl_gt/by.chr'
@@ -56,27 +56,21 @@ est_SE<-function(f,n.cases,total){
 }
 
 
-study1.DT<-get_gwas_data(TRAIT_MANIFEST,SNP_MANIFEST_FILE,GWAS_DATA_DIR,filter_snps_by_manifest=TRUE,DEFAULT.TRAIT)
+#study1.DT<-get_gwas_data(TRAIT_MANIFEST,SNP_MANIFEST_FILE,GWAS_DATA_DIR,filter_snps_by_manifest=TRUE,DEFAULT.TRAIT)
+snps.DT <- fread(SNP_MANIFEST_FILE)
 shrink.DT <- readRDS(SHRINKAGE_FILE)
-M <- merge(study1.DT,shrink.DT,by='pid')
+study1.DT <- copy(shrink.DT)
+study1.DT <- merge(study1.DT,snps.DT[,.(pid,maf=ifelse(ref_a1.af>0.5,1-ref_a1.af,ref_a1.af))],by='pid')
 pc.emp <- readRDS(BASIS_FILE)
-
-# check the above code by computing the SE looks ok but will be completely out for high p.values
-test <- M[,.(pid,beta=log(or),se.beta=abs(log(or))/qnorm(p.value/2,lower.tail=FALSE),n,n1,maf,p.value)]
-test[,est.se.beta:=est_SE(maf,n1,n)]
-## all the noise comes from things that are not associated at all
-## probably because qnorm pdf has a lot of area under it therefore big error with back calc of the standard error
-keep <- test$p.value>1e-1
-#plot(test[keep,]$se.beta,test[keep,]$est.se.beta)
-## do need to be careful of the instances where log(or) = 0 as these are
-## where se will be completely wrong.
 study1.DT$n <- args$total
 study1.DT$n1 <- args$ncases
+
 
 study1.DT[,beta_se:=est_SE(maf,n1,n)]
 #study1.DT[,emp_se_old := 1/sqrt(2) * 1/sqrt(n) * emp_maf_se]
 study1.DT[,or:=1]
 study1.DT[,c('chr','position'):=tstrsplit(pid,':')]
+study1.DT[,trait:='test']
 message(sprintf("Simulate %d studies",args$n_sims))
 s1.sim <- simulate_study(study1.DT,REF_GT_DIR,shrink_beta=FALSE,n_sims=DEFAULT.N.SIMS,quiet=FALSE)
 idx <- split(1:nrow(s1.sim),s1.sim$trait)
@@ -96,13 +90,13 @@ message(sprintf("Saved projections in %s",ofile))
 
 ## this code prints out the commands for slurm job submission
 if(FALSE){
-  OUTDIR <- '/home/ob219/share/as_basis/GWAS/variance_simulations'
-  cmd_template<-"Rscript /home/ob219/git/basis_paper/GWAS/variance_simulation/null_by_sample_size_special.R -n %d -c %d -o %s"
+  OUTDIR <- '/home/ob219/share/as_basis/GWAS/variance_simulations_bootstrap_basis'
+  cmd_template<-"Rscript /home/ob219/git/basis_paper/GWAS/variance_simulation/null_using_bootstrap_basis.R -n %d -c %d -o %s"
   all.cmds <- lapply(c(1000,2000,3000,15000,5000),function(n){
     sapply(c(250,500,1000,5000,10000,50000),function(n1){
       if(n1<n)
         rep(sprintf(cmd_template,n,n1,OUTDIR),40)
       })
     }) %>% unlist
-    write(all.cmds,"~/tmp/qstuff/run_cal.txt")
+    write(all.cmds,"~/tmp/qstuff/run_sim_bs.txt")
 }
