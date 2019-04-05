@@ -97,7 +97,7 @@ med[,c('wget','db','o','ofile'):=tstrsplit(wget.command,' ')]
 med[,new.cmd:=sprintf("wget %s -O %s%s",Dropbox.File,BNEALE_DIR,ofile)]
 med[,phe:=make.names(Phenotype.Description) %>% gsub("Non.cancer.illness.code..self.reported..","",.)]
 
-message(sprintf("Pheno%s i:%d method:%s",med$phe[i],args$i,args$method))
+message(sprintf("Pheno:%s i:%d method:%s",med$phe[i],args$i,args$method))
 
 ## download data if required
 if(!file.exists(file.path(BNEALE_DIR,med$ofile[i])))
