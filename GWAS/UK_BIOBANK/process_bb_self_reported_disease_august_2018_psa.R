@@ -157,7 +157,7 @@ out[or==0 | is.infinite(or),or:=1]
 
 
 shrink.DT <- readRDS(SHRINKAGE_FILE)
-if(BETA==TRUE)
+if(args$method=='none')
   shrink.DT[,none:=1]
 shrink.DT<-shrink.DT[,c('pid',shrink=SHRINKAGE_METHOD),with=FALSE]
 setkey(shrink.DT,'pid')
