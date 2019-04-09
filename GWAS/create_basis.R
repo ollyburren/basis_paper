@@ -8,6 +8,13 @@ library(ggplot2)
 library(cowplot)
 library(ggrepel)
 
+## when aligning to the basis the counted allele or the allele with which the or is respect to should
+## is allele2. This is demonstrated by ptpn22
+## A G 1.2 CD
+## A G 0.5 T1D
+## Here we know that minor allele A is protective from crohn's and risk for T1D therefore
+## basis must be with respect to allele2
+
 SHRINKAGE_METHOD<-'ws_emp_shrinkage'
 REF_GT_DIR <- '/home/ob219/share/as_basis/GWAS/ctrl_gt/by.chr'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'

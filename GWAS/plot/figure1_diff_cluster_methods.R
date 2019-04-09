@@ -42,7 +42,7 @@ plot_bb_hclust <- function(proj_dir,basis_file,variance_file,bb_lu,ptitle,hc.met
 }
 
 
-par(mfrow=c(3,2))
+par(mfrow=c(2,2))
 
 plot_bb_hclust(proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/beta_2018/',
 basis_file='/home/ob219/share/as_basis/GWAS/support/basis_beta_gwas.RDS',
@@ -55,6 +55,21 @@ basis_file='/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS',
 variance_file='/home/ob219/share/as_basis/GWAS/support/ss_av_june.RDS',bb_lu=BB_LU,
 ptitle = 'Shrinkage 2018 UKBB Complete',hc.method="complete"
 )
+
+## add in PSA basis projections for comparison
+
+#plot_bb_hclust(proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/psa_beta_2018/',
+#basis_file='/home/ob219/share/as_basis/GWAS/support/psa_beta_basis_gwas.RDS',
+#variance_file='/home/ob219/share/as_basis/GWAS/support/beta_av_june.RDS.RDS',bb_lu=BB_LU,
+#ptitle = 'PSA Beta 2018 UKBB Complete',hc.method="complete"
+#)
+
+#plot_bb_hclust(proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/psa_ss_shrink_2018/',
+#basis_file='/home/ob219/share/as_basis/GWAS/support/psa_ss_basis_gwas.RDS',
+#variance_file='/home/ob219/share/as_basis/GWAS/support/ss_av_june.RDS',bb_lu=BB_LU,
+#ptitle = 'PSA Shrinkage 2018 UKBB Complete',hc.method="complete"
+#)
+
 
 
 plot_bb_hclust(proj_dir='/home/ob219/share/as_basis/GWAS/bb_projections/beta_2018/',

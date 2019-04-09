@@ -3,7 +3,7 @@ library(annotSnpStats)
 
 aav.dir <- '~/share/Data/GWAS/egpa_aav/summary'
 aav.files <- list.files(path=aav.dir,pattern='*.gwas',full.names=TRUE)
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/vasc/'
+OUT_DIR <- '/home/ob219/share/as_basis/GWAS/lyons_egpa/'
 
 samples <- list()
 for(f in aav.files){

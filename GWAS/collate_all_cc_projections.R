@@ -76,17 +76,29 @@ ukbb <- ukbb[,trait:=paste('bb',trait,sep='_')]
 
 ## load in jia sub types
 
-jia <- readRDS("/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia.RDS")
-## get sample counts and merge
-library(annotSnpStats)
-(load('~/share/Data/GWAS/JIA-2017-data/annotsnpstats-22.RData'))
-samp.DT <- samples(G) %>% data.table
-samp.DT <- samp.DT[,list(n1=.N),by=alt_ilar_code]
-samp.DT <- samp.DT[,n0:=5181][!is.na(alt_ilar_code),]
-samp.DT[,alt_ilar_code:=paste('jia',alt_ilar_code,sep='_')]
+jia <- readRDS("/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia_2019.RDS")
+sample.DT <- fread('/home/ob219/share/Data/GWAS/jia-mar-2019/summary-stats-samplecount-mar2019.csv')
+setnames(sample.DT,'n','n1')
+sub.DT <- data.table(idx=0:9,subtype=c('case','sys','PO','EO','RFneg','RFpos','ERA','PsA','undiff','missing'))
+samp.DT <- merge(sub.DT,sample.DT[,.(ilar_pheno,n1)],by.x='idx',by.y='ilar_pheno')
+samp.DT[,n0:=9196]
 jia <- melt(jia,id.var='trait')
-jia <- merge(jia,samp.DT,by.x='trait',by.y='alt_ilar_code')
-jia[,category:='bowes_jia']
+samp.DT[,subtype:=sprintf("jia_%s_19",subtype)]
+jia <- merge(jia,samp.DT[,.(subtype,n1,n0)],by.x='trait',by.y='subtype')
+jia[,category:='bowes_jia_2019']
+
+## code below for the old data
+#jia <- readRDS("/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia.RDS")
+### get sample counts and merge
+#library(annotSnpStats)
+#(load('~/share/Data/GWAS/JIA-2017-data/annotsnpstats-22.RData'))
+#samp.DT <- samples(G) %>% data.table
+#samp.DT <- samp.DT[,list(n1=.N),by=alt_ilar_code]
+#samp.DT <- samp.DT[,n0:=5181][!is.na(alt_ilar_code),]
+#samp.DT[,alt_ilar_code:=paste('jia',alt_ilar_code,sep='_')]
+#jia <- melt(jia,id.var='trait')
+#jia <- merge(jia,samp.DT,by.x='trait',by.y='alt_ilar_code')
+#jia[,category:='bowes_jia']
 
 ## load in tian_infectious_disease
 
@@ -213,13 +225,23 @@ nmo[,category:='estrada_NMO']
 
 ## load in egpa vasc
 
-files <- list.files(path="/home/ob219/share/as_basis/GWAS/vasc/projections",pattern="*.RDS",full.names=TRUE)
-vasc <- lapply(files,readRDS) %>% do.call('rbind',.)
-vasc <- data.table(trait=rownames(vasc),vasc)
-vasc <- melt(vasc,id.var='trait')
-vasc.samp <- readRDS('/home/ob219/share/as_basis/GWAS/vasc/sample.RDS')
-vasc <- merge(vasc,vasc.samp,by='trait')
-vasc[,category:='lyons_vasculitis']
+files <- list.files(path="/home/ob219/share/as_basis/GWAS/lyons_egpa/projections",pattern="*.RDS",full.names=TRUE)
+egpa <- lapply(files,readRDS) %>% do.call('rbind',.)
+egpa <- data.table(trait=rownames(egpa),egpa)
+egpa <- melt(egpa,id.var='trait')
+egpa.samp <- readRDS('/home/ob219/share/as_basis/GWAS/lyons_egpa/sample.RDS')
+egpa <- merge(egpa,egpa.samp,by='trait')
+egpa[,category:='lyons_egpa']
+
+
+## load in aav (vasculitis) from Limy Wong
+
+aav <- readRDS("/home/ob219/share/as_basis/GWAS/wong_aav/projections/aav_2019.RDS")
+aav <- melt(aav,id.var='trait')
+aav.samp <- fread("/home/ob219/share/Data/GWAS-summary/aav_limy_wong/aav_sample_size.txt")
+aav <- merge(aav,aav.samp[,.(label,n0,n1)],by.x='trait',by.y='label')
+aav[,category:='wong_aav']
+
 
 ## load in abdef
 
@@ -245,6 +267,9 @@ t1d[trait=='z_pca',c('n0','n1'):=list(2240*(1-0.1),2240*0.1)]
 
 t1d[,category:='liley_t1d']
 
+psa <- readRDS("/home/ob219/share/as_basis/GWAS/psa_projections/summary/bowes_psa.RDS")
+psa <- melt(psa,id.var='trait')
+psa[,c('n0','n1','category'):=list(4596,1805,'bowes_psa')]
 
 ## for some reason we swapped from n1 to n0 halfway through to n0 n1
 ## we need to fix otherwise everything gets swapped and case
@@ -266,12 +291,13 @@ all.proj <- list(
   eff=eff,
   cd.prog=cd.prog,
   psy=psy,
-  #myogen=rbind(myogen,myogen.flip),
   myogen=myogen,
   nmo=nmo,
-  vasc=vasc,
+  egpa=egpa,
   abdef=abdef,
-  liley=t1d
+  liley=t1d,
+  aav=aav,
+  psa=psa
 ) %>% rbindlist
 all.proj[,n:=n1+n0]
 
@@ -298,126 +324,4 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/25_01_19_summary_results.RDS')
-
-
-if(FALSE){
-## how many traits have a pc score that is less than FDR 5%
-keep.traits <- all.DT[p.adj<0.05 & !variable %in% c('PC10','PC11'),]$trait %>% unique
-out.DT <- all.DT[trait %in% keep.traits,]
-setnames(out.DT,'variable','PC')
-#out.DT[,delta:=value-control.loading]
-## vitamin c is in twice remove !
-out.DT <- out.DT[trait!='bb_vitamin.c.product',]
-## work out hclust order
-
-get_hclust_order <- function(DT){
-  deltas <- melt(DT,id.vars=c('trait','PC'),measure.vars='delta') %>% dcast(.,trait~PC+variable)
-  delta.mat <- as.matrix(deltas[,-1])
-  rownames(delta.mat) <- deltas$trait
-  delta.hc <- dist(delta.mat) %>% hclust
-  delta.hc$labels[delta.hc$order]
-}
-out.DT[,PC:=factor(PC,levels=paste('PC',1:11,sep=""))]
-med.DT <- out.DT[category=='medications' & !PC %in% c('PC10','PC11'),]
-med.DT[,trait:=factor(trait,levels=get_hclust_order(med.DT))]
-med.DT[p.adj>=0.05,delta:=NA]
-disease.DT <- out.DT[category!='medications' & !PC %in% c('PC10','PC11'),]
-disease.DT[,trait:=factor(trait,levels=get_hclust_order(disease.DT))]
-disease.DT[p.adj>=0.05,delta:=NA]
-
-# deltas <- melt(out.DT,id.vars=c('trait','PC'),measure.vars='delta') %>% dcast(.,trait~PC+variable)
-# delta.mat <- as.matrix(deltas[,-1])
-# rownames(delta.mat) <- deltas$trait
-# delta.hc <- dist(delta.mat) %>% hclust
-
-#out.DT[,trait:=factor(trait,levels=delta.hc$labels[delta.hc$order])]
-
-
-library(cowplot)
-#ggplot(out.DT[p.adj<0.05 & !PC %in% c('PC10','PC11'),],aes(x=trait,y=PC,fill= (pmax(Z,-11) %>% pmin(.,11)),label=signif(delta,digits=1))) + geom_tile(color='black') +
-pa <- ggplot(med.DT,aes(x=trait,y=PC,fill= (pmax(Z,-11) %>% pmin(.,11)),label=signif(delta,digits=1))) + geom_tile(color='black') +
-geom_text(size=5,angle=90) + scale_fill_gradientn("Z",colours=c('green','white','red')) +
-theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + guides(fill=FALSE) + ggtitle("Medication")
-
-pb <- ggplot(disease.DT,aes(x=trait,y=PC,fill= (pmax(Z,-11) %>% pmin(.,11)),label=signif(delta,digits=1))) + geom_tile(color='black') +
-geom_text(size=5,angle=90) + scale_fill_gradientn("Z",colours=c('green','white','red')) +
-theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))  +  ggtitle("Disease") +
-theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank())
-
-plot_grid(pa,pb)
-
-stop()
-
-## category stuff
-ss.plot <- out.DT[PC=='PC1',.(trait,n0=n0,n1=n1,category)]
-ss.plot <- melt(ss.plot,id.vars=c('trait','category'))
-
-#ggplot(ss.plot[variable=='n1',],aes(x=trait,y=value,fill=category)) + geom_bar(stat="identity",col='black') +
-#theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +  scale_y_log10(
-#    breaks = scales::trans_breaks("log10", function(x) 10^x),
-#    labels = scales::trans_format("log10", scales::math_format(10^.x))
-#  )
-
-## we are interested in this which appears to separate mpo_Pos and anca_Neg
-int<-all.DT[trait %in% c('mpo_Pos','anca_Neg') & variable=='PC6',]
-int[,ci:=1.96 * sqrt(variance)]
-
-ggplot(int,aes(x=trait,y=value)) + geom_point() +  geom_errorbar(aes(ymin=value-ci, ymax=value+ci), width=.1,)
-
-
-T.test <- function(n, mean, sd) {
-  s <- sum((n - 1) * sd^2) / (sum(n) - 2) # weighted variance
-  t <- sqrt(prod(n) / sum(n)) * (diff(mean) / sqrt(s)) # t statistic
-  df <- sum(n) - 2  # degrees of freedom
-  p <- (1 - pt(abs(t), df)) * 2 # p value
-  c(t = t, p = p)
-}
-
-## alternative method just simulate
-
-m1=int$value[1]; s1=int$variance[1]; n1=800
-m2=int$value[2]; s2=int$variance[2]; n2=800
-
-# method 1: normal samples, rescaled to match original:
-z1 = rnorm(n1)
-x1 = scale(z1)*s1+m1
-z2 = rnorm(n2)
-x2 = scale(z2)*s2+m2
-t.test(x1,x2) # Welch-Satterthwaite
-plot.it <- rbind(data.table(trait=int$trait[1],loadings=x1[,1]),data.table(trait=int$trait[2],loadings=x2[,1]))
-
-ggplot(plot.it,aes(x=trait,y=loadings)) + geom_boxplot()
-}
-
-
-
-#dev.print(pdf,"~/tmp/all_cc.pdf")
-
-#out.DT[p.adj>0.05, Z:=0]
-
-#ggplot(out.DT[PC != 'PC11',],aes(x=trait,y=PC,fill= (pmax(Z,-11) %>% pmin(.,11)),label=signif(delta,digits=1))) + geom_tile(color='black') +
-#geom_text(size=5,angle=90) + scale_fill_gradientn("Z",colours=c('green','white','red')) +
-#theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
-
-## print a similar for projected traits
-
-## work out hclust order for basis
-if(FALSE){
-setnames(basis.DT,'variable','PC')
-deltas.basis <- melt(basis.DT,id.vars=c('trait','PC'),measure.vars='value') %>% dcast(.,trait~PC+variable)
-delta.basis.mat <- as.matrix(deltas.basis[,-1])
-rownames(delta.basis.mat) <- deltas.basis$trait
-delta.basis.hc <- dist(delta.basis.mat) %>% hclust
-basis.DT[,trait:=factor(trait,levels=delta.basis.hc$labels[delta.basis.hc$order])]
-basis.DT[,PC:=factor(PC,levels=paste('PC',1:11,sep=""))]
-
-
-
-ggplot(basis.DT[trait!='control',],aes(x=trait,y=PC,fill= Z,label=signif(value,digits=1))) + geom_tile(color='black') +
-geom_text(size=5,angle=90) + scale_fill_gradientn("Z",colours=c('green','white','red')) +
-theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
-dev.print(pdf,"~/tmp/basis.pdf")
-}
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/09_04_19_summary_results.RDS')
