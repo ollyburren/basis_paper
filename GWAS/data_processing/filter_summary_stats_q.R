@@ -19,7 +19,7 @@ if(TEST){
   args <- list(
     manifest_file='/home/ob219/rds/hpc-work/as_basis/support_tab/as_basis_snp_support_uk10k.tab',
     file = "/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/astle_lymph_p.tab",
-    outdir = "/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/all_studies_filtered",
+    outdir = "/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/all_imputed_studies_filtered",
     allele_flip=FALSE
 )
 }else{
@@ -57,4 +57,23 @@ if(FALSE){
     sprintf(template,RSCRIPT,fs,SNP_MANIFEST_FILE,OUTDIR)
   }) %>% do.call('c',.)
   write(cmds,file="~/tmp/qsub/filter_summ.txt")
+}
+
+if(FALSE){
+  MANIFEST_FILE <- '/home/ob219/git/as_basis/manifest/as_manifest_july.tsv'
+  BASE_DIR <- '/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/'
+  RSCRIPT <- '/home/ob219/git/basis_paper/GWAS/data_processing/filter_summary_stats_q.R'
+  OUTDIR <- '/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/all_imputed_studies_filtered'
+  SNP_MANIFEST_FILE <- '/home/ob219/rds/hpc-work/as_basis/support_tab/imputed_as_basis_snp_support_uk10k.tab'
+  m.DT <- fread(MANIFEST_FILE)[trait %in% c('UC','CD','RA','SLE','T1D','PSC'),]
+  cmds <- lapply(m.DT$file,function(f){
+    fs <- file.path(BASE_DIR,f)
+    effect_allele <- m.DT[file==f,]$effect_allele
+    template <- "Rscript %s --file %s --manifest_file %s --outdir %s"
+    if(effect_allele=='a1')
+      template <- "Rscript %s --file %s --manifest_file %s --outdir %s --allele_flip"
+    sprintf(template,RSCRIPT,fs,SNP_MANIFEST_FILE,OUTDIR)
+  }) %>% do.call('c',.)
+  write(cmds,file="~/tmp/qsub/filter_summ_imputed.txt")
+  write.table(m.DT,file='/home/ob219/share/as_basis/GWAS/trait_manifest/big_as_manifest_gwas.tab',sep="\t",quote=FALSE,row.names=FALSE)
 }

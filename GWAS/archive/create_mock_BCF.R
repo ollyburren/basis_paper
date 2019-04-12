@@ -32,7 +32,9 @@ mock_header <- "##fileformat=VCFv4.2
 
 in.dir <- '/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/'
 out.dir <- '/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/mockVCF'
-files <- list.files(path=in.dir,pattern='*.tab',full.names=TRUE)
+#files <- list.files(path=in.dir,pattern='*.tab',full.names=TRUE)
+files <- c('uc_delaange.tab','t1d_cooper.tab','sle_bentham.tab','ra_okada.tab','psc_ji.tab','cd_delaange.tab') %>% file.path(in.dir,.)
+
 BCFTOOLS <- '/usr/local/Cluster-Apps/bcftools/1.2/bin/bcftools'
 
 library(optparse)
@@ -45,7 +47,7 @@ option_list = list(
 )
 
 if(TEST){
-  args <- list(file='/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/sun_KIR2DS2.10428.1.3.tab')
+  args <- list(file='/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/uc_delaange.tab')
 }else{
   opt_parser = OptionParser(option_list=option_list);
   args = parse_args(opt_parser)
@@ -120,4 +122,38 @@ if(FALSE){
   addLDBlock(man.DT,ld.gr)
   man.DT <- man.DT[,.(pid,ref_a1=uk10_A1,ref_a2=uk10_A2,ref_a1.af=1-uk10_A2_AF,ld.block=ld)]
   write.table(man.DT,file='/home/ob219/rds/hpc-work/as_basis/support_tab/as_basis_snp_support_uk10k.tab',row.names=FALSE,quote=FALSE)
+}
+
+## this is to create a basis just using imputed studies
+
+if(FALSE){
+  library(data.table)
+  library(rtracklayer)
+  #BCF_FILE <- '/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/mockVCF/all_studies_tagged.bcf'
+  BCF_FILE <- '/home/ob219/rds/hpc-work/as_basis/gwas_stats/processed_new_aligned_uk10k/mockVCF/all_studies.bcf'
+  TOTAL_STUDY_COUNT <- 12
+  imputed.studies <- c('uc_delaange','t1d_cooper','sle_bentham','ra_okada','psc_ji','cd_delaange') %>% paste(.,sep=',',collapse=',')
+  cmd <- sprintf("bcftools view -G -c %d  -Ov -s %s %s",TOTAL_STUDY_COUNT,imputed.studies,BCF_FILE)
+  message(cmd)
+  DT <- fread(cmd)
+  LD_FILE <- "/home/ob219/rds/hpc-work/DATA/JAVIERRE_GWAS/support/0.1cM_regions.b37_ordered.bed"
+  ## load in UK10K reference genotype summaries
+  uk10 <- readRDS("/home/ob219/rds/hpc-work/DATA/UK10K/UK10K_0.005_MAF.RDS")
+  setnames(uk10,'CHROM','CHR')
+  uk10[CHR=='X',CHR:='23']
+  uk10[,CHR:=as.numeric(CHR)]
+  uk10 <- uk10[order(CHR,POS),]
+  uk10m <- uk10[,.(CHR,BP=POS,uk10_A1=REF,uk10_A2=ALT,uk10_A2_AF=AF)]
+  uk10m[,pid:=paste(CHR,BP,sep=':')]
+  man.DT <- uk10m[pid %in% DT$ID,]
+  ## add ld information
+  ld.gr<-import.bed(LD_FILE)
+  addLDBlock<-function(DT,ld.gr){
+    dt.gr<-with(DT,GRanges(seqnames=Rle(CHR),ranges=IRanges(start=BP,width=1L),idx=1:nrow(DT)))
+    ol<-as.matrix(findOverlaps(dt.gr,ld.gr))
+    DT[ol[,1],ld:=ol[,2]]
+  }
+  addLDBlock(man.DT,ld.gr)
+  man.DT <- man.DT[,.(pid,ref_a1=uk10_A1,ref_a2=uk10_A2,ref_a1.af=1-uk10_A2_AF,ld.block=ld)]
+  write.table(man.DT,file='/home/ob219/rds/hpc-work/as_basis/support_tab/imputed_as_basis_snp_support_uk10k.tab',row.names=FALSE,quote=FALSE)
 }

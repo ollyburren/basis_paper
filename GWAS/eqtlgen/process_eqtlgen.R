@@ -28,9 +28,9 @@ SHRINKAGE_METHOD<-'ws_emp_shrinkage'
 ## just the one shrinkage file
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
-DATA_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sum_stats/eqtlgen'
+DATA_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sum_stats/eqtlgen_notrans/'
 SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
-OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/eqtlgen_projections/'
+OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/eqtlgen_projections_no_trans/'
 
 
 ## running on the queue
@@ -48,7 +48,7 @@ if(FALSE){
   #cmds <- sapply(c(165,159,78,167,116,57,166),function(i){
     sprintf("Rscript /home/ob219/git/basis_paper/GWAS/eqtlgen/process_eqtlgen.R -f %s",f)
   })
-  write(cmds,file="~/tmp/qstuff/gwas_eqtlgen.txt")
+  write(cmds,file="~/tmp/qstuff/gwas_eqtlgen_notrans.txt")
 }
 
 shrink.DT <- readRDS(SHRINKAGE_FILE)
