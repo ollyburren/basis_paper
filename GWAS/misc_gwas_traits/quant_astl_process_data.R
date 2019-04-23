@@ -6,7 +6,7 @@ library(annotSnpStats)
 library(optparse)
 library(cupcake)
 
-TEST<-TRUE
+TEST<-FALSE
 option_list = list(
         make_option(c("-f", "--file"), type="character", default=NULL,
               help="Astle data file to process", metavar="character")
