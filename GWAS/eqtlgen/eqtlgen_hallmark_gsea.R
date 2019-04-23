@@ -5,7 +5,7 @@ library(parallel)
 library(grid)
 library(gridExtra)
 
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/eqtlgen_projections'
+OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/eqtlgen_projections_significant_only/'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
 fs <- list.files(path=OUT_DIR,pattern="*.RDS",full.names=TRUE)
 res.DT <- lapply(fs,readRDS) %>% rbindlist
@@ -26,9 +26,9 @@ M <- merge(M,genedesc,by.x='trait',by.y='ensembl_gene_id')
 
 Mf <- M[gene_biotype=='protein_coding' & !chromosome_name %in% c('X','Y'),]
 
-control <- readRDS(BASIS_FILE)$x["control",]
-control <- data.table(pc=names(control),cscore=control)
-Mf <- merge(Mf,control,by.x='variable',by.y='pc')
+#control <- readRDS(BASIS_FILE)$x["control",]
+#control <- data.table(pc=names(control),cscore=control)
+#Mf <- merge(Mf,control,by.x='variable',by.y='pc')
 Mf[,delta:=value-cscore]
 #Mf[,Zd:=(delta-mean(delta))/sqrt(var(delta)),by='variable']
 #Mf[,Z:=(value-mean(value))/sqrt(var(value)),by='variable']
@@ -36,7 +36,7 @@ Mf[,raw.p:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 Mf[,p.adj:=p.adjust(raw.p,method="BH"),by='variable']
 
 
-gp <- melt(Mf[trait %in% Mf[p.adj<0.05,]$trait,.(pc=variable,delta,gene=external_gene_name)],measure.vars='delta') %>% dcast(.,gene~pc)
+gp <- melt(Mf[trait %in% Mf[p.adj<0.01,]$trait,.(pc=variable,delta,gene=external_gene_name)],measure.vars='delta') %>% dcast(.,gene~pc)
 mat <- as.matrix(gp[,-1])
 rownames(mat) <- gp$gene
 hc <- dist(mat) %>% hclust(.)
@@ -45,7 +45,7 @@ library(cowplot)
 Mf <- Mf[variable !='PC11',]
 tp <- Mf[trait %in% Mf[p.adj<0.05,]$trait,.(pc=variable,delta,gene=external_gene_name,p.adj)]
 tp[,is.sig:='']
-tp[p.adj<0.05,is.sig:='*']
+tp[p.adj<0.01,is.sig:='*']
 tp[,pc:=factor(pc,levels=paste('PC',1:10,sep=''))]
 tp[,gene:=factor(gene,levels=hc$labels[hc$order])]
 bbplot <- ggplot(tp[pc!='PC11'],aes(x=pc,y=gene,fill=delta,label=is.sig))  +
@@ -192,7 +192,8 @@ gsea.kegg.DT <- newgsea(kegg)
 gsea.DT <- rbindlist(list(gsea.react.DT,gsea.hm.DT,gsea.kegg.DT))
 #gsea.DT <- gsea.react.DT
 ## test to see what happens if we just look at one PC
-gsea.DT[,p.adj:=p.adjust(p,method='BH')]
+#gsea.DT[,p.adj:=p.adjust(p,method='BH')]
+gsea.DT[,p.adj:=p.adjust(p,method='bonferroni')]
 ## keep KEGG, REACTOME and
 
 #gsea.DT <- gsea.hm.DT

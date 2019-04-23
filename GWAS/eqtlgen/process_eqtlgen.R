@@ -48,7 +48,7 @@ if(FALSE){
   #cmds <- sapply(c(165,159,78,167,116,57,166),function(i){
     sprintf("Rscript /home/ob219/git/basis_paper/GWAS/eqtlgen/process_eqtlgen.R -f %s",f)
   })
-  write(cmds,file="~/tmp/qstuff/gwas_eqtlgen_notrans.txt")
+  write(cmds,file="~/tmp/qstuff/gwas_eqtlgen_significant.txt")
 }
 
 shrink.DT <- readRDS(SHRINKAGE_FILE)
