@@ -48,7 +48,7 @@ if(FALSE){
   #cmds <- sapply(c(165,159,78,167,116,57,166),function(i){
     sprintf("Rscript /home/ob219/git/basis_paper/GWAS/process_bb_cancer_august_2018.R -i %d",i)
   })
-  write(cmds,file="~/tmp/qstuff/gwas_bb_cancer_proj_2018.txt")
+  write(cmds,file="~/tmp/qstuff/gwas_bb_cancer_proj_t2d_vit.txt")
 }
 
 
