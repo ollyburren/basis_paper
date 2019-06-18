@@ -17,7 +17,7 @@ if(!TEST){
 	    stop("Supply an integer for phenotype to process", call.=FALSE)
     }
 }else{
-  args <- list(integer=57,method='none')
+  args <- list(integer=57,method='ws_emp_shrinkage')
 }
 
 i<-args$integer
@@ -25,18 +25,18 @@ i<-args$integer
 
 if(args$method=='none'){
   SHRINKAGE_METHOD<-args$method
-  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/psa_beta_basis_gwas.RDS'
-  OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/psa_beta_2018/'
+  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
+  OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/vit_t2d_2019_beta/'
 }else{
   SHRINKAGE_METHOD<-args$method
   ##  note that this is not quite automatic as need to match basis with input shrinkage
-  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/psa_ss_basis_gwas.RDS'
-  OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/psa_ss_shrink_2018/'
+  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
+  OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/vit_t2d_2019/'
 }
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_psa_shrinkage_gwas.RDS'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
 BNEALE_DIR <- '/home/ob219/share/Data/GWAS-summary/uk_biobank_neale_summary_stats_2018'
 BASIS_FILT_DIR <- file.path(BNEALE_DIR,'as_basis_tmp')
-SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_psa.tab'
+SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
 BB_BASIS_LU_FILE <- '/home/ob219/share/as_basis/GWAS/support//sept_bb_gwas_var_man.RDS'
 
 

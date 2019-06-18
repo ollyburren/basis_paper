@@ -110,7 +110,40 @@ small <- sbi(pc.emp.small)
 
 plot_grid(big,small,nrow=2)
 
-#similar although PSC has swapped sides 
+## plot PC scores vs one another ?
+
+small.DT <- data.table(trait=rownames(pc.emp.small$x),pc.emp.small$x)
+small.DT <- melt(small.DT,id.vars="trait")
+setnames(small.DT,'value','small')
+big.DT <- data.table(trait=rownames(pc.emp.big$x),pc.emp.big$x)
+big.DT <- melt(big.DT,id.vars="trait")
+setnames(big.DT,'value','big')
+m.DT <- merge(small.DT,big.DT,by=c('trait','variable'))
+
+pp2 <- ggplot(m.DT[variable!='PC7'],aes(x=small,y=big,color=trait)) + geom_point() +
+geom_abline(intercept=0,slope=1,col='red',linetype=2,alpha=0.3) +
+geom_abline(intercept=0,slope=-1,col='red',linetype=2,alpha=0.3) +
+#geom_hline(yintercept=0,col='lightgrey',linetype=2) +
+#geom_vline(xintercept=0,col='lightgrey',linetype=2) +
+#facet_wrap(~variable,scales="free",nrow=6) + xlab("Sparse SNP Basis") + ylab("Dense SNP Basis")
+facet_wrap(~variable,nrow=6) + xlab("Sparse SNP Basis") + ylab("Dense SNP Basis") +
+theme(legend.position="bottom")
+
+## compare the prop of variance explained by each PC
+
+imp.DT <- data.table(pc=paste('PC',1:7,sep=''),small=summary(pc.emp.small)[['importance']][2,],big=summary(pc.emp.big)[['importance']][2,])
+
+pp1 <- ggplot(imp.DT[pc!='PC7'],aes(x=small,y=big)) +
+geom_abline(intercept=0,slope=1,col='lightgrey',linetype=2) +
+geom_point() + xlab("Sparse SNP Basis - Variance Explained") + ylab("Dense SNP Basis - Variance Explained")
+
+pp3 <- plot_grid(pp1,pp2,labels=c('a','b'),nrow=1,rel_widths=c(1,2))
+save_plot("~/tmp/supp_fig_snp_density_figure.pdf",pp3,base_height=8)
+
+
+
+
+#similar although PSC has swapped sides
 ## better to look at hclust across all components
 
 big.mat <- pc.emp.big$x
@@ -123,7 +156,7 @@ library(pheatmap)
 par(mfrow=c(1,2))
 p1 <- dist(big.mat) %>% as.matrix %>% pheatmap
 p2 <- dist(small.mat) %>% as.matrix %>% pheatmap
-
+library(gridExtra)
 g <- grid.arrange(arrangeGrob(grobs= list(p1[[4]],p2[[4]]),ncol=2))
 
 

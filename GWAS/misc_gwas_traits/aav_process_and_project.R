@@ -83,6 +83,9 @@ all.vasc <- mclapply(seq_along(samples.DT),function(i){
 },mc.cores=8) %>% do.call('rbind',.)
 vasc.DT <- data.table(trait=rownames(all.vasc),all.vasc)
 saveRDS(vasc.DT,file="/home/ob219/share/as_basis/GWAS/aav_projections/summary/aav_2019.RDS")
+
+
+## vasc.DT <- readRDS("/home/ob219/share/as_basis/GWAS/wong_aav/projections/aav_2019.RDS")
 vasc.DT <- melt(vasc.DT,id.vars='trait')
 control.DT <- data.table(rownames(pc.emp$x),pc.emp$x) %>% melt(.,id.vars='V1')
 control.DT <- control.DT[V1=='control',.(pc=variable,control.score=value)]
@@ -90,4 +93,9 @@ vasc.DT <- merge(vasc.DT,control.DT,by.x='variable',by.y='pc')
 vasc.DT[,variable:=factor(variable,levels=paste0('PC',1:11))]
 library(cowplot)
 ggplot(vasc.DT,aes(x=variable,y=value-control.score,color=trait,group=trait)) + geom_point() + geom_line() +
+geom_hline(yintercept=0,lty=2)
+
+##
+
+ggplot(vasc.DT[grep("meta",trait),],aes(x=variable,y=value-control.score,color=trait,group=trait)) + geom_point() + geom_line() +
 geom_hline(yintercept=0,lty=2)

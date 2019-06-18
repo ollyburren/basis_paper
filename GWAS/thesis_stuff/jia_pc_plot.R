@@ -175,7 +175,7 @@ cols['Medications'] <- '#05af6e'
 filt.DT[,trait:=gsub("^bb_","",trait)]
 filt.DT[,trait:=gsub("^jia_","",trait)]
 
-labs1 <- c('JIA',"UKBB SR\nMedications","UKBB SR\nDisease","UKBB SR\nCancer",'Basis')
+labs1 <- c('JIA',"UKBB\nSRM","UKBB\nSRD","UKBB\nSRC",'Basis')
 
 pc <- 'PC1'
 #title <- sprintf("JIA subtypes %s (Variance Explained %0.1f%%)",pc,(summary(pc.emp)[['importance']][2,][pc] * 100) %>% signif(.,digits=2))
@@ -194,6 +194,18 @@ pp4 <- forest_plot_focal_merge(filt.DT,pc='PC9',focal=all.traits['bowes_jia'] %>
 save_plot(pp4 + theme(legend.position="bottom",axis.text.y=element_text(size=13)),file="~/tmp/pc9_thesis.pdf",base_height=8)
 
 forest_plot_focal_merge(filt.DT,pc='PC7',focal=all.traits['bowes_jia'] %>% unlist %>% gsub("^jia_","",.),title=title,cat_levels=cols,labels=labs1)
+
+## print out a single PDF for each page for all PC excluding PC111
+
+pcs <- paste('PC',1:10,sep='')
+for(pc in pcs){
+  fp=file.path("~/tmp/pc_app/",sprintf("appendix_%s.pdf",pc))
+  pdf(file=fp,paper="a4",height=11,width=8)
+  pp <- forest_plot_focal_merge(filt.DT,pc=pc,focal=all.traits['bowes_jia'] %>% unlist %>% gsub("^jia_","",.),title=pc,cat_levels=cols,labels=labs1)
+  (pp + theme(legend.position="bottom")) %>% print
+  dev.off()
+}
+
 #save_plot(pp4 + theme(legend.position="bottom",axis.text.y=element_text(size=13)),file="~/tmp/pc9_thesis.pdf",base_height=8)
 
 

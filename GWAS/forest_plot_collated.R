@@ -1,7 +1,7 @@
 ## FOREST PLOTS FOR particular diseases
 library(cowplot)
-#RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/19_12_18_summary_results.RDS'
-RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/09_04_19_summary_results.RDS'
+RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/19_12_18_summary_results.RDS'
+#RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/09_04_19_summary_results.RDS'
 res.DT <- readRDS(RESULTS.FILE)
 all.traits <- traits<-split(res.DT$trait,res.DT$category) %>% lapply(.,unique)
 ## add in basis traits for comparison

@@ -3,49 +3,13 @@
 ## note that these are large files - I used UNIX to create a list of unique variants in
 ## order to facilitate filtering.
 
-EQTL_GEN_MAN <- '/home/ob219/share/Data/expr/eqtlgen/cis_manifest.tab'
+CIS_FILE <- '/home/ob219/share/Data/expr/eqtlgen/cis-eQTL_significant_20181017.txt.gz'
+cis.DT <- fread(sprintf("zcat %s",CIS_FILE))
+cis.DT[,pid:=paste(SNPChr,SNPPos,sep=':')]
+## read in basis
 SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
-e.DT <- fread(EQTL_GEN_MAN)
-setnames(e.DT,c('id','chr','position','effect','other'))
-e.DT <- e.DT[id!='SNP',]
-e.DT[,pid:=paste(chr,position,sep=':')]
 snp.DT <- fread(SNP_MANIFEST)
-keep.id <- e.DT[pid %in% snp.DT$pid,]$id
-ID_FILE <- "/home/ob219/share/as_basis/GWAS/eqtlgen/gwas_june_match.tab"
-write(keep.id,file=ID_FILE)
-CIS_FILE <- '/home/ob219/share/Data/expr/eqtlgen/cis-eQTLs_full_20180905.txt.gz'
-OUT_FILE <- '/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.txt'
-cmd <- sprintf("zcat %s | grep -f %s > %s",CIS_FILE,ID_FILE,OUT_FILE)
-#system(cmd)
-#zcat /home/ob219/share/Data/expr/eqtlgen/cis-eQTLs_full_20180905.txt.gz | grep -f /home/ob219/share/as_basis/GWAS/eqtlgen/gwas_june_match.tab > /home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.txt
-## above does not work as get out of mem error instead us data.table
-if(!file.exists("/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.RDS")){
-  DT<-fread("zcat /home/ob219/share/Data/expr/eqtlgen/cis-eQTLs_full_20180905.txt.gz")
-  f.DT<-DT[SNP %in% keep.id,]
-saveRDS(f.DT,"/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.RDS")
-}else{
-  f.DT<-readRDS("/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.RDS")
-}
-## next do the same for trans eqtl
-#EQTL_GEN_MAN_TRANS <- '/home/ob219/share/Data/expr/eqtlgen/trans_manifest.tab'
-#DT.t<-fread("/home/ob219/share/Data/expr/eqtlgen/trans-eQTLs_full_20180905.txt")
-#e.DT <- fread(EQTL_GEN_MAN_TRANS)
-#setnames(e.DT,c('id','chr','position','effect','other'))
-#e.DT <- e.DT[id!='SNP',]
-#e.DT[,pid:=paste(chr,position,sep=':')]
-snp.DT <- fread(SNP_MANIFEST)
-#keep.id <- e.DT[pid %in% snp.DT$pid,]$id
-#f.DT.t<-DT.t[SNP %in% keep.id,]
-
-## merge into one file and convert Z scores to the beta scale by multiplying through by se of beta due to variance
-
-#f.DT.t[,type:='trans']
-#f.DT[,type:='cis']
-
-#basis.DT <- rbind(f.DT.t,f.DT)
-## trans could be problematic as contain variants that are curated from immunobase
-basis.DT <- f.DT
-basis.DT[,pid:=paste(SNPChr,SNPPos,sep=':')]
+basis.DT <- cis.DT[pid %in% snp.DT$pid,]
 basis.DT <- basis.DT[,.(pid,Zscore,risk.allele=AssessedAllele,other.allele=OtherAllele,ensg=Gene,NrSamples)]
 ##merge with the manifest to get MAF so can convert to the correct scale
 M <- merge(basis.DT,snp.DT,by='pid')
@@ -77,7 +41,7 @@ M[g.class=='match',der.beta:=der.beta*-1]
 M.out <- M[,.(pid,a1=ref_a1,a2=ref_a2,or=der.beta,p.value=2*pnorm(abs(Zscore),lower.tail=FALSE),ensg)]
 by.gene<-split(M.out,M.out$ensg)
 #OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sum_stats/eqtlgen/'
-OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sum_stats/eqtlgen_notrans/'
+OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sum_stats/eqtlgen_significant_only/'
 for(n in names(by.gene)){
   message(n)
   out <- by.gene[[n]][,.(pid,a1,a2,or,p.value)]

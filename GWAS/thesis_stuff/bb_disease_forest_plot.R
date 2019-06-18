@@ -244,13 +244,28 @@ cols['Medications'] <- '#05af6e'
 filt.DT[,trait:=gsub("^bb_","",trait)]
 filt.DT[,trait:=gsub("^jia_","",trait)]
 
-labs1 <- c('JIA',"UKBB SR\nMedications","UKBB SR\nDisease","UKBB SR\nCancer",'Basis')
+## appendix plots
+for(pc in paste('PC',c(1,5,6),sep='')){
+  labs1 <- c('JIA',"UKBB\nSRM","UKBB\nSRD","UKBB\nSRC",'Basis')
+  title <- pc
+  fname <- file.path('~/tmp/pc_app/',sprintf("appendix_%s.pdf",pc))
+  pp1 <- forest_plot_focal_merge(filt.DT,pc=pc,focal=all.traits['bowes_jia'] %>% unlist %>% gsub("^jia_","",.),title=title,cat_levels=cols,labels=labs1)
+  save_plot(pp1 + theme(legend.position="bottom",axis.text.y=element_text(size=13)),file=fname,base_width=8,base_height=9,useDingbats=FALSE)
+}
 
-pc <- 'PC1'
-#title <- sprintf("JIA subtypes %s (Variance Explained %0.1f%%)",pc,(summary(pc.emp)[['importance']][2,][pc] * 100) %>% signif(.,digits=2))
-title <- ''
+for(pc in paste('PC',c(2,3,4,7,8,9),sep='')){
+  labs1 <- c('JIA',"UKBB\nSRM","UKBB\nSRD",'Basis')
+  title <- pc
+  fname <- file.path('~/tmp/pc_app/',sprintf("appendix_%s.pdf",pc))
+  pp1 <- forest_plot_focal_merge(filt.DT,pc=pc,focal=all.traits['bowes_jia'] %>% unlist %>% gsub("^jia_","",.),title=title,cat_levels=cols,labels=labs1)
+  save_plot(pp1 + theme(legend.position="bottom",axis.text.y=element_text(size=13)),file=fname,base_width=8,base_height=9,useDingbats=FALSE)
+}
+
+labs1 <- c('JIA',"UKBB\nSRM","UKBB\nSRD",'Basis')
+title <- 'PC10'
+fname <- file.path('~/tmp/pc_app/',sprintf("appendix_%s.pdf",pc))
 pp1 <- forest_plot_focal_merge(filt.DT,pc=pc,focal=all.traits['bowes_jia'] %>% unlist %>% gsub("^jia_","",.),title=title,cat_levels=cols,labels=labs1)
-save_plot(pp1 + theme(legend.position="bottom",axis.text.y=element_text(size=13)),file="~/tmp/pc1_thesis.pdf",base_height=8)
+save_plot(pp1 + theme(legend.position="bottom",axis.text.y=element_text(size=9)),file=fname,base_width=8,base_height=9,useDingbats=FALSE)
 
 pp2 <- forest_plot_focal_merge(filt.DT,pc='PC3',focal=all.traits['bowes_jia'] %>% unlist %>% gsub("^jia_","",.),title=title,cat_levels=cols,labels=labs1)
 save_plot(pp2 + theme(legend.position="bottom",axis.text.y=element_text(size=13)),file="~/tmp/pc3_thesis.pdf",base_height=8)

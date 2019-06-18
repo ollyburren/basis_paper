@@ -28,7 +28,7 @@ OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sum_stats'
 
 if(FALSE){
   DATA_DIR <- '/home/ob219/share/Data/GWAS-summary/blood-ukbiobank-2016-12-12'
-  RSCRIPT <- '/home/ob219/git/basis_paper/GWAS/astle/process_data.R'
+  RSCRIPT <- '/home/ob219/git/basis_paper/GWAS/misc_gwas_traits/quant_astl_process_data.R'
   files <- list.files(path=DATA_DIR,pattern="*.gz$",full.names=TRUE)
   sprintf("Rscript %s -f %s",RSCRIPT,files) %>% write(.,file="~/tmp/qstuff/astle_quant.txt")
 }
