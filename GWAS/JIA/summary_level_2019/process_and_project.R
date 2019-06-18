@@ -68,14 +68,12 @@ proj <- lapply(subtypes,function(M){
 
 jia.DT <- data.table(trait=rownames(proj),proj)
 saveRDS(jia.DT,file="/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia_vit_t2d_2019.RDS")
-
-
 jia.DT <- melt(jia.DT,id.vars='trait')
 
 control.DT <- data.table(rownames(pc.emp$x),pc.emp$x) %>% melt(.,id.vars='V1')
 control.DT <- control.DT[V1=='control',.(pc=variable,control.score=value)]
 jia.DT <- merge(jia.DT,control.DT,by.x='variable',by.y='pc')
-jia.DT[,variable:=factor(variable,levels=paste0('PC',1:11))]
+jia.DT[,variable:=factor(variable,levels=paste0('PC',1:13))]
 library(cowplot)
 ggplot(jia.DT,aes(x=variable,y=value-control.score,color=trait,group=trait)) + geom_point() + geom_line() +
 geom_hline(yintercept=0,lty=2)

@@ -1,6 +1,6 @@
 ## FOREST PLOTS FOR particular diseases
 library(cowplot)
-RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/19_12_18_summary_results.RDS'
+RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS//18_06_19__vit_t2d_summary_results.RDS'
 #RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/25_01_19_summary_results.RDS'
 res.DT <- readRDS(RESULTS.FILE)
 
@@ -8,7 +8,7 @@ all.traits <- traits<-split(res.DT$trait,res.DT$category) %>% lapply(.,unique)
 
 ## add in basis traits for comparison
 
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 control.DT <- data.table(PC=names( pc.emp$x["control",]),control.loading= pc.emp$x["control",])
 basis.DT <- data.table(trait=rownames(pc.emp$x),pc.emp$x) %>% melt(.,id.vars='trait')
@@ -108,8 +108,8 @@ forest_plot_med(rbind(talk.DT,basis.DT,fill=TRUE),pc='PC5',fdr=0.05)
 
 everything.DT <- res.DT
 
-pdf(file="~/tmp/everything_forest.pdf",paper="a4r",width=14,height=8,onefile=TRUE)
-lapply(paste('PC',1:10,sep=''),function(pc){
+pdf(file="~/tmp/everything_forest_vit_t2d.pdf",paper="a4r",width=14,height=20,onefile=TRUE)
+lapply(paste('PC',1:13,sep=''),function(pc){
   if(pc != 'PC10'){
     forest_plot(everything.DT,pc=pc)
   }else{

@@ -4,7 +4,7 @@ library(annotSnpStats)
 scz.DT <- fread("zcat /home/ob219/share/Data/GWAS-summary/psyc_traits/SCZvsCONT.sumstats.gz")
 scz.DT[,pid:=paste(CHR,BP,sep=':')]
 ## note OR are with respect to A1
-SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
+SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
 man.DT <- fread(SNP_MANIFEST)
 M <- merge(scz.DT[,.(pid,a1=A1,a2=A2,or=OR)],man.DT,by='pid')
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
@@ -31,7 +31,7 @@ M <- merge(M,alleles[,.(pid,g.class)],by='pid',all.x=TRUE)
 M <- M[!duplicated(pid),]
 ## so here alleles match we need to flip as we want wrt to a2
 M <- M[g.class=='match',or:=1/or]
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
@@ -44,9 +44,9 @@ B <- dcast(tmp,pid ~ trait,value.var='metric')
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()
 colnames(mat.emp) <- snames
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
 stop("Something wrong basis and projection matrix don't match")
 all.proj <- predict(pc.emp,newdata=mat.emp)
-saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/psych/scz.RDS')
+saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/psych/scz_vit_t2d.RDS')

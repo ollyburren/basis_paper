@@ -3,7 +3,7 @@ library(annotSnpStats)
 
 nmo.DT <- fread("zcat /home/ob219/share/Data/GWAS-summary/NMO_summary_stats_2018/NMO/EBI/NMO.Combined.gz")
 nmo.DT[,pid:=paste(Chr,Pos,sep=':')]
-SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
+SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
 man.DT <- fread(SNP_MANIFEST)
 M <- merge(nmo.DT[,.(pid,a1=toupper(Allele1),a2=toupper(Allele2),or=exp(Effect))],man.DT,by='pid')
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
@@ -29,7 +29,7 @@ if(length(idx) >0){
 M <- merge(M,alleles[,.(pid,g.class)],by='pid',all.x=TRUE)
 M <- M[!duplicated(pid),]
 M <- M[g.class!='match',or:=1/or]
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
@@ -42,18 +42,17 @@ B <- dcast(tmp,pid ~ trait,value.var='metric')
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()
 colnames(mat.emp) <- snames
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
 stop("Something wrong basis and projection matrix don't match")
 all.proj <- predict(pc.emp,newdata=mat.emp)
-saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/nmo/nmo.RDS')
+saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/nmo/nmo_vit_t2d.RDS')
 
 
 #antibody positive
 nmo.DT <- fread("zcat /home/ob219/share/Data/GWAS-summary/NMO_summary_stats_2018/NMO/EBI/NMO.IgGPos.gz")
 nmo.DT[,pid:=paste(Chr,Pos,sep=':')]
-SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
 man.DT <- fread(SNP_MANIFEST)
 M <- merge(nmo.DT[,.(pid,a1=toupper(Allele1),a2=toupper(Allele2),or=exp(Effect))],man.DT,by='pid')
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
@@ -79,7 +78,6 @@ if(length(idx) >0){
 M <- merge(M,alleles[,.(pid,g.class)],by='pid',all.x=TRUE)
 M <- M[!duplicated(pid),]
 M <- M[g.class!='match',or:=1/or]
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
@@ -92,18 +90,16 @@ B <- dcast(tmp,pid ~ trait,value.var='metric')
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()
 colnames(mat.emp) <- snames
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
 stop("Something wrong basis and projection matrix don't match")
 all.proj <- predict(pc.emp,newdata=mat.emp)
-saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/nmo/nmo_igpos.RDS')
+saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/nmo/nmo_igpos_vit_t2d.RDS')
 
 ##antibody negative
 
 nmo.DT <- fread("zcat /home/ob219/share/Data/GWAS-summary/NMO_summary_stats_2018/NMO/EBI/NMO.IgGNeg.gz")
 nmo.DT[,pid:=paste(Chr,Pos,sep=':')]
-SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
 man.DT <- fread(SNP_MANIFEST)
 M <- merge(nmo.DT[,.(pid,a1=toupper(Allele1),a2=toupper(Allele2),or=exp(Effect))],man.DT,by='pid')
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
@@ -129,7 +125,6 @@ if(length(idx) >0){
 M <- merge(M,alleles[,.(pid,g.class)],by='pid',all.x=TRUE)
 M <- M[!duplicated(pid),]
 M <- M[g.class!='match',or:=1/or]
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
@@ -142,9 +137,8 @@ B <- dcast(tmp,pid ~ trait,value.var='metric')
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()
 colnames(mat.emp) <- snames
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
 stop("Something wrong basis and projection matrix don't match")
 all.proj <- predict(pc.emp,newdata=mat.emp)
-saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/nmo/nmo_igneg.RDS')
+saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/nmo/nmo_igneg_vit_t2d.RDS')

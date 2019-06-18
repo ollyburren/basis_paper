@@ -13,7 +13,7 @@ library(annotSnpStats)
 #bolt_gwas2_pr3_bgen.stats.gz  pr3_gwas2 1142  6717
 #meta_mpo_lmm.txt  mpo_meta  873 11976
 #meta_pr3_lmm.txt  pr3_meta  1620 11976
-SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
+SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
 DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
 samples.DT <- fread("/home/ob219/share/Data/GWAS-summary/aav_limy_wong/aav_sample_size.txt")
 samples.DT[,n:=n1+n0]
@@ -21,10 +21,10 @@ samples.DT[,prop.case:=n1/n]
 
 ## meta analysis values are not converted to the OR scale as far as I can see
 man.DT <- fread(SNP_MANIFEST)
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 library(parallel)
 all.vasc <- mclapply(seq_along(samples.DT),function(i){
@@ -82,7 +82,7 @@ all.vasc <- mclapply(seq_along(samples.DT),function(i){
   all.proj <- predict(pc.emp,newdata=mat.emp)
 },mc.cores=8) %>% do.call('rbind',.)
 vasc.DT <- data.table(trait=rownames(all.vasc),all.vasc)
-saveRDS(vasc.DT,file="/home/ob219/share/as_basis/GWAS/aav_projections/summary/aav_2019.RDS")
+saveRDS(vasc.DT,file="/home/ob219/share/as_basis/GWAS/wong_aav/projections/aav_2019_vit_t2d.RDS")
 
 
 ## vasc.DT <- readRDS("/home/ob219/share/as_basis/GWAS/wong_aav/projections/aav_2019.RDS")

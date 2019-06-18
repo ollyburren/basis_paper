@@ -1,7 +1,7 @@
 ## Crohns prognosis GWAS
 library(annotSnpStats)
 
-SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
+SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
 PsA.dir <- '/home/ob219/share/Data/GWAS-summary/psa-2019-unpublished'
 psa.files <- list.files(path=PsA.dir,pattern="*.out",full.names=TRUE)
 DT <- lapply(psa.files,fread) %>% rbindlist
@@ -10,10 +10,10 @@ DT[,list(ncases=(cases_AA + cases_AB + cases_BB)/2,nctrl=(controls_AA + controls
 DT.f <- DT[,.(rsid,chr=chromosome,pos=position,a1=alleleA,a2=alleleB,a1_maf=ctrl_a1_maf,p.value=frequentist_add_pvalue,beta=frequentist_add_beta_1,se.beta=frequentist_add_se_1)]
 DT.f[,pid:=paste(chr,pos,sep=':')]
 man.DT <- fread(SNP_MANIFEST)
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 ## counted allele appears to be a2 so should be aligned but check
 M <- merge(DT.f[pid %in% man.DT$pid,.(trait='bowes_psa',pid=pid,a1,a2,or=exp(beta))],man.DT,by='pid',all.y=TRUE)
@@ -55,4 +55,4 @@ if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
 stop("Something wrong basis and projection matrix don't match")
 psa.proj <- predict(pc.emp,newdata=mat.emp)
 psa.DT <- data.table(trait=rownames(psa.proj),psa.proj)
-saveRDS(psa.DT,file="/home/ob219/share/as_basis/GWAS/psa_projections/summary/bowes_psa.RDS")
+saveRDS(psa.DT,file="/home/ob219/share/as_basis/GWAS/psa_projections/summary/bowes_psa_vit_t2d.RDS")
