@@ -46,7 +46,7 @@ if(FALSE){
   med <- pheno[grepl("20003\\_",Phenotype.Code) & Sex=='both_sexes',]
   cmds <- sapply(1:nrow(med),function(i){
   #cmds <- sapply(c(165,159,78,167,116,57,166),function(i){
-    sprintf("Rscript /home/ob219/git/basis_paper/GWAS/process_bb_medication_august_2018.R -i %d",i)
+    sprintf("Rscript /home/ob219/git/basis_paper/GWAS/UK_BIOBANK/process_bb_medication_august_2018.R -i %d",i)
   })
   write(cmds,file="~/tmp/qstuff/gwas_bb_med_proj_t2d_vit.txt")
 }
