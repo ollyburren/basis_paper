@@ -56,7 +56,7 @@ if(FALSE){
   #cmds <- sapply(c(165,159,78,167,116,57,166),function(i){
     sprintf("Rscript /home/ob219/git/basis_paper/GWAS/UK_BIOBANK/process_bb_self_reported_disease_august_2018_psa.R -i %d -m ws_emp_shrinkage",i)
   })
-  write(cmds,file="~/tmp/qstuff/gwas_bb_disease_proj_2018_psa.txt",append=TRUE)
+  write(cmds,file="~/tmp/qstuff/gwas_bb_disease_proj_2019_t2d.txt",append=TRUE)
 }
 
 
