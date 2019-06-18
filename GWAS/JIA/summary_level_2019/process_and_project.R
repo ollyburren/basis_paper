@@ -39,7 +39,7 @@ if(length(idx) >0){
 }
 ## it appears as if everything is reversed
 M[,or:=1/or]
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
@@ -48,7 +48,7 @@ setkey(M,pid)
 
 subtypes <- split(M,M$trait)
 
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 
 proj <- lapply(subtypes,function(M){
@@ -67,7 +67,7 @@ proj <- lapply(subtypes,function(M){
 }) %>% do.call('rbind',.)
 
 jia.DT <- data.table(trait=rownames(proj),proj)
-saveRDS(jia.DT,file="/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia_2019.RDS")
+saveRDS(jia.DT,file="/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia_vit_t2d_2019.RDS")
 
 
 jia.DT <- melt(jia.DT,id.vars='trait')

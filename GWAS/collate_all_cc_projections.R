@@ -2,7 +2,7 @@
 
 ## load in UKBB results
 
-BB_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/ss_shrink_2018'
+BB_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/vit_t2d_2019'
 ukbb <- lapply(list.files(path=BB_DIR,pattern="*.RDS",full.names=TRUE),readRDS) %>% rbindlist
 ukbb <- melt(ukbb,id.var='trait')
 ## need to add case and control numbers
@@ -76,7 +76,7 @@ ukbb <- ukbb[,trait:=paste('bb',trait,sep='_')]
 
 ## load in jia sub types
 
-jia <- readRDS("/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia_2019.RDS")
+jia <- readRDS("/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia_vit_t2d_2019.RDS")
 sample.DT <- fread('/home/ob219/share/Data/GWAS/jia-mar-2019/summary-stats-samplecount-mar2019.csv')
 setnames(sample.DT,'n','n1')
 sub.DT <- data.table(idx=0:9,subtype=c('case','sys','PO','EO','RFneg','RFpos','ERA','PsA','undiff','missing'))

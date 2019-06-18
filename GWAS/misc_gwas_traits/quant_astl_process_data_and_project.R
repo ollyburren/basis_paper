@@ -18,8 +18,8 @@ if(!TEST){
   args <- list(file='/home/ob219/share/Data/GWAS-summary/blood-ukbiobank-2016-12-12/baso_build37_171846_20161212.tsv.gz')
 }
 
-SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/astle/'
+SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
+OUT_DIR <- '/home/ob219/share/as_basis/GWAS/astle/vit_t2d/'
 
 
 if(FALSE){
@@ -73,7 +73,7 @@ M <- M[!duplicated(pid),]
 M <- M[g.class!='match',OR:=1/OR]
 M[,trait:= basename(f) %>% sub("(*.)_build37.*","\\1",.)]
 
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
@@ -83,7 +83,7 @@ B <- dcast(tmp,pid ~ trait,value.var='metric',fill=0)
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()
 colnames(mat.emp) <- snames
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
   stop("Something wrong basis and projection matrix don't match")

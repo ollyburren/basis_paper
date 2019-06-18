@@ -9,7 +9,7 @@ anno.DT[,pid:=paste(chr,position,sep=':')]
 
 ## load in SNP manifest
 
-SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
+SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
 snp.man <- fread(SNP_MANIFEST_FILE)
 anno.DT.f <- anno.DT[pid %in% snp.man$pid,]
 ## there are some duplicates which we need to resolve
@@ -64,7 +64,7 @@ all.DT <- all.DT[!is.na(or),]
 ## want to experiment with dcast fill=0 to help with missing
 ## variants
 
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 tmp<-all.DT[stmp]
@@ -73,7 +73,7 @@ B <- dcast(tmp,pid ~ trait,value.var='metric',fill=0)
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()
 colnames(mat.emp) <- snames
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
   stop("Something wrong basis and projection matrix don't match")
@@ -81,7 +81,7 @@ all.proj <- predict(pc.emp,newdata=mat.emp)
 
 
 all.proj.DT <- data.table(trait=rownames(all.proj),all.proj)
-saveRDS(all.proj.DT,file="/home/ob219/share/as_basis/GWAS/tian_projections/tian_infectious_disease.RDS")
+saveRDS(all.proj.DT,file="/home/ob219/share/as_basis/GWAS/tian_projections/tian_infectious_disease_t2d_vit.RDS")
 
 
 all.proj.m <- melt(all.proj.DT,id.var='trait')
