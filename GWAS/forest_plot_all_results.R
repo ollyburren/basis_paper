@@ -109,7 +109,7 @@ forest_plot_med(rbind(talk.DT,basis.DT,fill=TRUE),pc='PC5',fdr=0.05)
 everything.DT <- res.DT
 
 pdf(file="~/tmp/everything_forest_0619.pdf",width=14,height=20,onefile=TRUE)
-lapply(paste('PC',1:13,sep=''),function(pc){
+lapply(paste('PC',1:12,sep=''),function(pc){
   if(pc != 'PC122'){
     forest_plot(everything.DT,pc=pc)
   }else{

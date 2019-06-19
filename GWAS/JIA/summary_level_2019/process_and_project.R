@@ -18,6 +18,8 @@ setnames(sc.DT,'n','n1')
 
 sub.DT <- data.table(idx=0:9,subtype=c('case','sys','PO','EO','RFneg','RFpos','ERA','PsA','undiff','missing'))
 sub.DT <- merge(sub.DT,sc.DT[,.(ilar_pheno,n1)],by.x='idx',by.y='ilar_pheno')
+## add in a case/control for zero
+sub.DT<-rbind(sub.DT,data.table(idx=0,subtype='case',n1=sum(sub.DT$n1)))
 sub.DT[,subtype:=sprintf("jia_%s_19",subtype)]
 M <- merge(ss.DT,sub.DT,by.x='ilar',by.y='idx')
 M[,p.value:=pnorm(abs(b)/v,lower.tail=FALSE) * 2]
