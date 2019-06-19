@@ -84,7 +84,7 @@ sample.DT <- fread('/home/ob219/share/Data/GWAS/jia-mar-2019/summary-stats-sampl
 setnames(sample.DT,'n','n1')
 sub.DT <- data.table(idx=0:9,subtype=c('case','sys','PO','EO','RFneg','RFpos','ERA','PsA','undiff','missing'))
 samp.DT <- merge(sub.DT,sample.DT[,.(ilar_pheno,n1)],by.x='idx',by.y='ilar_pheno')
-sub.DT <- rbind(sub.DT,data.table(idx=0,subtype='case',n1=sum(sub.DT$n1)))
+samp.DT <- rbind(samp.DT,data.table(idx=0,subtype='case',n1=sum(samp.DT$n1)))
 samp.DT[,n0:=9196]
 jia <- melt(jia,id.var='trait')
 samp.DT[,subtype:=sprintf("jia_%s_19",subtype)]
