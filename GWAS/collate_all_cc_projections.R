@@ -298,7 +298,7 @@ all.proj <- list(
   nmo=nmo,
   egpa=egpa,
   abdef=abdef,
-  liley=t1d,
+  #liley=t1d,
   aav=aav,
   psa=psa
 ) %>% rbindlist

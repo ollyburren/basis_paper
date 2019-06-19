@@ -23,18 +23,14 @@ i<-args$integer
 ## to use maf estimate of se remove ss prefix !
 
 SHRINKAGE_METHOD<-'ws_emp_shrinkage'
-#SHRINKAGE_METHOD<-'recip.emp_maf_se'
-#SHRINKAGE_METHOD<-'none'
 ## just the one shrinkage file
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
-#BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_noshrink_gwas.RDS'
-#BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/basis_beta_gwas.RDS'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 BNEALE_DIR <- '/home/ob219/share/Data/GWAS-summary/uk_biobank_neale_summary_stats_2018/'
 BASIS_FILT_DIR <- file.path(BNEALE_DIR,'as_basis_tmp')
 SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
 BB_BASIS_LU_FILE <- '/home/ob219/share/as_basis/GWAS/support//sept_bb_gwas_var_man.RDS'
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/vit_t2d_2019/'
+OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/0619/'
 #OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/beta_2018/'
 
 
@@ -43,12 +39,12 @@ if(FALSE){
   bb_phenofile<-'/home/ob219/rds/hpc-work/as_basis/bb/bb_gwas_link_list.20180731.csv'
   pheno <- fread(bb_phenofile)
   setnames(pheno,names(pheno) %>% make.names)
-  med <- pheno[grepl("20001\\_",Phenotype.Code) & Sex=='both_sexes',]
+  med <- pheno[grepl("20001\\_|20002\\_|20003\\_",Phenotype.Code) & Sex=='both_sexes',]
   cmds <- sapply(1:nrow(med),function(i){
   #cmds <- sapply(c(165,159,78,167,116,57,166),function(i){
-    sprintf("Rscript /home/ob219/git/basis_paper/GWAS/UK_BIOBANK/process_bb_cancer_august_2018.R -i %d",i)
+    sprintf("Rscript /home/ob219/git/basis_paper/GWAS/UK_BIOBANK/process_bb.R -i %d",i)
   })
-  write(cmds,file="~/tmp/qstuff/gwas_bb_cancer_proj_t2d_vit.txt")
+  write(cmds,file="~/tmp/qstuff/gwas_bb.txt")
 }
 
 
@@ -74,7 +70,7 @@ keep <- readRDS(BB_BASIS_LU_FILE) %>% gsub("\\_",':',.)
 bb_phenofile<-'/home/ob219/rds/hpc-work/as_basis/bb/bb_gwas_link_list.20180731.csv'
 pheno <- fread(bb_phenofile)
 setnames(pheno,names(pheno) %>% make.names)
-med <- pheno[grepl("20001\\_",Phenotype.Code) & Sex=='both_sexes',]
+med <- pheno[grepl("20001\\_|20002\\_|20003\\_",Phenotype.Code) & Sex=='both_sexes',]
 
 ## load in phenotype file
 
@@ -87,7 +83,9 @@ P<-P[,.(phenotype,variable_type,non_missing=n_non_missing,cases=n_cases,controls
 med[,c('wget','db','o','ofile'):=tstrsplit(wget.command,' ')]
 #odir <- '/home/ob219/rds/hpc-work/as_basis/bb/summary_stats_20180731/self_reported_disease/'
 med[,new.cmd:=sprintf("wget -nv %s -O %s%s",Dropbox.File,BNEALE_DIR,ofile)]
-med[,phe:=make.names(Phenotype.Description) %>% gsub("Cancer.code..self.reported..","",.)]
+med[,phe:=make.names(Phenotype.Description) %>% gsub("Cancer.code..self.reported..","SRC:",.)]
+med[,phe:=gsub("Treatment.medication.code..","SRM:",phe)]
+med[,phe:=gsub("Non.cancer.illness.code..self.reported..","SRD:",phe)]
 
 ## download data if required
 if(!file.exists(file.path(BNEALE_DIR,med$ofile[i]))){

@@ -108,9 +108,9 @@ forest_plot_med(rbind(talk.DT,basis.DT,fill=TRUE),pc='PC5',fdr=0.05)
 
 everything.DT <- res.DT
 
-pdf(file="~/tmp/everything_forest_vit_t2d.pdf",paper="a4r",width=14,height=20,onefile=TRUE)
+pdf(file="~/tmp/everything_forest_vit_t2d.pdf",width=14,height=20,onefile=TRUE)
 lapply(paste('PC',1:13,sep=''),function(pc){
-  if(pc != 'PC10'){
+  if(pc != 'PC122'){
     forest_plot(everything.DT,pc=pc)
   }else{
     forest_plot(everything.DT,pc=pc,theme=theme(panel.grid.major.y=element_line(colour='lightgrey',linetype=3),axis.text.y=element_text(size=6)))
