@@ -1,9 +1,14 @@
 ## PID GWAS
 library(annotSnpStats)
 
+SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
+DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
+OUT_FILE <- '/home/ob219/share/as_basis/GWAS/abdef/abdef_0619.RDS'
+
 abdef.DT <- fread("zcat /home/ob219/share/Data/GWAS-summary/AbDeficiency2.chr1-22.assoc.logistic.plink.gz")
 abdef.DT[,pid:=paste(CHR,BP,sep=':')]
-SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
 man.DT <- fread(SNP_MANIFEST)
 M <- merge(abdef.DT[,.(pid,a1=A1,or=OR)],man.DT,by='pid')
 ## a bit of a hacky way to do it but should work
@@ -32,7 +37,6 @@ M <- merge(M,alleles[,.(pid,g.class)],by='pid',all.x=TRUE)
 M <- M[!duplicated(pid),]
 ## plink format so the other way around a1 is the effect allele
 M <- M[g.class=='match',or:=1/or]
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
@@ -45,9 +49,8 @@ B <- dcast(tmp,pid ~ trait,value.var='metric')
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()
 colnames(mat.emp) <- snames
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
 stop("Something wrong basis and projection matrix don't match")
 all.proj <- predict(pc.emp,newdata=mat.emp)
-saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/abdef/abdef_vit_t2d.RDS')
+saveRDS(all.proj,file=OUT_FILE)

@@ -2,6 +2,11 @@
 library(annotSnpStats)
 library(rtracklayer)
 
+SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
+DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
+
 myo.DT <- fread("zcat ~/share/Data/GWAS-summary/MYOGEN/Sep2018_summary_meta.txt.gz")
 snps.DT <- fread('/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab')
 myo.DT[,pid:=paste(CHR,BP,sep=':')]
@@ -55,7 +60,6 @@ M[sw,c('a1','a2','or','MAF_jdm'):=list(ref_a1,ref_a2,OR,MAF_jdm)]
 M[align.class=='impossible',c('OR','P'):=list(NA,NA)]
 
 
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
@@ -69,13 +73,12 @@ B <- dcast(tmp,pid ~ trait,value.var='metric')
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()
 colnames(mat.emp) <- snames
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
 stop("Something wrong basis and projection matrix don't match")
 all.proj <- predict(pc.emp,newdata=mat.emp)
 #saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis.RDS')
-saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis_vit_t2d.RDS')
+saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis_0619.RDS')
 
 ## process subset data
 
@@ -117,7 +120,6 @@ for (trait in c('jdm','pm','dm')){
   M[!sw,c('a1','a2','or'):=list(ref_a1,ref_a2,1/OR)]
   M[sw,c('a1','a2','or'):=list(ref_a1,ref_a2,OR)]
   M[align.class=='impossible',c('OR','P'):=list(NA,NA)]
-  SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
   sDT <- readRDS(SHRINKAGE_FILE)
   stmp<-sDT[,.(pid,ws_emp_shrinkage)]
   setkey(M,pid)
@@ -132,10 +134,9 @@ for (trait in c('jdm','pm','dm')){
   snames <- B[,1]$pid
   mat.emp <- as.matrix(B[,-1]) %>% t()
   colnames(mat.emp) <- snames
-  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
   pc.emp <- readRDS(BASIS_FILE)
   if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
   stop("Something wrong basis and projection matrix don't match")
   all.proj <- predict(pc.emp,newdata=mat.emp)
-  saveRDS(all.proj,file=sprintf('/home/ob219/share/as_basis/GWAS/myogen_myositis/%s_myositis_vit_t2d.RDS',trait))
+  saveRDS(all.proj,file=sprintf('/home/ob219/share/as_basis/GWAS/myogen_myositis/%s_myositis_0619.RDS',trait))
 }
