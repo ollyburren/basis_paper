@@ -8,7 +8,7 @@ all.traits <- traits<-split(res.DT$trait,res.DT$category) %>% lapply(.,unique)
 
 ## add in basis traits for comparison
 
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 control.DT <- data.table(PC=names( pc.emp$x["control",]),control.loading= pc.emp$x["control",])
 basis.DT <- data.table(trait=rownames(pc.emp$x),pc.emp$x) %>% melt(.,id.vars='trait')
