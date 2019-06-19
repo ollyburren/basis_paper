@@ -1,6 +1,6 @@
 ## FOREST PLOTS FOR particular diseases
 library(cowplot)
-RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS//18_06_19__vit_t2d_summary_results.RDS'
+RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/19_06_19_0619_summary_results.RDS'
 #RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/25_01_19_summary_results.RDS'
 res.DT <- readRDS(RESULTS.FILE)
 
@@ -108,7 +108,7 @@ forest_plot_med(rbind(talk.DT,basis.DT,fill=TRUE),pc='PC5',fdr=0.05)
 
 everything.DT <- res.DT
 
-pdf(file="~/tmp/everything_forest_vit_t2d.pdf",width=14,height=20,onefile=TRUE)
+pdf(file="~/tmp/everything_forest_0619.pdf",width=14,height=20,onefile=TRUE)
 lapply(paste('PC',1:13,sep=''),function(pc){
   if(pc != 'PC122'){
     forest_plot(everything.DT,pc=pc)

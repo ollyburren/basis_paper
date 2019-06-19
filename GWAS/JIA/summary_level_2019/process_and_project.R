@@ -1,6 +1,13 @@
 library(annotSnpStats)
 ## code to align the latest summary results from JIA GWAS
-SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
+
+
+SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
+OUT_FILE <- "/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia_0619.RDS"
+
+
 ss.DT <- fread("~/share/Data/GWAS/jia-mar-2019/summary-stats-mar2019.csv")
 snp.DT <- fread("~/share/Data/GWAS/jia-mar-2019/summary-stats-snpinfo-mar2019.csv")
 sc.DT <- fread("~/share/Data/GWAS/jia-mar-2019/summary-stats-samplecount-mar2019.csv")
@@ -39,16 +46,11 @@ if(length(idx) >0){
 }
 ## it appears as if everything is reversed
 M[,or:=1/or]
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
-
 ## do this for each subtype so we can catch all missing SNPS
-
 subtypes <- split(M,M$trait)
-
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 
 proj <- lapply(subtypes,function(M){
@@ -67,7 +69,7 @@ proj <- lapply(subtypes,function(M){
 }) %>% do.call('rbind',.)
 
 jia.DT <- data.table(trait=rownames(proj),proj)
-saveRDS(jia.DT,file="/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia_vit_t2d_2019.RDS")
+saveRDS(jia.DT,file=OUT_FILE)
 jia.DT <- melt(jia.DT,id.vars='trait')
 
 control.DT <- data.table(rownames(pc.emp$x),pc.emp$x) %>% melt(.,id.vars='V1')

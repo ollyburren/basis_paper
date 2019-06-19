@@ -1,5 +1,12 @@
 ## process 23andme data
 
+
+SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
+DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
+OUT_FILE <- "/home/ob219/share/as_basis/GWAS/ferreira_projections/ferreira_asthma_0619.RDS"
+
 ## Ferreira
 anno.file <- '/home/ob219/share/Data/GWAS-summary/23andme/annotation/all_snp_info-4.1.txt'
 
@@ -9,8 +16,7 @@ anno.DT[,pid:=paste(chr,position,sep=':')]
 
 ## load in SNP manifest
 
-SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
-snp.man <- fread(SNP_MANIFEST_FILE)
+snp.man <- fread(SNP_MANIFEST)
 anno.DT.f <- anno.DT[pid %in% snp.man$pid,]
 ## there are some duplicates which we need to resolve
 
@@ -64,7 +70,6 @@ all.DT <- all.DT[!is.na(or),]
 ## want to experiment with dcast fill=0 to help with missing
 ## variants
 
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 tmp<-all.DT[stmp]
@@ -73,14 +78,13 @@ B <- dcast(tmp,pid ~ trait,value.var='metric',fill=0)
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()
 colnames(mat.emp) <- snames
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
   stop("Something wrong basis and projection matrix don't match")
 all.proj <- predict(pc.emp,newdata=mat.emp)
 all.proj.DT <- data.table(trait=rownames(all.proj),all.proj)
 
-saveRDS(all.proj.DT,file="/home/ob219/share/as_basis/GWAS/ferreira_projections/ferreira_asthma_vit_t2d.RDS")
+saveRDS(all.proj.DT,file=OUT_FILE)
 
 
 all.proj.m <- melt(all.proj.DT,id.var='trait')

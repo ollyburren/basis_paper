@@ -2,10 +2,15 @@
 library(annotSnpStats)
 library(cupcake)
 library(parallel)
+SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
+DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
+
+
 OUT_DIR <- '/home/ob219/share/as_basis/GWAS/effrosyni_ig'
 DATA_DIR <- '/home/ob219/share/Data/GWAS-summary/ig_titre_unpublished'
 files <- list.files(path=DATA_DIR,pattern="*.txt",full.names=TRUE)
-SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
 man.DT <- fread(SNP_MANIFEST)
 
 ret <- mclapply(files,function(f){
@@ -37,7 +42,6 @@ M <- merge(M,alleles[,.(pid,g.class)],by='pid',all.x=TRUE)
 M <- M[!duplicated(pid),]
 M[,trait:=gsub("LN\\_([^\\_]+).*","\\1",basename(f))]
 
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_vit_t2d.RDS'
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
@@ -47,7 +51,6 @@ B <- dcast(tmp,pid ~ trait,value.var='metric',fill=0)
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()
 colnames(mat.emp) <- snames
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
   stop("Something wrong basis and projection matrix don't match")
@@ -55,4 +58,4 @@ all.proj <- predict(pc.emp,newdata=mat.emp)
 },mc.cores=3)
 ret <- do.call('rbind',ret)
 res.DT <- data.table(trait=rownames(ret),ret)
-saveRDS(res.DT,file.path(OUT_DIR,'effrosyni_ig_vit_t2d.RDS'))
+saveRDS(res.DT,file.path(OUT_DIR,'effrosyni_ig_0619.RDS'))

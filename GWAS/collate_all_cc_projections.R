@@ -2,7 +2,7 @@
 
 ## load in UKBB results
 
-BB_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/vit_t2d_2019'
+BB_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/0619'
 ukbb <- lapply(list.files(path=BB_DIR,pattern="*.RDS",full.names=TRUE),readRDS) %>% rbindlist
 ukbb <- melt(ukbb,id.var='trait')
 ## need to add case and control numbers
@@ -16,7 +16,10 @@ get_phenotype_annotation <- function(filter='20002\\_'){
   ## load in phenotype file
   P <- fread('/home/ob219/rds/hpc-work/as_basis/bb/summary_stats_20180731/phenotypes.both_sexes.tsv')
   P<-P[,.(phenotype,variable_type,non_missing=n_non_missing,cases=n_cases,controls=n_controls)]
-  med[,phe:=make.names(Phenotype.Description) %>% gsub("(Non.cancer.illness.code..self.reported..)|(Treatment.medication.code..)|(Cancer.code..self.reported..)","",.)]
+  #med[,phe:=make.names(Phenotype.Description) %>% gsub("(Non.cancer.illness.code..self.reported..)|(Treatment.medication.code..)|(Cancer.code..self.reported..)","",.)]
+  med[,phe:=make.names(Phenotype.Description) %>% gsub("Cancer.code..self.reported..","SRC:",.)]
+  med[,phe:=gsub("Treatment.medication.code..","SRM:",phe)]
+  med[,phe:=gsub("Non.cancer.illness.code..self.reported..","SRD:",phe)]
   med <- med[,.(Phenotype.Code,phe)]
   med <- merge(P,med,by.x='phenotype',by.y='Phenotype.Code')[,.(code=phenotype,phe,n1=as.numeric(cases),n0=as.numeric(controls))]
   med
@@ -76,7 +79,7 @@ ukbb <- ukbb[,trait:=paste('bb',trait,sep='_')]
 
 ## load in jia sub types
 
-jia <- readRDS("/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia_vit_t2d_2019.RDS")
+jia <- readRDS("/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia_0619.RDS")
 sample.DT <- fread('/home/ob219/share/Data/GWAS/jia-mar-2019/summary-stats-samplecount-mar2019.csv')
 setnames(sample.DT,'n','n1')
 sub.DT <- data.table(idx=0:9,subtype=c('case','sys','PO','EO','RFneg','RFpos','ERA','PsA','undiff','missing'))
@@ -102,7 +105,7 @@ jia[,category:='bowes_jia_2019']
 
 ## load in tian_infectious_disease
 
-tian <- readRDS("/home/ob219/share/as_basis/GWAS/tian_projections/tian_infectious_disease_t2d_vit.RDS")
+tian <- readRDS("/home/ob219/share/as_basis/GWAS/tian_projections/tian_infectious_disease_0619.RDS")
 ## get sample counts and merge
 tian_samples <- readRDS("/home/ob219/share/as_basis/GWAS/tian_projections/sample_size.RDS")
 tian <- melt(tian,id.var='trait')
@@ -111,7 +114,7 @@ tian[,category:='tian_infectious_disease']
 
 ## load in ferreira_asthma
 
-ferriera <- readRDS("/home/ob219/share/as_basis/GWAS/ferreira_projections/ferreira_asthma_vit_t2d.RDS")
+ferriera <- readRDS("/home/ob219/share/as_basis/GWAS/ferreira_projections/ferreira_asthma_0619.RDS")
 ferreira_samples <- readRDS("/home/ob219/share/as_basis/GWAS/ferreira_projections/sample_size.RDS")
 ferriera <- melt(ferriera,id.var='trait')
 ferriera <- merge(ferriera,ferreira_samples,by='trait')
@@ -122,7 +125,7 @@ ferriera[,category:='ferreira_asthma']
 
 ## first get sample sizes - note that because of assumptions in converting linear coefficient
 ## to OR the cases and control size are equal to the median/mean of the sample size i.e round(ss/2)
-ASTLE_DIR <- '/home/ob219/share/as_basis/GWAS/astle/vit_t2d/'
+ASTLE_DIR <- '/home/ob219/share/as_basis/GWAS/astle/0619/'
 astle <- lapply(list.files(path=ASTLE_DIR,pattern="*.RDS",full.names=TRUE),readRDS) %>% do.call('rbind',.)
 astle <- data.table(trait=rownames(astle),astle)
 astle <- melt(astle,id.var='trait')
@@ -138,13 +141,13 @@ astle[,category:='astle_blood']
 
 ## load in ig titres
 
-eff <- readRDS('/home/ob219/share/as_basis/GWAS/effrosyni_ig/effrosyni_ig_vit_t2d.RDS')
+eff <- readRDS('/home/ob219/share/as_basis/GWAS/effrosyni_ig/effrosyni_ig_0619.RDS')
 eff <- melt(eff,id.var='trait')
 eff[,c('n0','n1'):=list(3969,3969)]
 eff[,category:='Ig.titre']
 
 ## load in CD prognosis
-cd.prog <- readRDS('/home/ob219/share/as_basis/GWAS/cd_prognosis/cd_prognosis_vit_t2d.RDS')
+cd.prog <- readRDS('/home/ob219/share/as_basis/GWAS/cd_prognosis/cd_prognosis_0619.RDS')
 cd.prog <- data.table(trait=rownames(cd.prog),cd.prog)
 cd.prog <- melt(cd.prog,id.var='trait')
 cd.prog[,c('n0','n1'):=list(389 + 583,669 + 1093)]
@@ -152,7 +155,7 @@ cd.prog[,category:='lee_CD_prognosis']
 
 ## load in bp,adhd, and scz
 
-files <- list.files(path="/home/ob219/share/as_basis/GWAS/psych/",pattern="*vit_t2d.RDS",full.names=TRUE)
+files <- list.files(path="/home/ob219/share/as_basis/GWAS/psych/",pattern="*0619.RDS",full.names=TRUE)
 
 psy <- lapply(files,readRDS) %>% do.call('rbind',.)
 psy <- data.table(trait=rownames(psy),psy)
@@ -177,7 +180,7 @@ psy[,category:='psyc_consortium']
 # pm[!V1 %in% control.ids,affected:=1]
 
 ## myogen_myositis
-myogen <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis_vit_t2d.RDS')
+myogen <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis_0619.RDS')
 myogen <- data.table(trait=rownames(myogen),myogen)
 myogen <- melt(myogen,id.var='trait')
 myogen[,c('n0','n1'):=list(4724,1711)]
@@ -185,19 +188,19 @@ myogen[,category:='myogen']
 
 ## jdm
 
-jdm <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/jdm_myositis_vit_t2d.RDS')
+jdm <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/jdm_myositis_0619.RDS')
 jdm <- data.table(trait=rownames(jdm),jdm)
 jdm <- melt(jdm,id.var='trait')
 jdm[,c('n0','n1'):=list(4724,473)]
 jdm[,category:='myogen']
 
-dm <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/dm_myositis_vit_t2d.RDS')
+dm <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/dm_myositis_0619.RDS')
 dm <- data.table(trait=rownames(dm),dm)
 dm <- melt(dm,id.var='trait')
 dm[,c('n0','n1'):=list(4724,705)]
 dm[,category:='myogen']
 
-pm <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/pm_myositis_vit_t2d.RDS')
+pm <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/pm_myositis_0619.RDS')
 pm <- data.table(trait=rownames(pm),pm)
 pm <- melt(pm,id.var='trait')
 pm[,c('n0','n1'):=list(4724,533)]
@@ -213,7 +216,7 @@ myogen <- rbindlist(list(myogen,jdm,dm,pm))
 # myogen.flip[,category:='myogen']
 
 ## NMO - Neuromyelitis Optica
-files <- list.files(path="/home/ob219/share/as_basis/GWAS/nmo/",pattern="*vit_t2d.RDS",full.names=TRUE)
+files <- list.files(path="/home/ob219/share/as_basis/GWAS/nmo/",pattern="*0619.RDS",full.names=TRUE)
 nmo <- lapply(files,readRDS) %>% do.call('rbind',.)
 #nmo <- readRDS('/home/ob219/share/as_basis/GWAS/nmo/nmo.RDS')
 nmo <- data.table(trait=rownames(nmo),nmo)
@@ -225,7 +228,7 @@ nmo[,category:='estrada_NMO']
 
 ## load in egpa vasc
 
-files <- list.files(path="/home/ob219/share/as_basis/GWAS/lyons_egpa/projections",pattern="*vit_t2d.RDS",full.names=TRUE)
+files <- list.files(path="/home/ob219/share/as_basis/GWAS/lyons_egpa/projections",pattern="*0619.RDS",full.names=TRUE)
 egpa <- lapply(files,readRDS) %>% do.call('rbind',.)
 egpa <- data.table(trait=rownames(egpa),egpa)
 egpa <- melt(egpa,id.var='trait')
@@ -236,7 +239,7 @@ egpa[,category:='lyons_egpa']
 
 ## load in aav (vasculitis) from Limy Wong
 
-aav <- readRDS("/home/ob219/share/as_basis/GWAS/wong_aav/projections/aav_2019_vit_t2d.RDS")
+aav <- readRDS("/home/ob219/share/as_basis/GWAS/wong_aav/projections/aav_0619.RDS")
 aav <- melt(aav,id.var='trait')
 aav.samp <- fread("/home/ob219/share/Data/GWAS-summary/aav_limy_wong/aav_sample_size.txt")
 aav <- merge(aav,aav.samp[,.(label,n0,n1)],by.x='trait',by.y='label')
@@ -245,7 +248,7 @@ aav[,category:='wong_aav']
 
 ## load in abdef
 
-abdef <- readRDS('/home/ob219/share/as_basis/GWAS/abdef/abdef_vit_t2d.RDS')
+abdef <- readRDS('/home/ob219/share/as_basis/GWAS/abdef/abdef_0619.RDS')
 abdef <- data.table(trait=rownames(abdef),abdef)
 abdef <- melt(abdef,id.var='trait')
 abdef[,c('n0','n1'):=list(9225,733)]
@@ -270,7 +273,7 @@ t1d[trait=='z_pca',c('n0','n1'):=list(2240*(1-0.1),2240*0.1)]
 t1d[,category:='liley_t1d']
 }
 
-psa <- readRDS("/home/ob219/share/as_basis/GWAS/psa_projections/summary/bowes_psa_vit_t2d.RDS")
+psa <- readRDS("/home/ob219/share/as_basis/GWAS/psa_projections/summary/bowes_psa_0619.RDS")
 psa <- melt(psa,id.var='trait')
 psa[,c('n0','n1','category'):=list(4596,1805,'bowes_psa')]
 
@@ -305,9 +308,9 @@ all.proj <- list(
 all.proj[,n:=n1+n0]
 
 ## load in basis and variance
-VARIANCE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_av_june_vit_t2d.RDS'
+VARIANCE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_av_0619.RDS'
 var.DT <- readRDS(VARIANCE_FILE)
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_vit_t2d.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 pc.emp <- readRDS(BASIS_FILE)
 control.DT <- data.table(PC=names( pc.emp$x["control",]),control.loading= pc.emp$x["control",])
 basis.DT <- data.table(trait=rownames(pc.emp$x),pc.emp$x) %>% melt(.,id.vars='trait')
@@ -327,4 +330,4 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/18_06_19__vit_t2d_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/19_06_19_0619_summary_results.RDS')
