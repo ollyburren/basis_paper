@@ -281,7 +281,7 @@ psa[,c('n0','n1','category'):=list(4596,1805,'bowes_psa')]
 pah <- readRDS("/home/ob219/share/as_basis/GWAS/liley_pah/projections/pah_0619.RDS")
 pah <- melt(pah,id.var='trait') %>% data.table
 setnames(pah,c('trait','variable','value'))
-pah[,c('n0','n1','category'):=list(5045,1696,'rhodes_pah')]
+pah[,c('n0','n1','category'):=list(5045,847,'rhodes_pah')]
 
 ## for some reason we swapped from n1 to n0 halfway through to n0 n1
 ## we need to fix otherwise everything gets swapped and case
