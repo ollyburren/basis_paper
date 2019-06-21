@@ -278,6 +278,11 @@ psa <- readRDS("/home/ob219/share/as_basis/GWAS/psa_projections/summary/bowes_ps
 psa <- melt(psa,id.var='trait')
 psa[,c('n0','n1','category'):=list(4596,1805,'bowes_psa')]
 
+pah <- readRDS("/home/ob219/share/as_basis/GWAS/liley_pah/projections/pah_0619.RDS")
+pah <- melt(pah,id.var='trait') %>% data.table
+setnames(pah,c('trait','variable','value'))
+pah[,c('n0','n1','category'):=list(5045,1696,'rhodes_pah')]
+
 ## for some reason we swapped from n1 to n0 halfway through to n0 n1
 ## we need to fix otherwise everything gets swapped and case
 ## sizes become control sizes
@@ -304,7 +309,8 @@ all.proj <- list(
   abdef=abdef,
   #liley=t1d,
   aav=aav,
-  psa=psa
+  psa=psa,
+  pah=pah
 ) %>% rbindlist
 all.proj[,n:=n1+n0]
 
@@ -331,4 +337,4 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/19_06_19_0619_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/21_06_19_0619_summary_results.RDS')
