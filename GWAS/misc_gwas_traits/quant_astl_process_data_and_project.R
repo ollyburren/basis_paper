@@ -43,19 +43,19 @@ cmd <- sprintf("/home/ob219/bin/htslib/tabix -R ~/tmp/gwas_june_tabix.tab %s",f)
 b.DT <- fread(cmd)
 setnames(b.DT,header)
 b.DT[,pid:=paste(CHR,BP,sep=':')]
-M.tmp <- merge(b.DT,man.DT,by='pid')
+#M.tmp <- merge(b.DT,man.DT,by='pid')
 fname <- basename(f)
 trait <- gsub("(.*)\\_build37\\_[0-9]+\\_20161212.tsv.gz","\\1",fname)
 ss <- as.numeric(gsub("(.*)\\_build37\\_([0-9]+)\\_20161212.tsv.gz","\\2",fname))
-smaf <- M.tmp$MA_FREQ
-sbeta <- M.tmp$EFFECT
-sbeta.se <- M.tmp$SE
-res.DT <- convertBetaToOR(N=ss,b=sbeta,seb=sbeta.se,m=smaf) %>% do.call('cbind',.) %>% data.table
-b.DT <- cbind(M.tmp[,.(pid,a1=REF,a2=ALT,p.quant=P,beta.quant=EFFECT)],res.DT)
+#smaf <- M.tmp$MA_FREQ
+#sbeta <- M.tmp$EFFECT
+#sbeta.se <- M.tmp$SE
+#res.DT <- convertBetaToOR(N=ss,b=sbeta,seb=sbeta.se,m=smaf) %>% do.call('cbind',.) %>% data.table
+#b.DT <- cbind(M.tmp[,.(pid,a1=REF,a2=ALT,p.quant=P,beta.quant=EFFECT)],res.DT)
 #b.DT <- b.DT[,.(pid,a1=REF,a2=ALT,OR=exp(EFFECT),p.value=P)]
 ##check alleles
 M <- merge(b.DT,man.DT,by='pid')
-alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
+alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$REF,M$ALT,sep='/'))
 #alleles <- alleles[!duplicated(pid),]
 #alleles <- M[,list(al.x=paste(uk10_A1,uk10_A2,sep='/'),al.y=paste(a1,a2,sep='/')),by='pid']
 ## to make quick
@@ -75,13 +75,13 @@ if(length(idx) >0){
 }
 M <- merge(M,alleles[,.(pid,g.class)],by='pid',all.x=TRUE)
 M <- M[!duplicated(pid),]
-M <- M[g.class!='match',OR:=1/OR]
+M <- M[g.class!='match',EFFECT:=EFFECT*-1]
 M[,trait:= basename(f) %>% sub("(*.)_build37.*","\\1",.)]
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
 tmp<-M[stmp]
-tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$OR)
+tmp$metric <- tmp[['ws_emp_shrinkage']] * (tmp$EFFECT)
 B <- dcast(tmp,pid ~ trait,value.var='metric',fill=0)
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()

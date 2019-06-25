@@ -31,7 +31,8 @@ BB_LU <- list(
 )
 
 #category.foc <- 'rhodes_pah'
-category.foc <- 'taylor_mtx'
+#category.foc <- 'taylor_mtx'
+category.foc <- 'kiryluk_iga_neph'
 
 talk.DT <- res.DT[category %in% c('bb_disease',category.foc),]
 talk.DT<-talk.DT[(category %in% talk.DT[p.adj<0.01,]$category) | category==category.foc,]
@@ -88,7 +89,7 @@ forest_plot_focal_merge <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,c
   ggplot(dat,aes(x=trait,y=delta,colour=category,alpha=p.adj<fdr_thresh,lty=p.adj<fdr_thresh)) + geom_point() + geom_errorbar(aes(ymin=lower,ymax=upper)) +
   coord_flip() + geom_hline(yintercept=0,col='red',linetype=2) + ggtitle(title) + theme +
   xlab("Trait") + ylab("Change in basis score from control") + guides(alpha=FALSE,lty=FALSE) +
-  scale_alpha_manual(values=c('TRUE'=1,'FALSE'=0.5)) + scale_colour_manual("Category",values=cat_levels,labels=c('Rhodes PAH',"UKBB\nSRD",'Basis')) +
+  scale_alpha_manual(values=c('TRUE'=1,'FALSE'=0.5)) + scale_colour_manual("Category",values=cat_levels,labels=c('Focus',"UKBB\nSRD",'Basis')) +
   scale_linetype_manual(values=c('TRUE'=1,'FALSE'=2)) +
   theme(axis.text.y=element_text(size=12),legend.position="bottom")
 
@@ -98,8 +99,8 @@ forest_plot_focal_merge <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,c
 pc<-'PC1'
 pp1 <- forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols)
 
-pdf(file="~/tmp/pah.pdf",paper="a4r",onefile=TRUE)
+pdf(file="~/tmp/iga.pdf",paper="a4r",onefile=TRUE)
 lapply(paste('PC',1:12,sep=''),function(pc){
-  forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=0.01)
+  forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=0.05)
 })
 dev.off()
