@@ -1,34 +1,33 @@
+## bipolar prognosis GWAS
 library(annotSnpStats)
+library(rtracklayer)
 
-## 6 GWAS to project one of each of these for PR3 and MPO
-#1 gwas1
-#2 gwas2
-#3 meta (gwas1 and gwas2)
-
-## create a table of sample sizes for each GWAS
-#fname label n1  n0
-#bolt_gwas1_mpo_bgen.stats.gz  mpo_gwas1  264 5259
-#bolt_gwas1_pr3_bgen.stats.gz  pr3_gwas1 478 5259
-#bolt_gwas2_mpo_bgen.stats.gz  mpo_gwas2 609 6717
-#bolt_gwas2_pr3_bgen.stats.gz  pr3_gwas2 1142  6717
-#meta_mpo_lmm.txt  mpo_meta  873 11976
-#meta_pr3_lmm.txt  pr3_meta  1620 11976
 SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
 DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
-OUT_FILE <- "/home/ob219/share/as_basis/GWAS/liley_pah/projections/pah_0619.RDS"
+OUT_FILE <- '/home/ob219/share/as_basis/GWAS/IgA_nephropathy/IgA_nephropathy_0619.RDS'
 
-(load('/home/ob219/share/Data/GWAS-summary/PAH/results_pah.RData'))
 
-pah.DT <- data.table(snp=rownames(px),px)
-setnames(pah.DT,make.names(colnames(pah.DT)))
-pah.DT[,c('pid','alleles'):=tstrsplit(snp,"\\_")]
-pah.DT[,c('a1','a2'):=tstrsplit(alleles,'/')]
+iga.DT <- fread("zcat ~/share/Data/GWAS-summary/IgA_nephropathy/METAANALYSIS1.4cohorts.ORDERED")
+iga.DT[,pid:=paste(CHR,BP,sep=':')]
+iga.DT <- iga.DT[!pid %in% iga.DT[duplicated(pid),],]
+iga.DT[,id:=1:.N]
 
+
+iga.36.gr <- with(iga.DT,GRanges(seqnames=Rle(paste0('chr',CHR)),ranges=IRanges(start=BP,width=1L),id=id))
+c<-import.chain('/home/ob219/rds/hpc-work/DATA/LIFTOVER/hg18ToHg19.over.chain') ## e.g. hg19ToHg18.over.chain
+iga.37.gr<-unlist(liftOver(iga.36.gr,c))
+DT.37 <- data.table(id=iga.37.gr$id,position.37=start(iga.37.gr))
+iga.DT <- merge(iga.DT,DT.37,by.x='id',by.y='id',all.x=TRUE)
+## 173 iga.DT don't match after coord conversion
+iga.DT <- iga.DT[!is.na(position.37),]
+iga.DT[,pid.37:=paste(CHR,position.37,sep=":")]
+
+## note OR are with respect to A1
 man.DT <- fread(SNP_MANIFEST)
-#M <- merge(pah.DT[,.(pid,a1,a2,or=exp(Estimate),n0=AN.nonPAH/2,n1=AN.PAH,ctrl.af=AF.nonPAH)],man.DT,by='pid')
-M <- merge(pah.DT[,.(pid,a1,a2,or=exp(Estimate),n0=(nonPAH.0.0 + nonPAH.0.1 + nonPAH.1.1),n1=(PAH.0.0 + PAH.0.1 + PAH.1.1),ctrl.af=AF.nonPAH)],man.DT,by='pid')
+M <- merge(iga.DT[,.(pid=pid.37,a1=Allele1,a2=Allele2,or=exp(Effect))],man.DT,by='pid')
+
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
 #alleles <- alleles[!duplicated(pid),]
 #alleles <- M[,list(al.x=paste(uk10_A1,uk10_A2,sep='/'),al.y=paste(a1,a2,sep='/')),by='pid']
@@ -51,8 +50,8 @@ if(length(idx) >0){
 ## check direction which is the effect allele ? It appears that a1 is the effect allele
 M <- merge(M,alleles[,.(pid,g.class)],by='pid',all.x=TRUE)
 M <- M[!duplicated(pid),]
-M <- M[,or:=1/or]
-
+## so here alleles match we need to flip as we want wrt to a2
+#M <- M[g.class=='match',beta:=beta * -1]
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
@@ -60,8 +59,8 @@ tmp <- merge(M,stmp,by='pid',all.y=TRUE)
 tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 ## where snp is missing make it zero
 tmp[is.na(metric),metric:=0]
-tmp[,trait:= 'PAH']
-saveRDS(tmp,file='/home/ob219/share/as_basis/GWAS/PAH/pah_source.RDS')
+tmp[,trait:= 'IgA_nephropathy']
+saveRDS(tmp,file='/home/ob219/share/as_basis/GWAS/IgA_nephropathy/IgA_nephropathy_source.RDS')
 B <- dcast(tmp,pid ~ trait,value.var='metric')
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()

@@ -91,6 +91,16 @@ samp.DT[,subtype:=sprintf("jia_%s_19",subtype)]
 jia <- merge(jia,samp.DT[,.(subtype,n1,n0)],by.x='trait',by.y='subtype')
 jia[,category:='bowes_jia_2019']
 
+## do methotrexate study
+mtx <- readRDS("/home/ob219/share/as_basis/GWAS/mtx/mtx_matura_0619.RDS")
+mtx <- data.table(trait=rownames(mtx),mtx)
+mtx<- melt(mtx,id.var='trait')
+mtx[,c('n0','n1'):=list(1424,0)]
+mtx[,category:='taylor_mtx']
+mtx[,sdy:=0.9215145]
+
+
+
 ## code below for the old data
 #jia <- readRDS("/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia.RDS")
 ### get sample counts and merge
@@ -283,6 +293,12 @@ pah <- melt(pah,id.var='trait') %>% data.table
 setnames(pah,c('trait','variable','value'))
 pah[,c('n0','n1','category'):=list(5045,847,'rhodes_pah')]
 
+#IgA_nephropathy
+iga <- readRDS("/home/ob219/share/as_basis/GWAS/IgA_nephropathy/IgA_nephropathy_0619.RDS")
+iga <- melt(iga,id.var='trait') %>% data.table
+setnames(iga,c('trait','variable','value'))
+iga[,c('n0','n1','category'):=list(3952,2747,'kiryluk_iga_neph')]
+
 ## for some reason we swapped from n1 to n0 halfway through to n0 n1
 ## we need to fix otherwise everything gets swapped and case
 ## sizes become control sizes
@@ -310,8 +326,10 @@ all.proj <- list(
   #liley=t1d,
   aav=aav,
   psa=psa,
-  pah=pah
-) %>% rbindlist
+  pah=pah,
+  mtx=mtx,
+  iga=iga
+) %>% rbindlist(.,fill=TRUE)
 all.proj[,n:=n1+n0]
 
 ## load in basis and variance
@@ -330,11 +348,12 @@ basis.DT[,control.loading:=NULL]
 ## compute the variance of a projection
 all.DT <- merge(all.proj,var.DT,by.x='variable',by.y='pc')
 all.DT <- merge(all.DT,control.DT,by.x='variable',by.y='PC')
-all.DT[,variance:=((log(n)-(log(n1) + log(n-n1)))+ log(mfactor)) %>% exp]
+all.DT[is.na(sdy),variance:=((log(n)-(log(n1) + log(n-n1)))+ log(mfactor)) %>% exp]
+all.DT[!is.na(sdy),variance:=(log(sdy^2/n) + log(mfactor)) %>% exp]
 ## add in control loading
 all.DT[,Z:=(value-control.loading)/sqrt(variance)]
 all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/21_06_19_0619_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/24_06_19_0619_summary_results.RDS')
