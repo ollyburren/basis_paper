@@ -2,7 +2,7 @@
 
 library(optparse)
 
-TEST<-TRUE
+TEST<-FALSE
 option_list = list(
         make_option(c("-i", "--integer"), type="numeric", default=NULL,
               help="index of phenotype to process ", metavar="numeric")
