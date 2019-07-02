@@ -2,7 +2,7 @@
 
 library(optparse)
 
-TEST<-FALSE
+TEST<-TRUE
 option_list = list(
         make_option(c("-i", "--integer"), type="numeric", default=NULL,
               help="index of phenotype to process ", metavar="numeric")
@@ -22,16 +22,18 @@ i<-args$integer
 
 ## to use maf estimate of se remove ss prefix !
 
-SHRINKAGE_METHOD<-'ws_emp_shrinkage'
+#SHRINKAGE_METHOD<-'ws_emp_shrinkage'
+SHRINKAGE_METHOD<-'none'
 ## just the one shrinkage file
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
+#BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/noweight_basis_gwas_0619.RDS'
 BNEALE_DIR <- '/home/ob219/share/Data/GWAS-summary/uk_biobank_neale_summary_stats_2018/'
 BASIS_FILT_DIR <- file.path(BNEALE_DIR,'as_basis_tmp')
 SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
 BB_BASIS_LU_FILE <- '/home/ob219/share/as_basis/GWAS/support//sept_bb_gwas_var_man.RDS'
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/0619/'
-#OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/beta_2018/'
+#OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/0619/'
+OUT_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/noweight_0619/'
 
 
 ## running on the queue
@@ -39,13 +41,28 @@ if(FALSE){
   bb_phenofile<-'/home/ob219/rds/hpc-work/as_basis/bb/bb_gwas_link_list.20180731.csv'
   pheno <- fread(bb_phenofile)
   setnames(pheno,names(pheno) %>% make.names)
-  med <- pheno[grepl("20001\\_|20002\\_|20003\\_",Phenotype.Code) & Sex=='both_sexes',]
+
   cmds <- sapply(1:nrow(med),function(i){
   #cmds <- sapply(c(165,159,78,167,116,57,166),function(i){
     sprintf("Rscript /home/ob219/git/basis_paper/GWAS/UK_BIOBANK/process_bb.R -i %d",i)
   })
   write(cmds,file="~/tmp/qstuff/gwas_bb.txt")
 }
+
+## running just srd traits that match basis traits
+if(FALSE){
+  bb_phenofile<-'/home/ob219/rds/hpc-work/as_basis/bb/bb_gwas_link_list.20180731.csv'
+  pheno <- fread(bb_phenofile)
+  setnames(pheno,names(pheno) %>% make.names)
+  med <- pheno[grepl("20001\\_|20002\\_|20003\\_",Phenotype.Code) & Sex=='both_sexes',]
+  ids <- grepl("vitiligo|crohns disease|ulcerative colitis|malabsorption/coeliac disease|multiple sclerosis|rheumatoid arthritis|systemic lupus erythematosis|type 1 diabetes|asthma",med$Phenotype.Description) %>% which
+  cmds <- sapply(ids,function(i){
+  #cmds <- sapply(c(165,159,78,167,116,57,166),function(i){
+    sprintf("Rscript /home/ob219/git/basis_paper/GWAS/UK_BIOBANK/process_bb.R -i %d",i)
+  })
+  write(cmds,file="~/tmp/qstuff/noweight_bb.txt")
+}
+
 
 
 ## generating lookup file
