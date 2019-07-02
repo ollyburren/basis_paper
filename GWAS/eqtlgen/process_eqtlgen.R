@@ -50,7 +50,7 @@ if(FALSE){
     sprintf("Rscript /home/ob219/git/basis_paper/GWAS/eqtlgen/process_eqtlgen.R -f %s",f)
   })
   #write(cmds,file="~/tmp/qstuff/gwas_eqtlgen_significant.txt")
-  write(cmds,file="~/tmp/qstuff/gwas_eqtlgen.txt")
+  write(cmds,file="~/tmp/qstuff/gwas_eqtlgen_soft.txt")
 }
 
 shrink.DT <- readRDS(SHRINKAGE_FILE)
