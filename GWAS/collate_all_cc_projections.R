@@ -301,6 +301,7 @@ pah.np <- readRDS("/home/ob219/share/as_basis/GWAS/liley_pah/projections/pah_no_
 pah.np <- melt(pah.np,id.var='trait') %>% data.table
 setnames(pah.np,c('trait','variable','value'))
 pah.np[,c('n0','n1','category'):=list(4243,848,'rhodes_pah')]
+pah <- rbind(pah,pah.np)
 
 #IgA_nephropathy
 iga <- readRDS("/home/ob219/share/as_basis/GWAS/IgA_nephropathy/IgA_nephropathy_0619.RDS")
