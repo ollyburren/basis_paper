@@ -25,7 +25,7 @@ iga.DT[,pid.37:=paste(CHR,position.37,sep=":")]
 
 ## note OR are with respect to A1
 man.DT <- fread(SNP_MANIFEST)
-M <- merge(iga.DT[,.(pid=pid.37,a1=Allele1,a2=Allele2,or=exp(Effect))],man.DT,by='pid')
+M <- merge(iga.DT[,.(pid=pid.37,a1=toupper(Allele1),a2=toupper(Allele2),or=exp(Effect))],man.DT,by='pid')
 
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
 #alleles <- alleles[!duplicated(pid),]

@@ -51,8 +51,6 @@ if(length(idx) >0){
 ## check direction which is the effect allele ? It appears that a1 is the effect allele
 M <- merge(M,alleles[,.(pid,g.class)],by='pid',all.x=TRUE)
 M <- M[!duplicated(pid),]
-M <- M[,or:=1/or]
-
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)

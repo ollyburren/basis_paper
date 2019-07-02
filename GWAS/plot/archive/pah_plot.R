@@ -32,7 +32,8 @@ BB_LU <- list(
 
 #category.foc <- 'rhodes_pah'
 #category.foc <- 'taylor_mtx'
-category.foc <- 'kiryluk_iga_neph'
+#category.foc <- 'kiryluk_iga_neph'
+category.foc <- 'astle_blood'
 
 talk.DT <- res.DT[category %in% c('bb_disease',category.foc),]
 talk.DT<-talk.DT[(category %in% talk.DT[p.adj<0.01,]$category) | category==category.foc,]
@@ -96,8 +97,8 @@ forest_plot_focal_merge <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,c
 }
 
 
-pc<-'PC1'
-pp1 <- forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols)
+#pc<-'PC1'
+#pp1 <- forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols)
 
 pdf(file="~/tmp/iga.pdf",paper="a4r",onefile=TRUE)
 lapply(paste('PC',1:12,sep=''),function(pc){

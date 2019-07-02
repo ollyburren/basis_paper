@@ -144,9 +144,13 @@ astle <- melt(astle,id.var='trait')
 
 DATA_DIR <- '/home/ob219/share/Data/GWAS-summary/blood-ukbiobank-2016-12-12'
 afiles <- list.files(path=DATA_DIR,pattern="*.gz$",full.names=FALSE)
+#astle_samples <- data.table(trait = gsub("(.*)\\_build37\\_[0-9]+\\_20161212.tsv.gz","\\1",afiles),
+#ss = as.numeric(gsub("(.*)\\_build37\\_([0-9]+)\\_20161212.tsv.gz","\\2",afiles)))
+#astle_samples[,c('n0','n1','ss'):=list(round(ss/2),round(ss/2),NULL)]
+## here we assume that the trait outcome has been standardised such that sdY==1.
 astle_samples <- data.table(trait = gsub("(.*)\\_build37\\_[0-9]+\\_20161212.tsv.gz","\\1",afiles),
-ss = as.numeric(gsub("(.*)\\_build37\\_([0-9]+)\\_20161212.tsv.gz","\\2",afiles)))
-astle_samples[,c('n0','n1','ss'):=list(round(ss/2),round(ss/2),NULL)]
+n0 = as.numeric(gsub("(.*)\\_build37\\_([0-9]+)\\_20161212.tsv.gz","\\2",afiles)),
+n1 = 0, sdy=1)
 astle <- merge(astle,astle_samples)
 astle[,category:='astle_blood']
 
