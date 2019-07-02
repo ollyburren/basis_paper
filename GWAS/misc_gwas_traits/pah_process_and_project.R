@@ -14,13 +14,12 @@ library(annotSnpStats)
 #meta_mpo_lmm.txt  mpo_meta  873 11976
 #meta_pr3_lmm.txt  pr3_meta  1620 11976
 SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
-DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
-OUT_FILE <- "/home/ob219/share/as_basis/GWAS/liley_pah/projections/pah_0619.RDS"
+OUT_FILE <- "/home/ob219/share/as_basis/GWAS/liley_pah/projections/pah_no_pid_0619.RDS"
 
-(load('/home/ob219/share/Data/GWAS-summary/PAH/results_pah.RData'))
-
+#(load('/home/ob219/share/Data/GWAS-summary/PAH/results_pah.RData'))
+px <- (load('/home/ob219/share/Data/GWAS-summary/PAH/results_nopid_pah.RData')) %>% get
 pah.DT <- data.table(snp=rownames(px),px)
 setnames(pah.DT,make.names(colnames(pah.DT)))
 pah.DT[,c('pid','alleles'):=tstrsplit(snp,"\\_")]
@@ -58,8 +57,8 @@ tmp <- merge(M,stmp,by='pid',all.y=TRUE)
 tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 ## where snp is missing make it zero
 tmp[is.na(metric),metric:=0]
-tmp[,trait:= 'PAH']
-saveRDS(tmp,file='/home/ob219/share/as_basis/GWAS/PAH/pah_source.RDS')
+tmp[,trait:= 'PAH_nopid']
+saveRDS(tmp,file='/home/ob219/share/as_basis/GWAS/PAH/pah_nopid_source.RDS')
 B <- dcast(tmp,pid ~ trait,value.var='metric')
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()

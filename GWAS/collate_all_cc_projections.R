@@ -297,6 +297,11 @@ pah <- melt(pah,id.var='trait') %>% data.table
 setnames(pah,c('trait','variable','value'))
 pah[,c('n0','n1','category'):=list(5045,847,'rhodes_pah')]
 
+pah.np <- readRDS("/home/ob219/share/as_basis/GWAS/liley_pah/projections/pah_no_pid_0619.RDS")
+pah.np <- melt(pah.np,id.var='trait') %>% data.table
+setnames(pah.np,c('trait','variable','value'))
+pah.np[,c('n0','n1','category'):=list(4243,848,'rhodes_pah')]
+
 #IgA_nephropathy
 iga <- readRDS("/home/ob219/share/as_basis/GWAS/IgA_nephropathy/IgA_nephropathy_0619.RDS")
 iga <- melt(iga,id.var='trait') %>% data.table
@@ -360,4 +365,4 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/24_06_19_0619_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/02_07_19_0619_summary_results.RDS')
