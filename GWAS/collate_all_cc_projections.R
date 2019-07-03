@@ -309,6 +309,13 @@ iga <- melt(iga,id.var='trait') %>% data.table
 setnames(iga,c('trait','variable','value'))
 iga[,c('n0','n1','category'):=list(3952,2747,'kiryluk_iga_neph')]
 
+## ankylosing_spondylitis
+
+as <- readRDS("/home/ob219/share/as_basis/GWAS/ank_spond/ank_spond_0619.RDS")
+as <- melt(as,id.var='trait') %>% data.table
+setnames(as,c('trait','variable','value'))
+as[,c('n0','n1','category'):=list(3023,8779,'brown_as')]
+
 ## for some reason we swapped from n1 to n0 halfway through to n0 n1
 ## we need to fix otherwise everything gets swapped and case
 ## sizes become control sizes
@@ -338,7 +345,8 @@ all.proj <- list(
   psa=psa,
   pah=pah,
   mtx=mtx,
-  iga=iga
+  iga=iga,
+  as=as
 ) %>% rbindlist(.,fill=TRUE)
 all.proj[,n:=n1+n0]
 

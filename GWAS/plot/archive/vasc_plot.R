@@ -3,7 +3,7 @@ RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/02_07_19_0619_summary_r
 #RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/25_01_19_summary_results.RDS'
 res.DT <- readRDS(RESULTS.FILE)
 
-all.traits <- traits<-split(res.DT$trait,res.DT$category) %>% lapply(.,unique)
+
 
 ## add in basis traits for comparison
 
@@ -30,13 +30,23 @@ BB_LU <- list(
   VIT = 'vitiligo'
 )
 
-category.foc <- 'rhodes_pah'
-#category.foc <- 'taylor_mtx'
-#category.foc <- 'kiryluk_iga_neph'
-#category.foc <- 'astle_blood'
+N_LU <- list(
+  anca_Neg = 'EGPA_Lyons:ANCA-',
+  mpo_Pos = 'EGPA_Lyons:MPO+',
+  mpo = 'AAV_Lyons:MPO+',
+  mpo_meta = 'AAV_Wong:MPO+',
+  pr3_meta = 'AAV_Wong:PR3+',
+  egpa = 'EGPA_Lyons:Overall'
+)
 
-talk.DT <- res.DT[category %in% c('bb_disease',category.foc),]
-talk.DT<-talk.DT[(category %in% talk.DT[p.adj<0.01,]$category) | category==category.foc,]
+category.foc <- c('Focal')
+talk.DT <- res.DT[trait %in% names(N_LU),category:='Focal']
+talk.DT <- res.DT[category %in% c('bb_disease','Focal'),]
+talk.DT<-talk.DT[(category %in% talk.DT[p.adj<0.05,]$category) | category==category.foc,]
+## rename with nicer labels
+for(i in seq_along(N_LU)){
+  talk.DT[trait==names(N_LU)[i],trait:=N_LU[[i]]]
+}
 at <- talk.DT$category %>% unique
 at <- at[!at %in% c(category.foc)]
 library(RColorBrewer)
@@ -46,6 +56,8 @@ cols[category.foc] <- 'deeppink2'
 cols['basis'] <- '#7c0799'
 cols['bb_disease'] <- '#05af6e'
 talk.DT[,trait:=gsub("^bb_SRD:","",trait)]
+
+all.traits <- traits<-split(talk.DT$trait,talk.DT$category) %>% lapply(.,unique)
 
 
 forest_plot_focal_merge <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,cat_levels,fdr_thresh=0.05,theme=NA){
@@ -95,13 +107,9 @@ forest_plot_focal_merge <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,c
   theme(axis.text.y=element_text(size=12),legend.position="bottom")
 }
 
-#only for blood traits where lots of things are significant !
-talk.DT<-talk.DT[(category=='astle_blood' & p.adj<0.01) | category!='astle_blood',]
-#pc<-'PC1'
-#pp1 <- forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols)
 
-pdf(file="~/tmp/pah_020719.pdf",paper="a4r",onefile=TRUE)
+pdf(file="~/tmp/smith_020719.pdf",paper="a4r",onefile=TRUE)
 lapply(paste('PC',1:12,sep=''),function(pc){
-  forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=0.05)
+  forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=0.01)
 })
 dev.off()
