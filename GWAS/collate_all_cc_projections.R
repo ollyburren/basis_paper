@@ -314,7 +314,7 @@ iga[,c('n0','n1','category'):=list(3952,2747,'kiryluk_iga_neph')]
 as <- readRDS("/home/ob219/share/as_basis/GWAS/ank_spond/ank_spond_0619.RDS")
 as <- melt(as,id.var='trait') %>% data.table
 setnames(as,c('trait','variable','value'))
-as[,c('n0','n1','category'):=list(3023,8779,'brown_as')]
+as[,c('n0','n1','category'):=list(1644,4880,'brown_as')]
 
 ## for some reason we swapped from n1 to n0 halfway through to n0 n1
 ## we need to fix otherwise everything gets swapped and case
