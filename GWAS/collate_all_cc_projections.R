@@ -374,4 +374,4 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/02_07_19_0619_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/03_07_19_0619_summary_results.RDS')
