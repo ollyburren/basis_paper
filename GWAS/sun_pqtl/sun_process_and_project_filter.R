@@ -28,12 +28,9 @@ OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/fdr_0.05_by_chr_filtered'
 if(FALSE){
   OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/fdr_0.05_by_chr_filtered'
   PQTL_DIR <- '/home/ob219/share/as_basis/sun_pqtl/gwas_basis_june10k_pqtl'
-  FILTER_FILE <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/all_by_chr_fdr0.05.RDS'
-  filter.DT <- readRDS(FILTER_FILE)
   ## remove dirs that we have already processed
   ## only bother doing those with at least one pQTL
   all.dirs <- list.dirs(path=PQTL_DIR,recursive = FALSE)
-  #all.dirs <- all.dirs[basename(all.dirs) %in% filter.DT$prot]
   done <- list.files(path=OUT_DIR,pattern="*.RDS") %>% gsub("\\.RDS","",.) %>% file.path(PQTL_DIR,.)
   all.dirs <- all.dirs[!all.dirs %in% done]
   ## process 50 at a time
