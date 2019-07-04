@@ -20,7 +20,7 @@ if(!TEST){
   args <- list(file='/home/ob219/tmp/qstuff/pqtl/chunk1.txt')
 }
 
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl'
+OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/unfiltered/'
 
 if(FALSE){
   OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl'
@@ -48,7 +48,7 @@ processPQTL <- function(dir){
     sprintf("zcat %s",f) %>%  fread
   }) %>% rbindlist
   setnames(p.DT,c('snpid','chr','pos','a1','a2','effect','se','lp'))
-  SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
+  SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
   man.DT <- fread(SNP_MANIFEST)
   p.DT[,pid:=paste(chr,pos,sep=':')]
   p.DT <- p.DT[,.(pid,a1=toupper(a1),a2=toupper(a2),or=exp(effect),p.value=exp(lp))]
@@ -77,7 +77,7 @@ processPQTL <- function(dir){
   M <- M[g.class=='match',or:=1/or]
   M[,trait:= basename(dir)]
 
-  SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas.RDS'
+  SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
   sDT <- readRDS(SHRINKAGE_FILE)
   stmp<-sDT[,.(pid,ws_emp_shrinkage)]
   setkey(M,pid)
@@ -90,7 +90,7 @@ processPQTL <- function(dir){
   snames <- B[,1]$pid
   mat.emp <- as.matrix(B[,-1]) %>% t()
   colnames(mat.emp) <- snames
-  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas.RDS'
+  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/noweight_basis_gwas_0619.RDS'
   pc.emp <- readRDS(BASIS_FILE)
   if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
   stop("Something wrong basis and projection matrix don't match")
