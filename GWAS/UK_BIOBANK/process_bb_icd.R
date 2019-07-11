@@ -104,6 +104,8 @@ if(!file.exists(file.path(BASIS_FILT_DIR,filt.fname))){
   message(sprintf("zcat %s",file.path(BNEALE_DIR,med$ofile[i])))
   DT<-fread(sprintf("zcat %s",file.path(BNEALE_DIR,med$ofile[i])),showProgress=FALSE)[variant %in% keep, ]
   saveRDS(DT,file=file.path(BASIS_FILT_DIR,filt.fname))
+  ## remove the source file so we don't fill the disk !
+  unlink(file.path(BNEALE_DIR,med$ofile[i]))
   q(save="no")
 }else{
   DT <- readRDS(file.path(BASIS_FILT_DIR,filt.fname))
