@@ -81,6 +81,7 @@ med <- pheno[grepl("ICD10",Phenotype.Description) & Sex=='both_sexes',]
 
 P <- fread('/home/ob219/rds/hpc-work/as_basis/bb/summary_stats_20180731/phenotypes.both_sexes.tsv')
 P<-P[,.(phenotype,variable_type,non_missing=n_non_missing,cases=n_cases,controls=n_controls,pheno.source=source)]
+#PM <- merge(med,P,by.x='Phenotype.Code',by.y='phenotype')
 
 
 ## load in manifest
@@ -89,6 +90,9 @@ med[,c('wget','db','o','ofile'):=tstrsplit(wget.command,' ')]
 #odir <- '/home/ob219/rds/hpc-work/as_basis/bb/summary_stats_20180731/self_reported_disease/'
 med[,new.cmd:=sprintf("wget -nv %s -O %s%s",Dropbox.File,BNEALE_DIR,ofile)]
 med[,phe:=make.names(Phenotype.Description) %>% gsub("Diagnoses...main.ICD10..","",.)]
+
+## check here if the number of cases exceeds a certain threshold
+
 
 ## download data if required
 if(!file.exists(file.path(BNEALE_DIR,med$ofile[i]))){
