@@ -93,13 +93,15 @@ med[,phe:=make.names(Phenotype.Description) %>% gsub("Diagnoses...main.ICD10..",
 
 ## check here if the number of cases exceeds a certain threshold
 
-
+filt.fname <- gsub("\\.tsv\\.bgz",".RDS",med$ofile[i])
 ## download data if required
-if(!file.exists(file.path(BNEALE_DIR,med$ofile[i]))){
+#if(!file.exists(file.path(BNEALE_DIR,med$ofile[i]))){
+if(!file.exists(file.path(BASIS_FILT_DIR,filt.fname))){
   message(med$new.cmd[i])
   system(med$new.cmd[i],ignore.stdout=TRUE,ignore.stderr=FALSE)
 }
-filt.fname <- gsub("\\.tsv\\.bgz",".RDS",med$ofile[i])
+
+#if(!file.exists(file.path(BASIS_FILT_DIR,filt.fname))){
 if(!file.exists(file.path(BASIS_FILT_DIR,filt.fname))){
   message(sprintf("zcat %s",file.path(BNEALE_DIR,med$ofile[i])))
   DT<-fread(sprintf("zcat %s",file.path(BNEALE_DIR,med$ofile[i])),showProgress=FALSE)[variant %in% keep, ]
