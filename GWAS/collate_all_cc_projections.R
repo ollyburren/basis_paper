@@ -337,6 +337,11 @@ as <- melt(as,id.var='trait') %>% data.table
 setnames(as,c('trait','variable','value'))
 as[,c('n0','n1','category'):=list(1644,4880,'brown_as')]
 
+bs <- readRDS("/home/ob219/share/as_basis/GWAS/birdshot_retinopathy/birdshot_retinopathy_0619.RDS")
+bs <- melt(bs,id.var='trait') %>% data.table
+setnames(bs,c('trait','variable','value'))
+bs[,c('n0','n1','category'):=list(693,117,'kuiper_bs')]
+
 ## for some reason we swapped from n1 to n0 halfway through to n0 n1
 ## we need to fix otherwise everything gets swapped and case
 ## sizes become control sizes
@@ -362,13 +367,15 @@ all.proj <- list(
   nmo=nmo,
   egpa=egpa,
   abdef=abdef,
+  ost=ost,
   #liley=t1d,
   aav=aav,
   psa=psa,
   pah=pah,
   mtx=mtx,
   iga=iga,
-  as=as
+  as=as,
+  bs=bs
 ) %>% rbindlist(.,fill=TRUE)
 all.proj[,n:=n1+n0]
 
