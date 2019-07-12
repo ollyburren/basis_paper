@@ -15,7 +15,7 @@ if(!TEST){
 	    stop("Supply an integer for phenotype to process", call.=FALSE)
     }
 }else{
-  args <- list(integer=10)
+  args <- list(integer=370)
 }
 
 i<-args$integer
@@ -147,6 +147,11 @@ DT[,or:=computeOR(p$non_missing,p$cases,AC,ytx)]
 DT[,c('theta','se.theta'):=list(log(or),SElor(p$non_missing,p$cases,AC,ytx))]
 DT[,c('theta.pval','theta.Z','n0','n1'):=list(2*(pnorm(abs(theta/se.theta),lower.tail = FALSE)),theta/se.theta,p$non_missing-p$cases,p$cases)]
 
+## get a list of all the variants that are NaN for or
+
+idx <- which(DT$or<0)
+bad <- DT[idx,]$variant
+
 
 out <- DT[,.(variant,or,p.value=theta.pval)]
 out[,c('chr','pos','a1','a2'):=tstrsplit(variant,':')]
@@ -155,12 +160,8 @@ out[,pid:=paste(chr,pos,sep=':')]
 snp.DT <- fread(SNP_MANIFEST_FILE)
 out<-merge(snp.DT,out,by.x='pid',by.y='pid')
 
-## if any of the OR are 0 or inf set these to 1
-out[or==0 | is.infinite(or),or:=1]
-
-
-
-
+## if any of the OR are 0 or inf or nan (due to af in cases > 1) set these to 1
+out[or<=0 | is.infinite(or),or:=1]
 shrink.DT <- readRDS(SHRINKAGE_FILE)
 shrink.DT<-shrink.DT[,c('pid',shrink=SHRINKAGE_METHOD),with=FALSE]
 setkey(shrink.DT,'pid')
@@ -186,5 +187,7 @@ res.DT <- data.table(trait = med$phe[i]  %>% gsub("_shrunk.beta","",.),bc)[2,]
 
 
 saveRDS(res.DT,file=sprintf("%s%s.RDS",OUT_DIR,med$phe[i]))
+BAD_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/0619_ICD_BAD/'
+saveRDS(bad,file=sprintf("%s%s.RDS",BAD_DIR,med$phe[i]))
 message(sprintf("Wrote to %s%s.RDS",OUT_DIR,med$phe[i]))
 #file.remove(file.path(odir,med$ofile[i]))
