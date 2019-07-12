@@ -23,7 +23,7 @@ if(!TEST){
 OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/unfiltered/'
 
 if(FALSE){
-  OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl'
+  OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/unfiltered/'
   PQTL_DIR <- '/home/ob219/share/as_basis/sun_pqtl/gwas_basis_june10k_pqtl'
   ## remove dirs that we have already processed
   all.dirs <- list.dirs(path=PQTL_DIR,recursive = FALSE)

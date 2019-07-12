@@ -31,8 +31,9 @@ basis.DT<-get_gwas_data(TRAIT_MANIFEST,SNP_MANIFEST_FILE,GWAS_DATA_DIR,filter_sn
 basis.DT[,p.value:=as.numeric(p.value)]
 ## compute various shrinkage methods and store ommit T2D from
 ## creating the weights
-shrink.DT<-compute_shrinkage_metrics(basis.DT)
-saveRDS(shrink.DT,file=SHRINKAGE_FILE)
+shrink.DT <- readRDS(SHRINKAGE_FILE)
+#shrink.DT<-compute_shrinkage_metrics(basis.DT)
+#saveRDS(shrink.DT,file=SHRINKAGE_FILE)
 basis.mat.emp <- create_ds_matrix(basis.DT,shrink.DT,SHRINKAGE_METHOD)
 ## need to add control where beta is zero
 basis.mat.emp<-rbind(basis.mat.emp,control=rep(0,ncol(basis.mat.emp)))

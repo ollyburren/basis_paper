@@ -120,3 +120,18 @@ for(d in dirlist){
     }, error=function(e){sprintf("Error %s with %s",e,d) %>% message})
   }
 }
+
+if(FALSE){
+  ## examine which things are missing and why ?
+  PQTL_DIR <- '/home/ob219/share/as_basis/sun_pqtl/gwas_basis_june10k_pqtl'
+  ## remove dirs that we have already processed
+  ## only bother doing those with at least one pQTL
+  genes <- list.dirs(path=PQTL_DIR,recursive = FALSE) %>% basename
+  unf <- list.files(path='/home/ob219/share/as_basis/GWAS/sun_pqtl/unfiltered',pattern="*.RDS") %>% gsub("\\.RDS","",.)
+  fdr <- list.files(path='/home/ob219/share/as_basis/GWAS/sun_pqtl/fdr_0.05_by_chr_filtered',pattern="*.RDS") %>% gsub("\\.RDS","",.)
+
+  ## which are missing
+
+
+
+}

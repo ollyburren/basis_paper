@@ -20,6 +20,7 @@ get_phenotype_annotation <- function(filter='20002\\_'){
   med[,phe:=make.names(Phenotype.Description) %>% gsub("Cancer.code..self.reported..","SRC:",.)]
   med[,phe:=gsub("Treatment.medication.code..","SRM:",phe)]
   med[,phe:=gsub("Non.cancer.illness.code..self.reported..","SRD:",phe)]
+  med[,phe:=gsub("Diagnoses...main.ICD10..","ICD10:",phe)]
   med <- med[,.(Phenotype.Code,phe)]
   med <- merge(P,med,by.x='phenotype',by.y='Phenotype.Code')[,.(code=phenotype,phe,n1=as.numeric(cases),n0=as.numeric(controls))]
   med
@@ -73,6 +74,19 @@ anno.bb[clade=='20003',top.node:='bb_medications']
 
 ukbb <- merge(ukbb,anno.bb[,.(phe,n1,n0,category=top.node)],by.x='trait',by.y='phe')
 ukbb <- ukbb[,trait:=paste('bb',trait,sep='_')]
+
+
+## read in ICD projections
+
+ ICD_BB_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/0619_ICD'
+ icd <- lapply(list.files(path=ICD_BB_DIR,pattern="*.RDS",full.names=TRUE),readRDS) %>% rbindlist
+ icd <- melt(icd,id.var='trait')
+ icd[,trait:=paste('ICD10',trait,sep=':')]
+
+ icd.traits <- icd$trait %>% unique
+ anno.icd <- anno[phe %in% icd.traits]
+ icd <- merge(icd,anno.icd[,.(phe,n1,n0,category='bb_icd10')],by.x='trait',by.y='phe')
+
 
 ##remove medication for the time being
 #ukbb <- ukbb[!is.na(category),]
@@ -260,6 +274,13 @@ aav.samp <- fread("/home/ob219/share/Data/GWAS-summary/aav_limy_wong/aav_sample_
 aav <- merge(aav,aav.samp[,.(label,n0,n1)],by.x='trait',by.y='label')
 aav[,category:='wong_aav']
 
+## load in osteo data
+
+ost <- readRDS("/home/ob219/share/as_basis/GWAS/tachmazidou_osteo/projections/oa_0619.RDS")
+ost <- melt(ost,id.var='trait')
+ost.samp <- fread("/home/ob219/share/Data/GWAS-summary/tachmazidou_osteo/osteo_sample_size.txt")
+ost <- merge(ost,ost.samp[,.(label,n0,n1)],by.x='trait',by.y='label')
+ost[,category:='tachmazidou_osteo']
 
 ## load in abdef
 
@@ -332,6 +353,7 @@ all.proj <- list(
   tian=tian,
   jia=jia,
   ukbb=ukbb,
+  #icd=icd, - did not work not sure why !
   astle=astle,
   eff=eff,
   cd.prog=cd.prog,
@@ -374,4 +396,4 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/03_07_19_0619_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/12_07_19_0619_summary_results.RDS')

@@ -1,30 +1,30 @@
-## process both cis and trans signals from Võsa,U. et al. (2018) Unraveling the polygenic architecture of complex traits using blood eQTL meta-analysis. bioRxiv, 447367.
+cis-eQTLs_0619_full_20180905## process both cis and trans signals from Võsa,U. et al. (2018) Unraveling the polygenic architecture of complex traits using blood eQTL meta-analysis. bioRxiv, 447367.
 
 ## note that these are large files - I used UNIX to create a list of unique variants in
 ## order to facilitate filtering.
 
 EQTL_GEN_MAN <- '/home/ob219/share/Data/expr/eqtlgen/cis_manifest.tab'
-SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab'
+SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
 e.DT <- fread(EQTL_GEN_MAN)
 setnames(e.DT,c('id','chr','position','effect','other'))
 e.DT <- e.DT[id!='SNP',]
 e.DT[,pid:=paste(chr,position,sep=':')]
 snp.DT <- fread(SNP_MANIFEST)
 keep.id <- e.DT[pid %in% snp.DT$pid,]$id
-ID_FILE <- "/home/ob219/share/as_basis/GWAS/eqtlgen/gwas_june_match.tab"
+ID_FILE <- "/home/ob219/share/as_basis/GWAS/eqtlgen/gwas_0619_match.tab"
 write(keep.id,file=ID_FILE)
 CIS_FILE <- '/home/ob219/share/Data/expr/eqtlgen/cis-eQTLs_full_20180905.txt.gz'
-OUT_FILE <- '/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.txt'
+OUT_FILE <- '/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905_0619.filtered.txt'
 cmd <- sprintf("zcat %s | grep -f %s > %s",CIS_FILE,ID_FILE,OUT_FILE)
 #system(cmd)
 #zcat /home/ob219/share/Data/expr/eqtlgen/cis-eQTLs_full_20180905.txt.gz | grep -f /home/ob219/share/as_basis/GWAS/eqtlgen/gwas_june_match.tab > /home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.txt
 ## above does not work as get out of mem error instead us data.table
-if(!file.exists("/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.RDS")){
+if(!file.exists("/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_0619_full_20180905.filtered.RDS")){
   DT<-fread("zcat /home/ob219/share/Data/expr/eqtlgen/cis-eQTLs_full_20180905.txt.gz")
   f.DT<-DT[SNP %in% keep.id,]
-saveRDS(f.DT,"/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.RDS")
+saveRDS(f.DT,"/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_0619_full_20180905.filtered.RDS")
 }else{
-  f.DT<-readRDS("/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_full_20180905.filtered.RDS")
+  f.DT<-readRDS("/home/ob219/share/as_basis/GWAS/eqtlgen/cis-eQTLs_0619_full_20180905.filtered.RDS")
 }
 ## next do the same for trans eqtl
 #EQTL_GEN_MAN_TRANS <- '/home/ob219/share/Data/expr/eqtlgen/trans_manifest.tab'
@@ -46,7 +46,7 @@ snp.DT <- fread(SNP_MANIFEST)
 ## trans could be problematic as contain variants that are curated from immunobase
 basis.DT <- f.DT
 basis.DT[,pid:=paste(SNPChr,SNPPos,sep=':')]
-basis.DT <- basis.DT[,.(pid,Zscore,risk.allele=AssessedAllele,other.allele=OtherAllele,ensg=Gene,NrSamples)]
+basis.DT <- basis.DT[,.(pid,Zscore,risk.allele=AssessedAllele,other.allele=OtherAllele,ensg=Gene,NrSamples,FDR)]
 ##merge with the manifest to get MAF so can convert to the correct scale
 M <- merge(basis.DT,snp.DT,by='pid')
 
@@ -54,6 +54,11 @@ M[,maf:=ifelse(ref_a1.af>0.5,1-ref_a1.af,ref_a1.af)]
 
 # this to get a derived beta that takes into account differing MAF's and sample sizes.
 M[,der.beta:=1/(sqrt(2 * NrSamples) * sqrt(maf * (1-maf))) * Zscore]
+## taken from the paper
+M[,vosa.beta:=Zscore/sqrt(2 * maf * (1-maf) * (NrSamples + Zscore^2))]
+## these two are not wildly different but use der.beta so comparable.
+## reweight beta's by 1-FDR
+M[,soft.der.beta:=(1-FDR) * der.beta]
 
 library(annotSnpStats)
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$risk.allele,M$other.allele,sep='/'))
@@ -74,10 +79,10 @@ M <- merge(M,alleles[,.(pid,g.class)],by='pid',all.x=TRUE)
 ## matched alleles are the wrong way round
 #M[g.class=='rev',der.beta:=der.beta*-1]
 M[g.class=='match',der.beta:=der.beta*-1]
-M.out <- M[,.(pid,a1=ref_a1,a2=ref_a2,or=der.beta,p.value=2*pnorm(abs(Zscore),lower.tail=FALSE),ensg)]
+M.out <- M[,.(pid,a1=ref_a1,a2=ref_a2,or=soft.der.beta,p.value=2*pnorm(abs(Zscore),lower.tail=FALSE),ensg)]
 by.gene<-split(M.out,M.out$ensg)
 #OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sum_stats/eqtlgen/'
-OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sum_stats/eqtlgen_notrans/'
+OUT_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sum_stats/eqtlgen_softthresh/'
 for(n in names(by.gene)){
   message(n)
   out <- by.gene[[n]][,.(pid,a1,a2,or,p.value)]
