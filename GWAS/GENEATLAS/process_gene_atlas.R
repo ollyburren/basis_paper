@@ -9,12 +9,10 @@ all.urls <- sprintf("ftp://ftp.igmm.ed.ac.uk/pub/GeneATLAS/%s.v2.tar",meta.dt$ID
 
 for(i in 1:nrow(meta.dt)){
 ftp_url <- all.urls[i]
+out_dir <- '/home/ob219/share/Data/GWAS-summary/tmp'
 ofile <- paste(out_dir,basename(ftp_url),sep='/')
-
 sprintf("Processing %s",ofile) %>% message
 #ftp_url <- 'ftp://ftp.igmm.ed.ac.uk/pub/GeneATLAS/clinical_c_M05.v2.tar'
-out_dir <- '/home/ob219/share/Data/GWAS-summary/tmp'
-
 cmd <- sprintf("wget %s -O %s",ftp_url,ofile)
 system(cmd)
 ## next list the files
