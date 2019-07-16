@@ -13,7 +13,7 @@ out_dir <- '/home/ob219/share/Data/GWAS-summary/tmp'
 ofile <- paste(out_dir,basename(ftp_url),sep='/')
 sprintf("Processing %s",ofile) %>% message
 #ftp_url <- 'ftp://ftp.igmm.ed.ac.uk/pub/GeneATLAS/clinical_c_M05.v2.tar'
-cmd <- sprintf("wget %s -O %s",ftp_url,ofile)
+cmd <- sprintf("wget -nv %s -O %s",ftp_url,ofile)
 system(cmd)
 ## next list the files
 cmd <- sprintf("tar -tf %s",ofile)
@@ -22,12 +22,15 @@ chr.files <- chr.files[grep("\\.gz$",chr.files)]
 chr.files <- chr.files[grep("chr[0-9]+",chr.files)]
 chr.files <- chr.files[grep("imputed",chr.files)]
 
-
+tmp.file <- file.path(OUT.DIR,'tmp.gz')
 all.results <- lapply(chr.files,function(x){
-  cmd3 <- sprintf("tar -Oxf %s %s | zcat",ofile,x)
+  #cmd3 <- sprintf("tar -Oxf %s %s | zcat",ofile,x)
+  cmd3 <- sprintf("tar -Oxf %s %s > %s",ofile,x,tmp.file)
+  system(cmd3)
   message(gsub(".*(chr[0-9]+).csv.gz","\\1",x))
   chrom <- gsub(".*(chr[0-9]+).csv.gz","\\1",x)
-  dt <- fread(cmd3)
+  cmd4 <- sprintf("zcat %s",tmp.file)
+  dt <- fread(cmd4)
   dt[,chr:=chrom]
 }) %>% rbindlist
 setnames(all.results,c('SNP','ALLELE','iscores','beta','seb','pval','chr'))
