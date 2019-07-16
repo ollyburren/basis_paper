@@ -11,10 +11,6 @@ all.urls <- sprintf("ftp://ftp.igmm.ed.ac.uk/pub/GeneATLAS/%s.v2.tar",meta.dt$ID
 if(FALSE){
   trait <- meta.dt$Description[i] %>% make.names
   res.file <- sprintf("%s/%s.RDS",OUT.DIR,trait)
-  if(file.exists(res.file)){
-    sprintf("Already done %s skipping",trait) %>% message
-    return
-  }
   trait <- meta.dt$Description[i] %>% make.names
   ftp_url <- all.urls[i]
   out_dir <- '/home/ob219/share/Data/GWAS-summary/tmp'
@@ -62,8 +58,10 @@ if(FALSE){
 mainfunc <- function(i){
   trait <- meta.dt$Description[i] %>% make.names
   res.file <- sprintf("%s/%s.RDS",OUT.DIR,trait)
-  if(file.exists(res.file))
+  if(file.exists(res.file)){
+    sprintf("Already done %s skipping",trait) %>% message
     return
+  }
   trait <- meta.dt$Description[i] %>% make.names
   ftp_url <- all.urls[i]
   out_dir <- '/home/ob219/share/Data/GWAS-summary/tmp'
