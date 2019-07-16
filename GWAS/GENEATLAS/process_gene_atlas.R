@@ -12,7 +12,7 @@ if(FALSE){
   trait <- meta.dt$Description[i] %>% make.names
   res.file <- sprintf("%s/%s.RDS",OUT.DIR,trait)
   if(file.exists(res.file))
-    next
+    return
   trait <- meta.dt$Description[i] %>% make.names
   ftp_url <- all.urls[i]
   out_dir <- '/home/ob219/share/Data/GWAS-summary/tmp'
