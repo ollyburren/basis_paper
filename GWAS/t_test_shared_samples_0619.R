@@ -1,6 +1,7 @@
 ### use pooled variance to do t-test taking into account sharing between control for studies.
 
-RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/03_07_19_0619_summary_results.RDS'
+#RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/03_07_19_0619_summary_results.RDS'
+RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/16_07_19_0619_summary_results.RDS'
 res.DT <- readRDS(RESULTS.FILE)
 
 ## pooled variance

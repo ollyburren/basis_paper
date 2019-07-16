@@ -88,6 +88,19 @@ ukbb <- ukbb[,trait:=paste('bb',trait,sep='_')]
  icd <- merge(icd,anno.icd[,.(phe,n1,n0,category='bb_icd10')],by.x='trait',by.y='phe')
 
 
+## read in roslin geneatlas results
+
+GENEATLAS <- '/home/ob219/share/as_basis/GWAS/geneatlas/0619'
+ga <- lapply(list.files(path=GENEATLAS,pattern="*.RDS",full.names=TRUE),readRDS) %>% rbindlist
+ga <- melt(ga,id.var='trait')
+ga[,trait:=paste('GA',trait,sep=':')]
+
+meta.dt <- fread("~/tmp/41588_2018_248_MOESM3_ESM.csv")
+meta.dt <- meta.dt[Category=='Binary',.(ID,Description=paste('GA',make.names(Description),sep=':'),Cases,Controls=round(Cases/Sample),prop=Sample)]
+ga <- merge(ga,meta.dt[,.(Description,n1=Cases,n0=Controls,category='geneatlas')],by.x='trait',by.y='Description')
+
+
+
 ##remove medication for the time being
 #ukbb <- ukbb[!is.na(category),]
 
@@ -388,7 +401,8 @@ all.proj <- list(
   as=as,
   bs=bs,
   lada=lada,
-  li_as=li_as
+  li_as=li_as,
+  ga=ga
 ) %>% rbindlist(.,fill=TRUE)
 all.proj[,n:=n1+n0]
 
@@ -416,4 +430,4 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/16_07_19_0619_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/17_07_19_0619_summary_results.RDS')
