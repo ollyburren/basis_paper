@@ -60,7 +60,8 @@ mainfunc <- function(i){
   res.file <- sprintf("%s/%s.RDS",OUT.DIR,trait)
   if(file.exists(res.file)){
     sprintf("Already done %s skipping",trait) %>% message
-    return
+    return()
+    message("here")
   }else{
     message("Go")
   }
