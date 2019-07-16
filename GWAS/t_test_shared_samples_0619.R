@@ -216,6 +216,14 @@ compute_t_no_share <- function(tg,pc,covM){
 ## compute the covariance matrix so that we can do use and save a lot of effort
 scovM <- compute_t(tg=list(g1='pr3_meta',g2='mpo_meta'),pc='PC1')$covM
 pcs <- paste('PC',1:11,sep='')
+
+
+dat.ladavst1d <- lapply(pcs,function(pc){
+  compute_t(tg=list(g1='bb_SRD:type.1.diabetes',g2='cousminer_lada'),pc=pc,scovM)$t
+}) %>% rbindlist
+
+dat.ladavst1d[,bonf.p:=p.adjust(p.value,method="bonferroni")]
+
 dat.egpa <- lapply(pcs,function(pc){
   compute_t(tg=list(g1='mpo_Pos',g2='anca_Neg'),pc=pc,scovM)$t
 }) %>% rbindlist

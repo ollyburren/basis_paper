@@ -37,7 +37,8 @@ all.oa <- lapply(1:nrow(samples.DT),function(i){
   sprintf("Processing %s",samples.DT$fname[i]) %>% message
   fname <- file.path(DATA.DIR,samples.DT$fname[i])
   stat.DT <- fread(sprintf("zcat %s",fname))
-  stat.DT[,maf:=]
+  stat.DT[,maf:=ifelse(Freq1>0.5,1-Freq1,Freq1)]
+  stat.DT <- stat.DT[maf>0.01,]
   ## in order to convert lmm to the or scale do the following
   ## taken from https://data.broadinstitute.org/alkesgroup/BOLT-LMM/#x1-5000010 (section 10.2)
   #convertORscale <- function(x,cp) x/(cp * (1-cp))

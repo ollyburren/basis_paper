@@ -1,9 +1,9 @@
 library(cowplot)
-RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/03_07_19_0619_summary_results.RDS'
+RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/17_07_19_0619_summary_results.RDS'
 #RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/25_01_19_summary_results.RDS'
 res.DT <- readRDS(RESULTS.FILE)
 
-all.traits <- traits<-split(res.DT$trait,res.DT$category) %>% lapply(.,unique)
+#all.traits <- traits<-split(res.DT$trait,res.DT$category) %>% lapply(.,unique)
 
 ## add in basis traits for comparison
 
@@ -30,13 +30,19 @@ BB_LU <- list(
   VIT = 'vitiligo'
 )
 
-category.foc <- 'tachmazidou_osteo'
+#res.DT[category %in% c('brown_as','li_as'),category:='all_as']
+#category.foc <- 'all_as'
+category.foc <- 'geneatlas'
+#category.foc <- 'cousminer_lada'
+#category.foc <- 'kuiper_bs'
+#category.foc <- 'tachmazidou_osteo'
 #category.foc <- 'brown_as'
 #category.foc <- 'rhodes_pah'
 #category.foc <- 'taylor_mtx'
 #category.foc <- 'kiryluk_iga_neph'
 #category.foc <- 'astle_blood'
 
+all.traits <- traits<-split(res.DT$trait,res.DT$category) %>% lapply(.,unique)
 talk.DT <- res.DT[category %in% c('bb_disease',category.foc),]
 talk.DT<-talk.DT[(category %in% talk.DT[p.adj<0.01,]$category) | category==category.foc,]
 at <- talk.DT$category %>% unique
@@ -98,12 +104,12 @@ forest_plot_focal_merge <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,c
 }
 
 #only for blood traits where lots of things are significant !
-talk.DT<-talk.DT[(category=='astle_blood' & p.adj<0.01) | category!='astle_blood',]
+talk.DT<-talk.DT[(category=='geneatlas' & p.adj<0.05) | category!='geneatlas',]
 #pc<-'PC1'
 #pp1 <- forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols)
 
-pdf(file="~/tmp/as_030719.pdf",paper="a4r",onefile=TRUE)
-lapply(paste('PC',1:12,sep=''),function(pc){
+pdf(file="~/tmp/geneatlas_160719.pdf",paper="a4r",onefile=TRUE)
+lapply(paste('PC',1:11,sep=''),function(pc){
   forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=0.05)
 })
 dev.off()

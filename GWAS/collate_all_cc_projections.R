@@ -358,13 +358,19 @@ bs[,c('n0','n1','category'):=list(693,117,'kuiper_bs')]
 lada <- readRDS("/home/ob219/share/as_basis/GWAS/cousminer_lada/cousminer_lada_0619.RDS")
 lada <- melt(lada,id.var='trait') %>% data.table
 setnames(lada,c('trait','variable','value'))
-lada[,c('n0','n1','category'):=list(2634,5947,'cousminer_lada')]
+lada[,c('n0','n1','category'):=list(5947,2634,'cousminer_lada')]
 
 
 li_as <- readRDS('/home/ob219/share/as_basis/GWAS/li_ankspond/li_ankspond_0619.RDS')
 li_as <- melt(li_as,id.var='trait') %>% data.table
 setnames(li_as,c('trait','variable','value'))
-li_as[,c('n0','n1','category'):=list(1480,1841,'li_as')]
+li_as[,c('n0','n1','category'):=list(1841,1480,'li_as')]
+
+
+t2d_mahajan <- readRDS('/home/ob219/share/as_basis/GWAS/mahajan_t2d/mahajan_t2d_0619.RDS')
+t2d_mahajan <- melt(t2d_mahajan,id.var='trait') %>% data.table
+setnames(t2d_mahajan,c('trait','variable','value'))
+t2d_mahajan[,c('n0','n1','category'):=list(824006,74124,'mahajan_t2d')]
 
 ## for some reason we swapped from n1 to n0 halfway through to n0 n1
 ## we need to fix otherwise everything gets swapped and case
@@ -402,7 +408,8 @@ all.proj <- list(
   bs=bs,
   lada=lada,
   li_as=li_as,
-  ga=ga
+  ga=ga,
+  t2d=t2d
 ) %>% rbindlist(.,fill=TRUE)
 all.proj[,n:=n1+n0]
 
