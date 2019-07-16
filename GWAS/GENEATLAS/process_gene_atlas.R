@@ -61,6 +61,8 @@ mainfunc <- function(i){
   if(file.exists(res.file)){
     sprintf("Already done %s skipping",trait) %>% message
     return
+  }else{
+    message("Go")
   }
   trait <- meta.dt$Description[i] %>% make.names
   ftp_url <- all.urls[i]
