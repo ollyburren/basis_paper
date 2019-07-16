@@ -342,6 +342,17 @@ bs <- melt(bs,id.var='trait') %>% data.table
 setnames(bs,c('trait','variable','value'))
 bs[,c('n0','n1','category'):=list(693,117,'kuiper_bs')]
 
+lada <- readRDS("/home/ob219/share/as_basis/GWAS/cousminer_lada/cousminer_lada_0619.RDS")
+lada <- melt(lada,id.var='trait') %>% data.table
+setnames(lada,c('trait','variable','value'))
+lada[,c('n0','n1','category'):=list(2634,5947,'cousminer_lada')]
+
+
+li_as <- readRDS('/home/ob219/share/as_basis/GWAS/li_ankspond/li_ankspond_0619.RDS')
+li_as <- melt(li_as,id.var='trait') %>% data.table
+setnames(li_as,c('trait','variable','value'))
+li_as[,c('n0','n1','category'):=list(1480,1841,'li_as')]
+
 ## for some reason we swapped from n1 to n0 halfway through to n0 n1
 ## we need to fix otherwise everything gets swapped and case
 ## sizes become control sizes
@@ -375,7 +386,9 @@ all.proj <- list(
   mtx=mtx,
   iga=iga,
   as=as,
-  bs=bs
+  bs=bs,
+  lada=lada,
+  li_as=li_as
 ) %>% rbindlist(.,fill=TRUE)
 all.proj[,n:=n1+n0]
 
@@ -403,4 +416,4 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/12_07_19_0619_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/16_07_19_0619_summary_results.RDS')
