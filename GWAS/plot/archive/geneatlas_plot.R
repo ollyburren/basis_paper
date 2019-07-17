@@ -13,7 +13,6 @@ control.DT <- data.table(PC=names( pc.emp$x["control",]),control.loading= pc.emp
 basis.DT <- data.table(trait=rownames(pc.emp$x),pc.emp$x) %>% melt(.,id.vars='trait')
 basis.DT <- merge(basis.DT,control.DT,by.x='variable',by.y='PC')
 basis.DT[,delta:=(value-control.loading)]
-#basis.DT[,c('lower','upper'):=list(delta,delta)]
 basis.DT[,category:='basis']
 
 BB_LU <- list(
@@ -30,21 +29,8 @@ BB_LU <- list(
   VIT = 'vitiligo'
 )
 
-#res.DT[category %in% c('brown_as','li_as'),category:='all_as']
-res.DT[category %in% c('cousminer_lada','mahajan_t2d'),category:='all_diabetes']
-category.foc <- 'all_diabetes'
-#category.foc <- 'all_as'
-#category.foc <- 'mahajan_t2d'
-#category.foc <- 'cousminer_lada'
-#category.foc <- 'kuiper_bs'
-#category.foc <- 'tachmazidou_osteo'
-#category.foc <- 'brown_as'
-#category.foc <- 'rhodes_pah'
-#category.foc <- 'taylor_mtx'
-#category.foc <- 'kiryluk_iga_neph'
-#category.foc <- 'astle_blood'
+category.foc <- 'geneatlas'
 
-all.traits <- traits<-split(res.DT$trait,res.DT$category) %>% lapply(.,unique)
 talk.DT <- res.DT[category %in% c('bb_disease',category.foc),]
 talk.DT<-talk.DT[(category %in% talk.DT[p.adj<0.01,]$category) | category==category.foc,]
 at <- talk.DT$category %>% unique
@@ -106,11 +92,13 @@ forest_plot_focal_merge <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,c
 }
 
 #only for blood traits where lots of things are significant !
-#talk.DT<-talk.DT[(category=='geneatlas' & p.adj<0.05) | category!='geneatlas',]
+talk.DT<-talk.DT[(category=='geneatlas' & p.adj<0.05) | category!='geneatlas',]
+talk.DT[,trait:=strtrim(trait, 50)]
+all.traits <- traits<-split(res.DT$trait,res.DT$category) %>% lapply(.,unique)
 #pc<-'PC1'
 #pp1 <- forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols)
 
-pdf(file="~/tmp/all_diabetes_160719.pdf",paper="a4r",onefile=TRUE)
+pdf(file="~/tmp/geneatlas_160719.pdf",paper="a4r",onefile=TRUE)
 lapply(paste('PC',1:11,sep=''),function(pc){
   forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=0.05)
 })
