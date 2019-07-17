@@ -97,8 +97,15 @@ ga[,trait:=paste('GA',trait,sep=':')]
 
 meta.dt <- fread("~/tmp/41588_2018_248_MOESM3_ESM.csv")
 meta.dt <- meta.dt[Category=='Binary',.(ID,Description=paste('GA',make.names(Description),sep=':'),Cases,Controls=round(Cases/Sample),prop=Sample)]
-ga <- merge(ga,meta.dt[,.(Description,n1=Cases,n0=Controls,category='geneatlas')],by.x='trait',by.y='Description')
-
+srd.idx <- grep("^selfReported",meta.dt$ID)
+icd.idx <- grep("^clinical_c",meta.dt$ID)
+cancer.idx <- grep("^cancer_c",meta.dt$ID)
+ga.srd <- merge(ga,meta.dt[srd.idx,.(Description,n1=Cases,n0=Controls,category='geneatlas_srd')],by.x='trait',by.y='Description')
+ga.icd <- merge(ga,meta.dt[icd.idx,.(Description,n1=Cases,n0=Controls,category='geneatlas_icd')],by.x='trait',by.y='Description')
+ga.cancer <- merge(ga,meta.dt[cancer.idx,.(Description,n1=Cases,n0=Controls,category='geneatlas_cancer')],by.x='trait',by.y='Description')
+#lefthandedness etc.
+#ga.other <- merge(ga,meta.dt[-(c(srd.idx,icd.idx,cancer.idx)),.(Description,n1=Cases,n0=Controls,category='geneatlas_other')],by.x='trait',by.y='Description')
+ga <- rbindlist(list(ga.srd,ga.icd,ga.cancer))
 
 
 ##remove medication for the time being
