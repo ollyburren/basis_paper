@@ -29,7 +29,12 @@ BB_LU <- list(
   VIT = 'vitiligo'
 )
 
-category.foc <- 'geneatlas'
+## remove all srd gene atlas and recalculate p.adj as it is currently wrong
+res.DT <- res.DT[category!='geneatlas_srd',]
+res.DT[,p.adj:=p.adjust(p.value,method='BH')]
+
+#category.foc <- 'geneatlas_icd'
+category.foc <- 'geneatlas_cancer'
 
 talk.DT <- res.DT[category %in% c('bb_disease',category.foc),]
 talk.DT<-talk.DT[(category %in% talk.DT[p.adj<0.01,]$category) | category==category.foc,]
@@ -92,14 +97,14 @@ forest_plot_focal_merge <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,c
 }
 
 #only for blood traits where lots of things are significant !
-talk.DT<-talk.DT[(category=='geneatlas' & p.adj<0.05) | category!='geneatlas',]
+talk.DT<-talk.DT[(category==category.foc & p.adj<0.01) | category!=category.foc,]
 talk.DT[,trait:=strtrim(trait, 50)]
-all.traits <- traits<-split(res.DT$trait,res.DT$category) %>% lapply(.,unique)
+all.traits <- traits<-split(talk.DT$trait,talk.DT$category) %>% lapply(.,unique)
 #pc<-'PC1'
 #pp1 <- forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols)
 
-pdf(file="~/tmp/geneatlas_160719.pdf",paper="a4r",onefile=TRUE)
+pdf(file="~/tmp/geneatlas_cancer_160719.pdf",paper="a4r",onefile=TRUE)
 lapply(paste('PC',1:11,sep=''),function(pc){
-  forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=0.05)
+  forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=0.01)
 })
 dev.off()

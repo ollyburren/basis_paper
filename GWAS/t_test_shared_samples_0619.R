@@ -1,7 +1,7 @@
 ### use pooled variance to do t-test taking into account sharing between control for studies.
 
 #RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/03_07_19_0619_summary_results.RDS'
-RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/16_07_19_0619_summary_results.RDS'
+RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/17_07_19_0619_summary_results.RDS'
 res.DT <- readRDS(RESULTS.FILE)
 
 ## pooled variance
@@ -95,6 +95,7 @@ compute_cov <- function(DT){
           ## both jia - NB this is not correct if we test between groups where
           ## the groups have shared controls but there are no shared samples between
           ## groups in that case cor should be 0
+          message("Assume shared controls")
           cor <- compute_cor_jia(
             n_i1=DT$n1[i],
             n_j1=DT$n1[j],

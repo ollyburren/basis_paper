@@ -30,9 +30,15 @@ BB_LU <- list(
   VIT = 'vitiligo'
 )
 
+res.DT <- res.DT[category!='geneatlas_srd',]
+res.DT[,p.adj:=p.adjust(p.value,method='BH')]
+
 #res.DT[category %in% c('brown_as','li_as'),category:='all_as']
-res.DT[category %in% c('cousminer_lada','mahajan_t2d'),category:='all_diabetes']
+res.DT[category %in% c('cousminer_lada','mahajan_t2d','GA:E10.Insulin.dependent.diabetes.mellitus','GA:E11.Non.insulin.dependent.diabetes.mellitus','Unspecified.diabetes.mellitus'),category:='all_diabetes']
 category.foc <- 'all_diabetes'
+#category.foc <- 'bowes_psa'
+category.foc <- 'estrada_NMO'
+#category.foc <- 'myogen'
 #category.foc <- 'all_as'
 #category.foc <- 'mahajan_t2d'
 #category.foc <- 'cousminer_lada'
@@ -110,8 +116,19 @@ forest_plot_focal_merge <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,c
 #pc<-'PC1'
 #pp1 <- forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols)
 
+## plot only PCs where significantly difference from control
+
+PADJ_THRESH <- 0.05
+
+talk.DT[category==category.foc & p.adj<PADJ_THRESH,]$variable
+pc <- 'PC8'
+forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=PADJ_THRESH)
+
+
+
+
 pdf(file="~/tmp/all_diabetes_160719.pdf",paper="a4r",onefile=TRUE)
 lapply(paste('PC',1:11,sep=''),function(pc){
-  forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=0.05)
+  forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=PADJ_THRESH)
 })
 dev.off()
