@@ -11,9 +11,9 @@ option_list = list(
 if(!TEST){
   opt_parser = OptionParser(option_list=option_list);
   args = parse_args(opt_parser)
-  if (is.null(args$integer)){
+  if (is.null(args$phenotypes)){
 	   print_help(opt_parser)
-	    stop("Supply an integer for phenotype to process", call.=FALSE)
+	    stop("Supply a file containing a list of phenotypes to process", call.=FALSE)
     }
 }else{
   args <- list(phenotypes = '/home/ob219/tmp/qstuff/geneatlas/file48cf2588d1f17')
@@ -29,7 +29,15 @@ if(FALSE){
   foo<-lapply(split(meta.dt$ID,ceiling(seq_along(meta.dt$ID)/BLOCK.SIZE)),function(ids){
     tfile <- tempfile(tmpdir=lout)
     write(ids,file=tfile)
+    tfile
   })
+  rscript <- '/home/ob219/git/basis_paper/GWAS/GENEATLAS/process_gene_atlas.R'
+  cmds <- sapply(foo,function(x){
+    sprintf("Rscript %s -p %s",rscript,x)
+  })
+  write(cmds,file="~/tmp/qstuff/geneatlas.txt")
+
+
 }
 
 
