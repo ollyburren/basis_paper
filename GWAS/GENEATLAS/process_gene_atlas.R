@@ -22,7 +22,7 @@ if(!TEST){
 
 if(FALSE){
   ## create a list of phenotype ids
-  BLOCK.SIZE<-50
+  BLOCK.SIZE<-100
   meta.dt <- fread("~/tmp/41588_2018_248_MOESM3_ESM.csv")
   meta.dt <- meta.dt[Category=='Binary',.(ID,Description,Cases,Controls=round(Cases/Sample)-Cases,prop=Sample)]
   lout <- '/home/ob219/tmp/qstuff/geneatlas/'
