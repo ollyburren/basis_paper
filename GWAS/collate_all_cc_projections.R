@@ -96,7 +96,7 @@ ga <- melt(ga,id.var='trait')
 ga[,trait:=paste('GA',trait,sep=':')]
 
 meta.dt <- fread("~/tmp/41588_2018_248_MOESM3_ESM.csv")
-meta.dt <- meta.dt[Category=='Binary',.(ID,Description=paste('GA',make.names(Description),sep=':'),Cases,Controls=round(Cases/Sample)-cases,prop=Sample)]
+meta.dt <- meta.dt[Category=='Binary',.(ID,Description=paste('GA',make.names(Description),sep=':'),Cases,Controls=round(Cases/Sample)-Cases,prop=Sample)]
 srd.idx <- grep("^selfReported",meta.dt$ID)
 icd.idx <- grep("^clinical_c",meta.dt$ID)
 cancer.idx <- grep("^cancer_c",meta.dt$ID)
