@@ -402,8 +402,8 @@ PQTL_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sun_pqtl/fdr_
 fs <- list.files(path=PQTL_DIR,pattern="*.RDS",full.names=TRUE)
 res.DT <- lapply(fs,readRDS) %>% rbindlist
 ## define a Z score for loading to see if any are significant across pc's
-pql_fdr <- melt(res.DT,id.vars='trait')
-pql_fdr[,c('n0','n1','sdy','category'):=list(3301,0,1,'sun_pqtl_fdr0.05')]
+pqtl_fdr <- melt(res.DT,id.vars='trait')
+pqtl_fdr[,c('n0','n1','sdy','category'):=list(3301,0,1,'sun_pqtl_fdr0.05')]
 
 
 all.proj <- list(
@@ -462,4 +462,4 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/17_07_19_0619_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/23_07_19_0619_summary_results.RDS')
