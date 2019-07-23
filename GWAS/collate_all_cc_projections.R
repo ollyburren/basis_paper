@@ -389,6 +389,22 @@ setcolorder(tian,ncolorder)
 setcolorder(jia,ncolorder)
 setcolorder(ukbb,ncolorder)
 
+## add eqtlgen
+
+EQTLGEN_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/eqtlgen_projections_significant_only_0619/'
+fs <- list.files(path=EQTLGEN_DIR,pattern="*.RDS",full.names=TRUE)
+res.DT <- lapply(fs,readRDS) %>% rbindlist
+## define a Z score for loading to see if any are significant across pc's
+eqtlgen_fdr <- melt(res.DT,id.vars='trait')
+eqtlgen_fdr[,c('n0','n1','sdy','category'):=list(31684,0,1,'eqtlgen_fdr0.05')]
+
+PQTL_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sun_pqtl/fdr_0.05_by_chr_filtered/'
+fs <- list.files(path=PQTL_DIR,pattern="*.RDS",full.names=TRUE)
+res.DT <- lapply(fs,readRDS) %>% rbindlist
+## define a Z score for loading to see if any are significant across pc's
+pql_fdr <- melt(res.DT,id.vars='trait')
+pql_fdr[,c('n0','n1','sdy','category'):=list(3301,0,1,'sun_pqtl_fdr0.05')]
+
 
 all.proj <- list(
   ferriera=ferriera,
@@ -416,7 +432,9 @@ all.proj <- list(
   lada=lada,
   li_as=li_as,
   ga=ga,
-  t2d_mahajan=t2d_mahajan
+  t2d_mahajan=t2d_mahajan,
+  pql_fdr=pqtl_fdr,
+  eqtgen_fdr=eqtlen_fdr
 ) %>% rbindlist(.,fill=TRUE)
 all.proj[,n:=n1+n0]
 
