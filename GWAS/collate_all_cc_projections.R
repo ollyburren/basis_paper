@@ -400,12 +400,14 @@ eqtlgen_fdr[,c('n0','n1','sdy','category'):=list(31684,0,1,'eqtlgen_fdr0.05')]
 
 PQTL_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sun_pqtl/fdr_0.05_by_chr_filtered/'
 fs <- list.files(path=PQTL_DIR,pattern="*.RDS",full.names=TRUE)
-res.DT <- lapply(fs,readRDS) %>% rbindlist
+res.DT <- lapply(fs,function(x){
+	mat<-readRDS(x)
+	data.table(trait=rownames(mat),mat)
+}) %>% rbindlist
 ## define a Z score for loading to see if any are significant across pc's
 pqtl_fdr <- melt(res.DT,id.vars='trait')
 pqtl_fdr[,c('n0','n1','sdy','category'):=list(3301,0,1,'sun_pqtl_fdr0.05')]
 
-message("Got Here")
 
 all.proj <- list(
   ferriera=ferriera,
