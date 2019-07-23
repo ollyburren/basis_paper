@@ -433,7 +433,7 @@ all.proj <- list(
   li_as=li_as,
   ga=ga,
   t2d_mahajan=t2d_mahajan,
-  pql_fdr=pqtl_fdr,
+  pqtl_fdr=pqtl_fdr,
   eqtlgen_fdr=eqtlgen_fdr
 ) %>% rbindlist(.,fill=TRUE)
 all.proj[,n:=n1+n0]
