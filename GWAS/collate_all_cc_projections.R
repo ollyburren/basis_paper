@@ -405,6 +405,7 @@ res.DT <- lapply(fs,readRDS) %>% rbindlist
 pqtl_fdr <- melt(res.DT,id.vars='trait')
 pqtl_fdr[,c('n0','n1','sdy','category'):=list(3301,0,1,'sun_pqtl_fdr0.05')]
 
+message("Got Here")
 
 all.proj <- list(
   ferriera=ferriera,
