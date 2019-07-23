@@ -98,7 +98,7 @@ processPQTL <- function(dir,filter){
   snames <- B[,1]$pid
   mat.emp <- as.matrix(B[,-1]) %>% t()
   colnames(mat.emp) <- snames
-  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/noweight_basis_gwas_0619.RDS'
+  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
   pc.emp <- readRDS(BASIS_FILE)
   if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
   stop("Something wrong basis and projection matrix don't match")
