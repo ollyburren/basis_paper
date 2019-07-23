@@ -2,10 +2,10 @@
 
 
 SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
-DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 OUT_FILE <- "/home/ob219/share/as_basis/GWAS/ferreira_projections/ferreira_asthma_0619.RDS"
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 
 ## Ferreira
 anno.file <- '/home/ob219/share/Data/GWAS-summary/23andme/annotation/all_snp_info-4.1.txt'
@@ -49,7 +49,8 @@ ferreira.anno <- M[,.(all.data.id,pid,g.class,alleles)]
 
 DATA_DIR <- '/home/ob219/share/Data/GWAS-summary/23andme/ferreira/'
 files <- list.files(path=DATA_DIR,pattern="*.gz",full.names=TRUE)
-
+sDT <- readRDS(SHRINKAGE_FILE)
+stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 library(parallel)
 all.DT <- mclapply(files,function(file){
   message(file)
@@ -60,7 +61,11 @@ all.DT <- mclapply(files,function(file){
   DT[,or:=exp(effect)]
   DT[g.class=='rev',or:=exp(effect * -1)]
   trait <- basename(file) %>% sub("_4.1V2.dat.gz","",.)
-  topr <- DT[,.(trait=trait,pid,or,n0=im.num.0,n1=im.num.1)]
+  topr <- DT[,.(trait=trait,pid,or,n0=im.num.0,n1=im.num.1,p.value=pvalue)]
+  pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",trait))
+  tmp <- merge(topr,stmp,by='pid',all.y=TRUE)
+  #tmp<-all.DT[stmp]
+  saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
   topr
 },mc.cores=8) %>% rbindlist
 setkey(all.DT,pid)
@@ -70,8 +75,8 @@ all.DT <- all.DT[!is.na(or),]
 ## want to experiment with dcast fill=0 to help with missing
 ## variants
 
-sDT <- readRDS(SHRINKAGE_FILE)
-stmp<-sDT[,.(pid,ws_emp_shrinkage)]
+#sDT <- readRDS(SHRINKAGE_FILE)
+#stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 tmp<-all.DT[stmp]
 tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 B <- dcast(tmp,pid ~ trait,value.var='metric',fill=0)

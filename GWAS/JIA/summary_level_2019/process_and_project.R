@@ -6,12 +6,15 @@ SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_viti
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 OUT_FILE <- "/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia_0619.RDS"
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 
 
 ss.DT <- fread("~/share/Data/GWAS/jia-mar-2019/summary-stats-mar2019.csv")
 snp.DT <- fread("~/share/Data/GWAS/jia-mar-2019/summary-stats-snpinfo-mar2019.csv")
 sc.DT <- fread("~/share/Data/GWAS/jia-mar-2019/summary-stats-samplecount-mar2019.csv")
 setnames(sc.DT,'n','n1')
+
+
 
 
 ## split into different subtypes
@@ -22,12 +25,17 @@ sub.DT <- merge(sub.DT,sc.DT[,.(ilar_pheno,n1)],by.x='idx',by.y='ilar_pheno')
 sub.DT<-rbind(sub.DT,data.table(idx=0,subtype='case',n1=sum(sub.DT$n1)))
 sub.DT[,subtype:=sprintf("jia_%s_19",subtype)]
 M <- merge(ss.DT,sub.DT,by.x='ilar',by.y='idx')
-M[,p.value:=pnorm(abs(b)/v,lower.tail=FALSE) * 2]
+M[,Z:=b/sqrt(v)]
+M[,p.value:=pnorm(abs(b)/sqrt(v),lower.tail=FALSE) * 2]
 snp.DT[,pid:=paste(chromosome,position,sep=':')]
 jia.DT <- merge(M,snp.DT[,.(pid,a1=allele.1,a2=allele.2,snp.name)],by.x='snp',by.y='snp.name')
-
 man.DT <- fread(SNP_MANIFEST)
-M <- merge(jia.DT[,.(pid,a1,a2,or=exp(b),trait=subtype)],man.DT,by='pid')
+M <- merge(jia.DT[,.(pid,a1,a2,or=exp(b),Z,p.value,trait=subtype)],man.DT,by='pid')
+
+if(FALSE){
+  pz <- M[,list(p0=sum(p.value==0),total.snp=.N),by=trait]
+}
+
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
 #alleles <- alleles[!duplicated(pid),]
 #alleles <- M[,list(al.x=paste(uk10_A1,uk10_A2,sep='/'),al.y=paste(a1,a2,sep='/')),by='pid']
@@ -54,6 +62,20 @@ setkey(M,pid)
 ## do this for each subtype so we can catch all missing SNPS
 subtypes <- split(M,M$trait)
 pc.emp <- readRDS(BASIS_FILE)
+
+## write out files that are to be projected as CW needs them for fdr
+
+for(n in names(subypes)){
+  message(n)
+  tmp <- merge(subtypes[[n]],stmp,by='pid',all.y=TRUE)
+  tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
+  ## where snp is missing make it zero
+  tra <- unique(M$trait)
+  tmp[is.na(metric),c('metric','trait'):=list(0,tra)]
+  pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",n))
+  saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
+  tmp[,.(pid,or,p.value)]
+}
 
 proj <- lapply(subtypes,function(M){
   tmp <- merge(M,stmp,by='pid',all.y=TRUE)

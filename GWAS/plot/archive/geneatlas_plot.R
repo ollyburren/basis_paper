@@ -33,8 +33,8 @@ BB_LU <- list(
 res.DT <- res.DT[category!='geneatlas_srd',]
 res.DT[,p.adj:=p.adjust(p.value,method='BH')]
 
-#category.foc <- 'geneatlas_icd'
-category.foc <- 'geneatlas_cancer'
+category.foc <- 'geneatlas_icd'
+#category.foc <- 'geneatlas_cancer'
 
 talk.DT <- res.DT[category %in% c('bb_disease',category.foc),]
 talk.DT<-talk.DT[(category %in% talk.DT[p.adj<0.01,]$category) | category==category.foc,]
@@ -97,14 +97,53 @@ forest_plot_focal_merge <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,c
 }
 
 #only for blood traits where lots of things are significant !
-talk.DT<-talk.DT[(category==category.foc & p.adj<0.01) | category!=category.foc,]
+talk.DT<-talk.DT[(category==category.foc & p.adj<0.05) | category!=category.foc,]
 talk.DT[,trait:=strtrim(trait, 50)]
 all.traits <- traits<-split(talk.DT$trait,talk.DT$category) %>% lapply(.,unique)
 #pc<-'PC1'
 #pp1 <- forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols)
 
-pdf(file="~/tmp/geneatlas_cancer_160719.pdf",paper="a4r",onefile=TRUE)
+pdf(file="~/tmp/geneatlas_160719_fdr01.pdf",paper="a4r",onefile=TRUE)
 lapply(paste('PC',1:11,sep=''),function(pc){
-  forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=0.01)
+  forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=0.05)
 })
 dev.off()
+
+### comparing neale et al self reported disease with
+
+library(cowplot)
+RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/17_07_19_0619_summary_results.RDS'
+res.DT <- readRDS(RESULTS.FILE)
+
+ga.srd <- res.DT[category=='geneatlas_srd',.(trait=gsub("GA:","",trait),pc=variable,ga.Z=Z,ga.cases=n1,ga.controls=n0,ga.p.adj=p.adj)]
+neale.srd <- res.DT[category=='bb_disease',.(trait=gsub("bb_SRD:","",trait),pc=variable,neale.Z=Z,neale.cases=n1,neale.controls=n0,neale.p.adj=p.adj)]
+
+M <- merge(ga.srd,neale.srd,by=c('trait','pc'),all.y=TRUE)
+
+M[,pc:=factor(pc,levels=paste0('PC',1:12))]
+M[,label:='NONE']
+#M[abs(neale.Z)>2.8 & abs(ga.Z)<2.8,label:='NEALE']
+#M[abs(neale.Z)<2.8 & abs(ga.Z)>2.8,label:='GA']
+#M[abs(neale.Z)>2.8 & abs(ga.Z)>2.8,label:='BOTH']
+M[neale.p.adj<0.05 & ga.p.adj>0.05, label:='NEALE']
+M[neale.p.adj>0.05 & ga.p.adj<0.05, label:='GA']
+M[neale.p.adj<0.05 & ga.p.adj<0.05, label:='BOTH']
+
+## compare cases
+
+pp1 <- ggplot(M,aes(x=neale.cases,y=ga.cases)) + geom_point() +
+geom_abline(col='red',lty=2) + xlab("Neale Cases") + ylab("GeneAtlas Cases")
+pp2 <- ggplot(M,aes(x=neale.controls,y=ga.controls)) + geom_point() +
+geom_abline(col='red',lty=2) + xlab("Neale Controls") + ylab("GeneAtlas Controls")
+
+plot_grid(pp1,pp2)
+
+## what self reported phenotypes differ between the two studies
+
+Mall <- merge(ga.srd,neale.srd,by=c('trait','pc'),all=TRUE)[trait!='unclassifiable']
+Mall[is.na(ga.cases),.(trait,neale.cases)] %>% unique
+Mall[is.na(neale.cases),.(trait,ga.cases)] %>% unique
+
+ggplot(M,aes(x=neale.Z,y=ga.Z,col=label)) +
+geom_point() + geom_abline(a=0,b=1,col='black',lty=2,alpha=0.3) +
+theme_bw() + facet_wrap(~pc)

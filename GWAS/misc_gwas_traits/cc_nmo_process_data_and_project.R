@@ -5,12 +5,13 @@ SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_viti
 DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 #OUT_FILE <-
 
 nmo.DT <- fread("zcat /home/ob219/share/Data/GWAS-summary/NMO_summary_stats_2018/NMO/EBI/NMO.Combined.gz")
 nmo.DT[,pid:=paste(Chr,Pos,sep=':')]
 man.DT <- fread(SNP_MANIFEST)
-M <- merge(nmo.DT[,.(pid,a1=toupper(Allele1),a2=toupper(Allele2),or=exp(Effect))],man.DT,by='pid')
+M <- merge(nmo.DT[,.(pid,a1=toupper(Allele1),a2=toupper(Allele2),or=exp(Effect),p.value=P)],man.DT,by='pid')
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
 #alleles <- alleles[!duplicated(pid),]
 #alleles <- M[,list(al.x=paste(uk10_A1,uk10_A2,sep='/'),al.y=paste(a1,a2,sep='/')),by='pid']
@@ -38,6 +39,8 @@ sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
 tmp <- merge(M,stmp,by='pid',all.y=TRUE)
+pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",'NMO_combined'))
+saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
 tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 ## where snp is missing make it zero
 tmp[is.na(metric),metric:=0]
@@ -57,7 +60,7 @@ saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/nmo/nmo_0619.RDS')
 nmo.DT <- fread("zcat /home/ob219/share/Data/GWAS-summary/NMO_summary_stats_2018/NMO/EBI/NMO.IgGPos.gz")
 nmo.DT[,pid:=paste(Chr,Pos,sep=':')]
 man.DT <- fread(SNP_MANIFEST)
-M <- merge(nmo.DT[,.(pid,a1=toupper(Allele1),a2=toupper(Allele2),or=exp(Effect))],man.DT,by='pid')
+M <- merge(nmo.DT[,.(pid,a1=toupper(Allele1),a2=toupper(Allele2),or=exp(Effect),p.value=P)],man.DT,by='pid')
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
 #alleles <- alleles[!duplicated(pid),]
 #alleles <- M[,list(al.x=paste(uk10_A1,uk10_A2,sep='/'),al.y=paste(a1,a2,sep='/')),by='pid']
@@ -85,6 +88,8 @@ sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
 tmp <- merge(M,stmp,by='pid',all.y=TRUE)
+pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",'NMO_IgGPos'))
+saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
 tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 ## where snp is missing make it zero
 tmp[is.na(metric),metric:=0]
@@ -104,7 +109,7 @@ saveRDS(all.proj,file='/home/ob219/share/as_basis/GWAS/nmo/nmo_igpos_0619.RDS')
 nmo.DT <- fread("zcat /home/ob219/share/Data/GWAS-summary/NMO_summary_stats_2018/NMO/EBI/NMO.IgGNeg.gz")
 nmo.DT[,pid:=paste(Chr,Pos,sep=':')]
 man.DT <- fread(SNP_MANIFEST)
-M <- merge(nmo.DT[,.(pid,a1=toupper(Allele1),a2=toupper(Allele2),or=exp(Effect))],man.DT,by='pid')
+M <- merge(nmo.DT[,.(pid,a1=toupper(Allele1),a2=toupper(Allele2),or=exp(Effect),p.value=P)],man.DT,by='pid')
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
 #alleles <- alleles[!duplicated(pid),]
 #alleles <- M[,list(al.x=paste(uk10_A1,uk10_A2,sep='/'),al.y=paste(a1,a2,sep='/')),by='pid']
@@ -132,6 +137,8 @@ sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
 tmp <- merge(M,stmp,by='pid',all.y=TRUE)
+pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",'NMO_IgGNeg'))
+saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
 tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 ## where snp is missing make it zero
 tmp[is.na(metric),metric:=0]

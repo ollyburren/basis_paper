@@ -18,6 +18,7 @@ DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 OUT_FILE <- "/home/ob219/share/as_basis/GWAS/wong_aav/projections/aav_0619.RDS"
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 
 
 samples.DT <- fread("/home/ob219/share/Data/GWAS-summary/aav_limy_wong/aav_sample_size.txt")
@@ -46,8 +47,10 @@ all.vasc <- mclapply(seq_along(samples.DT),function(i){
   }else{
     stat.DT[,c('beta.log','se.beta.log'):=list(convertORscale(BETA,samples.DT$prop.case[i]),convertORscale(SE,samples.DT$prop.case[i]))]
   }
+  ## compute p.values
+  stat.DT[,c('Z','p.value'):=list(beta.log/se.beta.log,2* pnorm(abs(beta.log/se.beta.log),lower.tail=FALSE))]
   ## note here that the counted allele is ALLELE1 hence we flip things as in the basis the counted allele is a2
-  M <- merge(stat.DT[SNP %in% man.DT$pid,.(trait=samples.DT$label[i],pid=SNP,a1=ALLELE0,a2=ALLELE1,or=exp(beta.log))],man.DT,by='pid',all.y=TRUE)
+  M <- merge(stat.DT[SNP %in% man.DT$pid,.(trait=samples.DT$label[i],pid=SNP,a1=ALLELE0,a2=ALLELE1,or=exp(beta.log),p.value)],man.DT,by='pid',all.y=TRUE)
   idx <- which(is.na(M$or))
   sprintf("%d missing",length(idx)) %>% message
   if(length(idx)!=0)
@@ -75,6 +78,10 @@ all.vasc <- mclapply(seq_along(samples.DT),function(i){
   setkey(M,pid)
   tmp <- merge(M,stmp,by='pid',all.y=TRUE)
   tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
+  tra <- unique(M$trait)
+  pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",tra))
+  saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
+  return()
   ## where snp is missing make it zero
   tra <- unique(M$trait)
   tmp[is.na(metric),c('metric','trait'):=list(0,tra)]

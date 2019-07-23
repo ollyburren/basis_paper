@@ -18,6 +18,7 @@ DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/tachmazidou_osteo'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 OUT_FILE <- "/home/ob219/share/as_basis/GWAS/tachmazidou_osteo/projections/oa_0619.RDS"
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 ## can we estimate sample size from maf and standard error ?
 
 
@@ -44,7 +45,7 @@ all.oa <- lapply(1:nrow(samples.DT),function(i){
   #convertORscale <- function(x,cp) x/(cp * (1-cp))
   ## note here that the counted allele is ALLELE1 hence we flip things as in the basis the counted allele is a2
   stat.DT[,c('pid','a1','a2'):=tstrsplit(MarkerName,'_')]
-  M <- merge(stat.DT[pid %in% man.DT$pid,.(trait=samples.DT$label[i],pid,a1=Allele1,a2=Allele2,or=exp(Effect))],man.DT,by='pid',all.y=TRUE)
+  M <- merge(stat.DT[pid %in% man.DT$pid,.(trait=samples.DT$label[i],pid,a1=Allele1,a2=Allele2,or=exp(Effect),p.value=`P-value`)],man.DT,by='pid',all.y=TRUE)
   idx <- which(is.na(M$or))
   sprintf("%d missing",length(idx)) %>% message
   if(length(idx)!=0)
@@ -71,9 +72,13 @@ all.oa <- lapply(1:nrow(samples.DT),function(i){
     M[flip,or:=1/or]
   setkey(M,pid)
   tmp <- merge(M,stmp,by='pid',all.y=TRUE)
+  tra <- unique(M$trait)
+  pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",tra))
+  saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
+  return()
   tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
   ## where snp is missing make it zero
-  tra <- unique(M$trait)
+
   tmp[is.na(metric),c('metric','trait'):=list(0,tra)]
   B <- dcast(tmp,pid ~ trait,value.var='metric')
   snames <- B[,1]$pid

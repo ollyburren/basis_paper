@@ -13,7 +13,7 @@ sub.DT <- data.table(idx=0:9,subtype=c('case','sys','PO','EO','RFneg','RFpos','E
 sub.DT <- merge(sub.DT,sc.DT[,.(ilar_pheno,n1)],by.x='idx',by.y='ilar_pheno')
 sub.DT[,subtype:=sprintf("jia_%s_19",subtype)]
 M <- merge(ss.DT,sub.DT,by.x='ilar',by.y='idx')
-M[,p.value:=pnorm(abs(b)/v,lower.tail=FALSE) * 2]
+M[,p.value:=pnorm(abs(b)/sqrt(v),lower.tail=FALSE) * 2]
 snp.DT[,pid:=paste(chromosome,position,sep=':')]
 jia.DT <- merge(M,snp.DT[,.(pid,a1=allele.1,a2=allele.2,snp.name)],by.x='snp',by.y='snp.name')
 

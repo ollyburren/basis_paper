@@ -5,13 +5,14 @@ SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_viti
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 OUT_FILE <- '/home/ob219/share/as_basis/GWAS/cousminer_lada/cousminer_lada_0619.RDS'
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 
 lada.DT <- fread("zcat /home/ob219/share/Data/GWAS-summary/LADACTRL_QCed_Sep_2018_DLC.txt.gz ")
 lada.DT[,pid:=paste(chromosome,position,sep=':')]
 
 man.DT <- fread(SNP_MANIFEST)
 ## seems that these are aligned and that effect allele is allele2 so fudge so the code below works
-M <- merge(lada.DT[,.(pid=pid,a2=reference_allele,or=OR,n_samples)],man.DT,by='pid')
+M <- merge(lada.DT[,.(pid=pid,a2=reference_allele,or=OR,p.value=P,n_samples)],man.DT,by='pid')
 
 
 ## note OR are with respect to A1
@@ -42,6 +43,8 @@ sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
 tmp <- merge(M,stmp,by='pid',all.y=TRUE)
+pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",'cousminer_lada'))
+saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
 tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 ## where snp is missing make it zero
 tmp[is.na(metric),metric:=0]

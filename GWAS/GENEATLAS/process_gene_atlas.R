@@ -19,12 +19,15 @@ if(!TEST){
   args <- list(phenotypes = '/home/ob219/tmp/qstuff/geneatlas/file48cf2588d1f17')
 }
 
-
+OUT.DIR <- '/home/ob219/share/as_basis/GWAS/geneatlas/0619'
 if(FALSE){
   ## create a list of phenotype ids
-  BLOCK.SIZE<-100
+  BLOCK.SIZE<-25
   meta.dt <- fread("~/tmp/41588_2018_248_MOESM3_ESM.csv")
-  meta.dt <- meta.dt[Category=='Binary',.(ID,Description,Cases,Controls=round(Cases/Sample)-Cases,prop=Sample)]
+  meta.dt <- meta.dt[Category=='Binary',.(ID,Description=make.names(Description),Cases,Controls=round(Cases/Sample)-Cases,prop=Sample)]
+  ## get a list of traits already done
+  done <- list.files(path=OUT.DIR,pattern='*.RDS') %>% gsub("\\.RDS","",.)
+  meta.dt[!Description %in% done,]
   lout <- '/home/ob219/tmp/qstuff/geneatlas/'
   foo<-lapply(split(meta.dt$ID,ceiling(seq_along(meta.dt$ID)/BLOCK.SIZE)),function(ids){
     tfile <- tempfile(tmpdir=lout)
@@ -45,7 +48,7 @@ phids<-scan(args$phenotypes,"character()")
 
 
 
-OUT.DIR <- '/home/ob219/share/as_basis/GWAS/geneatlas/0619'
+
 meta.dt <- fread("~/tmp/41588_2018_248_MOESM3_ESM.csv")
 meta.dt <- meta.dt[Category=='Binary',.(ID,Description,Cases,Controls=round(Cases/Sample)-Cases,prop=Sample)]
 

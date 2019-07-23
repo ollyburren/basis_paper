@@ -6,12 +6,14 @@ SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_viti
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 OUT_FILE <- '/home/ob219/share/as_basis/GWAS/ank_spond/ank_spond_0619.RDS'
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 
 
 as.DT <- fread("~/share/Data/GWAS-summary/ank-spond-internal-2019.csv")
+as.DT[,p.value:=pnorm(abs(beta/sqrt(varbeta)),lower.tail=FALSE) * 2]
 ## note OR are with respect to A1
 man.DT <- fread(SNP_MANIFEST)
-M <- merge(as.DT[,.(pid,a1=allele.1,a2=allele.2,or=exp(beta))],man.DT,by='pid')
+M <- merge(as.DT[,.(pid,a1=allele.1,a2=allele.2,or=exp(beta),p.value)],man.DT,by='pid')
 
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
 #alleles <- alleles[!duplicated(pid),]
@@ -41,12 +43,14 @@ sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
 tmp <- merge(M,stmp,by='pid',all.y=TRUE)
+pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",'ank_spond'))
+saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
 tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 ## where snp is missing make it zero
 tmp[is.na(metric),metric:=0]
 #tmp[,trait:= 'ankylosing_spondylitis']
 tmp[,trait:= 'ank_spond']
-saveRDS(tmp,file='/home/ob219/share/as_basis/GWAS/ank_spond/ank_spond_source.RDS')
+#saveRDS(tmp,file='/home/ob219/share/as_basis/GWAS/ank_spond/ank_spond_source.RDS')
 B <- dcast(tmp,pid ~ trait,value.var='metric')
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()

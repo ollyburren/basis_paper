@@ -6,6 +6,7 @@ DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 OUT_FILE <- "/home/ob219/share/as_basis/GWAS/psa_projections/summary/bowes_psa_0619.RDS"
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 
 PsA.dir <- '/home/ob219/share/Data/GWAS-summary/psa-2019-unpublished'
 psa.files <- list.files(path=PsA.dir,pattern="*.out",full.names=TRUE)
@@ -19,7 +20,7 @@ sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 pc.emp <- readRDS(BASIS_FILE)
 ## counted allele appears to be a2 so should be aligned but check
-M <- merge(DT.f[pid %in% man.DT$pid,.(trait='bowes_psa',pid=pid,a1,a2,or=exp(beta))],man.DT,by='pid',all.y=TRUE)
+M <- merge(DT.f[pid %in% man.DT$pid,.(trait='bowes_psa',pid=pid,a1,a2,or=exp(beta),p.value)],man.DT,by='pid',all.y=TRUE)
 idx <- which(is.na(M$or))
 sprintf("%d missing",length(idx)) %>% message
 if(length(idx)!=0)
@@ -46,6 +47,8 @@ if(length(flip)>0)
   M[flip,or:=1/or]
 setkey(M,pid)
 tmp <- merge(M,stmp,by='pid',all.y=TRUE)
+pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",tmp$trait %>% unique))
+saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
 tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 ## where snp is missing make it zero
 tra <- unique(M$trait)

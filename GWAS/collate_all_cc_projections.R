@@ -401,6 +401,7 @@ eqtlgen_fdr[,c('n0','n1','sdy','category'):=list(31684,0,1,'eqtlgen_fdr0.05')]
 PQTL_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sun_pqtl/fdr_0.05_by_chr_filtered/'
 fs <- list.files(path=PQTL_DIR,pattern="*.RDS",full.names=TRUE)
 res.DT <- lapply(fs,function(x){
+  message(x)
 	mat<-readRDS(x)
 	data.table(trait=rownames(mat),mat)
 }) %>% rbindlist
@@ -466,3 +467,18 @@ all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
 saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/23_07_19_0619_summary_results.RDS')
+
+if(FALSE){
+  all.DT <- readRDS("~/share/as_basis/GWAS/RESULTS/23_07_19_0619_summary_results.RDS")
+  qqnorm(all.DT[category=='eqtlgen_fdr0.05',]$Z,main='eqtlgen_fdr0.05')
+  qqline(all.DT[category=='eqtlgen_fdr0.05',]$Z,col='red',lty=2)
+  qqnorm(all.DT[category=='sun_pqtl_fdr0.05',]$Z,main='sun_pqtl_fdr0.05')
+  qqline(all.DT[category=='sun_pqtl_fdr0.05',]$Z,col='red',lty=2)
+  qqnorm(all.DT[category=='bb_disease',]$Z,main='Neale SRD')
+  qqline(all.DT[category=='bb_disease',]$Z,col='red',lty=2)
+  qqnorm(all.DT[category=='astle_blood',]$Z,main='Neale SRD')
+  qqline(all.DT[category=='astle_blood',]$Z,col='red',lty=2)
+  foo <- all.DT[category=='sun_pqtl_fdr0.05',][,list(mvalue=mean(value),control=mean(control.loading)),by='variable']
+  ggplot(all.DT[category=='sun_pqtl_fdr0.05',],aes(x=variable,y=value)) + geom_boxplot()
+  all.DT[category=='sun_pqtl_fdr0.05' & variable=='PC1',][order(Z),] %>% head
+}

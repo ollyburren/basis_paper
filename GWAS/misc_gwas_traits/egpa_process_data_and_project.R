@@ -2,13 +2,13 @@
 library(annotSnpStats)
 
 SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
-DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 
 aav.dir <- '~/share/Data/GWAS/egpa_aav/summary'
 aav.files <- list.files(path=aav.dir,pattern='*.gwas',full.names=TRUE)
 OUT_DIR <- '/home/ob219/share/as_basis/GWAS/lyons_egpa/'
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 
 samples <- list()
 for(f in aav.files){
@@ -49,8 +49,8 @@ for(f in aav.files){
   ## where snp is missing make it zero
   tmp[is.na(metric),metric:=0]
   tmp[,trait:= trait]
-  pfile <- file.path(OUT_DIR,sprintf("projections/%s_source.RDS",trait))
-  saveRDS(tmp,file=pfile)
+  pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",trait))
+  saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
   B <- dcast(tmp,pid ~ trait,value.var='metric')
   snames <- B[,1]$pid
   mat.emp <- as.matrix(B[,-1]) %>% t()
