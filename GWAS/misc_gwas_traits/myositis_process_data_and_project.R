@@ -1,4 +1,3 @@
-## bipolar prognosis GWAS
 library(annotSnpStats)
 library(rtracklayer)
 

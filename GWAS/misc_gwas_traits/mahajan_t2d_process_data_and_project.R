@@ -10,7 +10,7 @@ SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 t2d.DT <- fread("zcat /home/ob219/share/Data/GWAS-summary/Mahajan.NatGenet2018b.T2Dbmiadj.European.zip")
 
 man.DT <- fread(SNP_MANIFEST)
-M <- merge(t2d.DT[,.(pid=SNP,a2=EA,a1=NEA,or=exp(Beta))],man.DT,by='pid')
+M <- merge(t2d.DT[,.(pid=SNP,a2=EA,a1=NEA,or=exp(Beta),p.value=Pvalue)],man.DT,by='pid')
 
 
 ## note OR are with respect to A1

@@ -6,11 +6,13 @@ DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 OUT_FILE <- '/home/ob219/share/as_basis/GWAS/cd_prognosis/cd_prognosis_0619.RDS'
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
+
 
 c.DT <- fread("zcat /home/ob219/share/Data/GWAS-summary/CD_prognosis_fixed_GWA_results.csv.gz")
 c.DT[,pid:=paste(chr,pos,sep=':')]
 man.DT <- fread(SNP_MANIFEST)
-M <- merge(c.DT[,.(pid,a1=allele_A,a2=allele_B,or=exp(beta))],man.DT,by='pid')
+M <- merge(c.DT[,.(pid,a1=allele_A,a2=allele_B,or=exp(beta),p.value=P_value)],man.DT,by='pid')
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
 #alleles <- alleles[!duplicated(pid),]
 #alleles <- M[,list(al.x=paste(uk10_A1,uk10_A2,sep='/'),al.y=paste(a1,a2,sep='/')),by='pid']
@@ -38,6 +40,9 @@ sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
 tmp <- merge(M,stmp,by='pid',all.y=TRUE)
+tra <- 'CD_prognosis'
+pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",tra))
+saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
 tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 ## where snp is missing make it zero
 tmp[is.na(metric),metric:=0]

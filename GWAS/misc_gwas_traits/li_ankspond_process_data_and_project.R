@@ -15,7 +15,7 @@ m[,pid:=paste(CHROM,POS,sep=':')]
 m <- m[!pid %in% m[duplicated(pid),],]
 
 man.DT <- fread(SNP_MANIFEST)
-M <- merge(m[,.(pid=pid,a1=toupper(Allele1),a2=toupper(Allele2),or=exp(Effect))],man.DT,by='pid')
+M <- merge(m[,.(pid=pid,a1=toupper(Allele1),a2=toupper(Allele2),or=exp(Effect),p.value=`P-value`)],man.DT,by='pid')
 
 ## note OR are with respect to A1
 

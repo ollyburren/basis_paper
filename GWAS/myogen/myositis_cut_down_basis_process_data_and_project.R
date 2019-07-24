@@ -209,3 +209,4 @@ myogen.DT[,Z:=(value-control.loading)/sqrt(variance)]
 myogen.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 myogen.DT[,p.adj:=p.adjust(p.value,method="bonferroni"),by='variable']
 myogen.DT[,delta:=value-control.loading]
+saveRDS(myogen.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/24_07_19_0619_summary_results_myogen_snps_only.RDS')
