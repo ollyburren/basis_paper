@@ -6,6 +6,7 @@ SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_viti
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 OUT_FILE <- '/home/ob219/share/as_basis/GWAS/IgA_nephropathy/IgA_nephropathy_0619.RDS'
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 
 
 iga.DT <- fread("zcat ~/share/Data/GWAS-summary/IgA_nephropathy/METAANALYSIS1.4cohorts.ORDERED")
@@ -25,7 +26,7 @@ iga.DT[,pid.37:=paste(CHR,position.37,sep=":")]
 
 ## note OR are with respect to A1
 man.DT <- fread(SNP_MANIFEST)
-M <- merge(iga.DT[,.(pid=pid.37,a1=toupper(Allele1),a2=toupper(Allele2),or=exp(Effect))],man.DT,by='pid')
+M <- merge(iga.DT[,.(pid=pid.37,a1=toupper(Allele1),a2=toupper(Allele2),or=exp(Effect),p.value=P)],man.DT,by='pid')
 
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
 #alleles <- alleles[!duplicated(pid),]
@@ -55,6 +56,9 @@ sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
 tmp <- merge(M,stmp,by='pid',all.y=TRUE)
+tra <- 'IgA_nephropathy'
+pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",tra))
+saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
 tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 ## where snp is missing make it zero
 tmp[is.na(metric),metric:=0]

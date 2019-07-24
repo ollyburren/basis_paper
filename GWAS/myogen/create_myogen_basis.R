@@ -10,12 +10,12 @@ library(ggrepel)
 
 SHRINKAGE_METHOD<-'ws_emp_shrinkage'
 REF_GT_DIR <- '/home/ob219/share/as_basis/GWAS/ctrl_gt/by.chr'
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_myositis_gwas.RDS'
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_myositis_gwas.RDS'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_myositis_gwas_0619.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_myositis_gwas_0619.RDS'
 GWAS_DATA_DIR <- '/home/ob219/share/as_basis/GWAS/sum_stats'
-SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_myositis.tab'
+SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_myositis_0619.tab'
 TRAIT_MANIFEST <- '/home/ob219/share/as_basis/GWAS/trait_manifest/as_manifest_gwas.tab'
-VARIANCE_FILE <- '/home/ob219/share/as_basis/GWAS/support/myositis_ss_av_june.RDS'
+VARIANCE_FILE <- '/home/ob219/share/as_basis/GWAS/support/myositis_ss_av_0619.RDS'
 
 
 if(FALSE){
@@ -24,9 +24,9 @@ if(FALSE){
   jdm_myo <- readRDS("/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/myogen_myositis/jdm_myositis_source.RDS")
   jdm_myo[is.na(or)]
   ## load in current snp support file and limit by jdm snps
-  snps <- fread('/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june.tab')
+  snps <- fread('/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab')
   snps_dt <- snps[pid %in% jdm_myo[!is.na(or),]$pid,]
-  write.table(snps_dt,file='/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_myositis.tab',sep="\t",row.names=FALSE)
+  write.table(snps_dt,file='/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_myositis_0619.tab',sep="\t",row.names=FALSE)
 }
 
 

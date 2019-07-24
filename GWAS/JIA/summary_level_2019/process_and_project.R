@@ -65,16 +65,15 @@ pc.emp <- readRDS(BASIS_FILE)
 
 ## write out files that are to be projected as CW needs them for fdr
 
-for(n in names(subypes)){
+for(n in names(subtypes)){
   message(n)
   tmp <- merge(subtypes[[n]],stmp,by='pid',all.y=TRUE)
   tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
   ## where snp is missing make it zero
   tra <- unique(M$trait)
-  tmp[is.na(metric),c('metric','trait'):=list(0,tra)]
+  tmp[is.na(metric),c('metric','trait'):=list(0,n)]
   pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",n))
   saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
-  tmp[,.(pid,or,p.value)]
 }
 
 proj <- lapply(subtypes,function(M){

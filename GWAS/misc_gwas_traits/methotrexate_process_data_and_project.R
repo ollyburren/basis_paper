@@ -6,6 +6,7 @@ DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 OUT_FILE <- '/home/ob219/share/as_basis/GWAS/mtx/mtx_matura_0619.RDS'
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 
 
 met.DT <- fread("zcat /home/ob219/share/Data/GWAS-summary/MATURA-MTXresponse-DAS.meta.gz")
@@ -17,7 +18,7 @@ met.DT[,var.beta:=(BETA/z)^2]
 
 ## note OR are with respect to A1
 man.DT <- fread(SNP_MANIFEST)
-M <- merge(met.DT[,.(pid,a1=A1,a2=A2,beta=BETA,var.beta)],man.DT,by='pid')
+M <- merge(met.DT[,.(pid,a1=A1,a2=A2,beta=BETA,var.beta,p.value=P)],man.DT,by='pid')
 M[,maf:=ifelse(ref_a1.af>0.5,1-ref_a1.af,ref_a1.af)]
 ## compute Z scores and therefore estimate of var(beta)
 
@@ -86,6 +87,9 @@ sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
 tmp <- merge(M,stmp,by='pid',all.y=TRUE)
+tra <- 'methotrexate'
+pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",tra))
+saveRDS(tmp[,.(pid,beta,p.value,ws_emp_shrinkage)],file=pfile)
 tmp$metric <- tmp[['ws_emp_shrinkage']] * tmp$beta
 ## where snp is missing make it zero
 tmp[is.na(metric),metric:=0]
