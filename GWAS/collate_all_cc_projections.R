@@ -28,46 +28,9 @@ get_phenotype_annotation <- function(filter='20002\\_'){
 
 anno <- get_phenotype_annotation(".*")[!is.na(n1) & !is.na(n0) & phe != 'unclassifiable',]
 ## compose an annotation bar
-
-bb_cod.sr_disease <- fread("/home/ob219/share/as_basis/GWAS/bb_projections/coding6.tsv")
-bb_cod.sr_cancer <- fread("/home/ob219/share/as_basis/GWAS/bb_projections/coding3.tsv")
-bb_cod.sr_medication <- fread("/home/ob219/share/as_basis/GWAS/bb_projections/coding4.tsv")
-
 ukbb.traits <- ukbb$trait %>% unique %>% gsub("^bb\\_","",.)
 anno.bb <- anno[phe %in% ukbb.traits]
 anno.bb[,c('clade','coding'):=tstrsplit(code,'_') %>% lapply(.,as.numeric)]
-## note only self reported data has a coding, drugs and cancer must have a separate classification
-## and there are collisions so need to exclude
-#root.bb <- merge(anno.bb[clade=='20002',],bb_cod,by='coding')
-## fill in parent nodes
-
-get_hier <- function(DT,id,l,top.node=TRUE){
-  #message(head(DT))
-  if(missing(l)){
-    l <- DT[coding==id,]$meaning
-    parent_id <- DT[coding==id,]$parent_id
-  }else{
-    l <- c(l,DT[node_id==id,]$meaning)
-    parent_id <- DT[node_id==id,]$parent_id
-  }
-
-  if(length(parent_id)==0 || parent_id==0){
-    if(top.node){
-      message(sprintf("Top node %d",parent_id))
-      tail(l,n=1) %>% return
-    }else{
-      paste(l,sep=':',collapse=':') %>% return
-    }
-  }else{
-    get_hier(DT,parent_id,l,top.node)
-  }
-}
-
-#root.bb[,bread.crumbs:=sapply(node_id,get_hier,FALSE)]
-#srd <- anno.bb[clade=='20002',]
-#srd[,top.node:=sapply(coding,get_hier,DT=bb_cod.sr_disease,top.node=TRUE)]
-#anno.bb[clade=='20002',top.node:=sapply(coding,get_hier,DT=bb_cod.sr_disease,top.node=TRUE)]
-#anno.bb[clade=='20001',top.node:=sapply(coding,get_hier,DT=bb_cod.sr_cancer,top.node=TRUE)]
 anno.bb[clade=='20002',top.node:='bb_disease']
 anno.bb[clade=='20001',top.node:='bb_cancer']
 anno.bb[clade=='20003',top.node:='bb_medications']
@@ -77,16 +40,16 @@ ukbb <- ukbb[,trait:=paste('bb',trait,sep='_')]
 
 
 ## read in ICD projections
-
- ICD_BB_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/0619_ICD'
- icd <- lapply(list.files(path=ICD_BB_DIR,pattern="*.RDS",full.names=TRUE),readRDS) %>% rbindlist
- icd <- melt(icd,id.var='trait')
- icd[,trait:=paste('ICD10',trait,sep=':')]
-
- icd.traits <- icd$trait %>% unique
- anno.icd <- anno[phe %in% icd.traits]
- icd <- merge(icd,anno.icd[,.(phe,n1,n0,category='bb_icd10')],by.x='trait',by.y='phe')
-
+## Neale ICD projections are currently broken therefore we use GeneATLAS instead
+if(FALSE){
+  ICD_BB_DIR <- '/home/ob219/share/as_basis/GWAS/bb_projections/0619_ICD'
+  icd <- lapply(list.files(path=ICD_BB_DIR,pattern="*.RDS",full.names=TRUE),readRDS) %>% rbindlist
+  icd <- melt(icd,id.var='trait')
+  icd[,trait:=paste('ICD10',trait,sep=':')]
+  icd.traits <- icd$trait %>% unique
+  anno.icd <- anno[phe %in% icd.traits]
+  icd <- merge(icd,anno.icd[,.(phe,n1,n0,category='bb_icd10')],by.x='trait',by.y='phe')
+}
 
 ## read in roslin geneatlas results
 
@@ -133,8 +96,6 @@ mtx[,c('n0','n1'):=list(1424,0)]
 mtx[,category:='taylor_mtx']
 mtx[,sdy:=0.9215145]
 
-
-
 ## code below for the old data
 #jia <- readRDS("/home/ob219/share/as_basis/GWAS/jia_projections/summary/jia.RDS")
 ### get sample counts and merge
@@ -175,6 +136,10 @@ astle <- lapply(list.files(path=ASTLE_DIR,pattern="*.RDS",full.names=TRUE),readR
 astle <- data.table(trait=rownames(astle),astle)
 astle <- melt(astle,id.var='trait')
 
+## for analysis we will stick to just the 13 main blood types mentioned in Astle et al.
+keep <- c('pdw','mpv','plt','irf','ret','rdw','hct','mch','mono','baso','eo','neut','lymph')
+astle <- astle[trait %in% keep,]
+
 
 DATA_DIR <- '/home/ob219/share/Data/GWAS-summary/blood-ukbiobank-2016-12-12'
 afiles <- list.files(path=DATA_DIR,pattern="*.gz$",full.names=FALSE)
@@ -189,12 +154,13 @@ astle <- merge(astle,astle_samples)
 astle[,category:='astle_blood']
 
 ## load in ig titres
-
-eff <- readRDS('/home/ob219/share/as_basis/GWAS/effrosyni_ig/effrosyni_ig_0619.RDS')
-eff <- melt(eff,id.var='trait')
-eff[,c('n0','n1'):=list(3969,3969)]
-eff[,category:='Ig.titre']
-
+## this is unpublished and based on old method for converting to OR scale so leave for now
+if(FALSE){
+  eff <- readRDS('/home/ob219/share/as_basis/GWAS/effrosyni_ig/effrosyni_ig_0619.RDS')
+  eff <- melt(eff,id.var='trait')
+  eff[,c('n0','n1'):=list(3969,3969)]
+  eff[,category:='Ig.titre']
+}
 ## load in CD prognosis
 cd.prog <- readRDS('/home/ob219/share/as_basis/GWAS/cd_prognosis/cd_prognosis_0619.RDS')
 cd.prog <- data.table(trait=rownames(cd.prog),cd.prog)
@@ -329,20 +295,33 @@ t1d[trait=='z_pca',c('n0','n1'):=list(2240*(1-0.1),2240*0.1)]
 t1d[,category:='liley_t1d']
 }
 
+## unpublished psa bowes
 psa <- readRDS("/home/ob219/share/as_basis/GWAS/psa_projections/summary/bowes_psa_0619.RDS")
 psa <- melt(psa,id.var='trait')
 psa[,c('n0','n1','category'):=list(4596,1805,'bowes_psa')]
 
-pah <- readRDS("/home/ob219/share/as_basis/GWAS/liley_pah/projections/pah_0619.RDS")
-pah <- melt(pah,id.var='trait') %>% data.table
-setnames(pah,c('trait','variable','value'))
-pah[,c('n0','n1','category'):=list(5045,847,'rhodes_pah')]
+## psa aterido one north american and one spanish cohort
+psa_aterido <- readRDS('/home/ob219/share/as_basis/GWAS/psa_aterido/psa_aterido_0619.RDS')
+psa_aterido <- melt(psa_aterido,id.var='trait') %>% data.table
+setnames(psa_aterido,c('trait','variable','value'))
+psa_aterido[trait=='na_psa',c('n0','n1','category'):=list(1417,1430,'psa_aterido')]
+psa_aterido[trait=='span_psa',c('n0','n1','category'):=list(1454,744,'psa_aterido')]
 
-pah.np <- readRDS("/home/ob219/share/as_basis/GWAS/liley_pah/projections/pah_no_pid_0619.RDS")
-pah.np <- melt(pah.np,id.var='trait') %>% data.table
-setnames(pah.np,c('trait','variable','value'))
-pah.np[,c('n0','n1','category'):=list(4243,848,'rhodes_pah')]
-pah <- rbind(pah,pah.np)
+
+## this is from Mark Toshner - I was unable to find evidence of immune-mediated component
+## therefore leave
+if(FALSE){
+  pah <- readRDS("/home/ob219/share/as_basis/GWAS/liley_pah/projections/pah_0619.RDS")
+  pah <- melt(pah,id.var='trait') %>% data.table
+  setnames(pah,c('trait','variable','value'))
+  pah[,c('n0','n1','category'):=list(5045,847,'rhodes_pah')]
+  pah.np <- readRDS("/home/ob219/share/as_basis/GWAS/liley_pah/projections/pah_no_pid_0619.RDS")
+  pah.np <- melt(pah.np,id.var='trait') %>% data.table
+  setnames(pah.np,c('trait','variable','value'))
+  pah.np[,c('n0','n1','category'):=list(4243,848,'rhodes_pah')]
+  pah <- rbind(pah,pah.np)
+}
+
 
 #IgA_nephropathy
 iga <- readRDS("/home/ob219/share/as_basis/GWAS/IgA_nephropathy/IgA_nephropathy_0619.RDS")
@@ -351,33 +330,56 @@ setnames(iga,c('trait','variable','value'))
 iga[,c('n0','n1','category'):=list(3952,2747,'kiryluk_iga_neph')]
 
 ## ankylosing_spondylitis
-
 as <- readRDS("/home/ob219/share/as_basis/GWAS/ank_spond/ank_spond_0619.RDS")
 as <- melt(as,id.var='trait') %>% data.table
 setnames(as,c('trait','variable','value'))
 as[,c('n0','n1','category'):=list(1644,4880,'brown_as')]
 
-bs <- readRDS("/home/ob219/share/as_basis/GWAS/birdshot_retinopathy/birdshot_retinopathy_0619.RDS")
-bs <- melt(bs,id.var='trait') %>% data.table
-setnames(bs,c('trait','variable','value'))
-bs[,c('n0','n1','category'):=list(693,117,'kuiper_bs')]
-
-lada <- readRDS("/home/ob219/share/as_basis/GWAS/cousminer_lada/cousminer_lada_0619.RDS")
-lada <- melt(lada,id.var='trait') %>% data.table
-setnames(lada,c('trait','variable','value'))
-lada[,c('n0','n1','category'):=list(5947,2634,'cousminer_lada')]
-
-
+## Iranain study
 li_as <- readRDS('/home/ob219/share/as_basis/GWAS/li_ankspond/li_ankspond_0619.RDS')
 li_as <- melt(li_as,id.var='trait') %>% data.table
 setnames(li_as,c('trait','variable','value'))
 li_as[,c('n0','n1','category'):=list(1841,1480,'li_as')]
 
+## birdshot_retinopathy
+bs <- readRDS("/home/ob219/share/as_basis/GWAS/birdshot_retinopathy/birdshot_retinopathy_0619.RDS")
+bs <- melt(bs,id.var='trait') %>% data.table
+setnames(bs,c('trait','variable','value'))
+bs[,c('n0','n1','category'):=list(693,117,'kuiper_bs')]
 
+## Latent autoimmune diabetes in adults
+lada <- readRDS("/home/ob219/share/as_basis/GWAS/cousminer_lada/cousminer_lada_0619.RDS")
+lada <- melt(lada,id.var='trait') %>% data.table
+setnames(lada,c('trait','variable','value'))
+lada[,c('n0','n1','category'):=list(5947,2634,'cousminer_lada')]
+
+## T2D to compare with LADA and T1D
 t2d_mahajan <- readRDS('/home/ob219/share/as_basis/GWAS/mahajan_t2d/mahajan_t2d_0619.RDS')
 t2d_mahajan <- melt(t2d_mahajan,id.var='trait') %>% data.table
 setnames(t2d_mahajan,c('trait','variable','value'))
 t2d_mahajan[,c('n0','n1','category'):=list(824006,74124,'mahajan_t2d')]
+
+## jia uveitis
+
+hasnoot_uveitis <- readRDS('/home/ob219/share/as_basis/GWAS/hasnoot_uveitis/hasnoot_uveitis_0619.RDS')
+hasnoot_uveitis <- melt(hasnoot_uveitis,id.var='trait') %>% data.table
+setnames(hasnoot_uveitis,c('trait','variable','value'))
+hasnoot_uveitis[,c('n0','n1','category'):=list(330,192,'hasnoot_uveitis_jia')]
+
+## cytokines
+
+cyt <- readRDS('/home/ob219/share/as_basis/GWAS/ahola-olli_cytokine/projections/ck_0619.RDS')
+cyt <- melt(cyt,id.var='trait') %>% data.table
+setnames(cyt,c('trait','variable','value'))
+## read in sample sizes from file
+ss.cyt <- fread("/home/ob219/share/Data/GWAS-summary/cytokine_gwas/sample_size.txt")
+ss.cyt[,label:=paste('CK',label,sep=':')]
+cyt<-merge(cyt,ss.cyt[,.(trait=label,n0=n,n1=0,sdy=1)],by='trait',all.x=TRUE)
+cyt[,category:='ahola-olli_cytokine']
+
+
+
+
 
 ## for some reason we swapped from n1 to n0 halfway through to n0 n1
 ## we need to fix otherwise everything gets swapped and case
@@ -389,26 +391,27 @@ setcolorder(tian,ncolorder)
 setcolorder(jia,ncolorder)
 setcolorder(ukbb,ncolorder)
 
-## add eqtlgen
+## ommit for the time being from analysis
+if(FALSE){
+  ## add eqtlgen
+  EQTLGEN_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/eqtlgen_projections_significant_only_0619/'
+  fs <- list.files(path=EQTLGEN_DIR,pattern="*.RDS",full.names=TRUE)
+  res.DT <- lapply(fs,readRDS) %>% rbindlist
+  ## define a Z score for loading to see if any are significant across pc's
+  eqtlgen_fdr <- melt(res.DT,id.vars='trait')
+  eqtlgen_fdr[,c('n0','n1','sdy','category'):=list(31684,0,1,'eqtlgen_fdr0.05')]
 
-EQTLGEN_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/eqtlgen_projections_significant_only_0619/'
-fs <- list.files(path=EQTLGEN_DIR,pattern="*.RDS",full.names=TRUE)
-res.DT <- lapply(fs,readRDS) %>% rbindlist
-## define a Z score for loading to see if any are significant across pc's
-eqtlgen_fdr <- melt(res.DT,id.vars='trait')
-eqtlgen_fdr[,c('n0','n1','sdy','category'):=list(31684,0,1,'eqtlgen_fdr0.05')]
-
-PQTL_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sun_pqtl/fdr_0.05_by_chr_filtered/'
-fs <- list.files(path=PQTL_DIR,pattern="*.RDS",full.names=TRUE)
-res.DT <- lapply(fs,function(x){
-  message(x)
-	mat<-readRDS(x)
-	data.table(trait=rownames(mat),mat)
-}) %>% rbindlist
-## define a Z score for loading to see if any are significant across pc's
-pqtl_fdr <- melt(res.DT,id.vars='trait')
-pqtl_fdr[,c('n0','n1','sdy','category'):=list(3301,0,1,'sun_pqtl_fdr0.05')]
-
+  PQTL_DIR <- '/home/ob219/rds/rds-cew54-wallace-share/as_basis/GWAS/sun_pqtl/fdr_0.05_by_chr_filtered/'
+  fs <- list.files(path=PQTL_DIR,pattern="*.RDS",full.names=TRUE)
+  res.DT <- lapply(fs,function(x){
+    message(x)
+	   mat<-readRDS(x)
+	    data.table(trait=rownames(mat),mat)
+  }) %>% rbindlist
+  ## define a Z score for loading to see if any are significant across pc's
+  pqtl_fdr <- melt(res.DT,id.vars='trait')
+  pqtl_fdr[,c('n0','n1','sdy','category'):=list(3301,0,1,'sun_pqtl_fdr0.05')]
+}
 
 all.proj <- list(
   ferriera=ferriera,
@@ -417,7 +420,7 @@ all.proj <- list(
   ukbb=ukbb,
   #icd=icd, - did not work not sure why !
   astle=astle,
-  eff=eff,
+  #eff=eff,
   cd.prog=cd.prog,
   psy=psy,
   myogen=myogen,
@@ -428,7 +431,7 @@ all.proj <- list(
   #liley=t1d,
   aav=aav,
   psa=psa,
-  pah=pah,
+  #pah=pah,
   mtx=mtx,
   iga=iga,
   as=as,
@@ -437,8 +440,11 @@ all.proj <- list(
   li_as=li_as,
   ga=ga,
   t2d_mahajan=t2d_mahajan,
-  pqtl_fdr=pqtl_fdr,
-  eqtlgen_fdr=eqtlgen_fdr
+  psa_aterido=psa_aterido,
+  hasnoot_uveitis=hasnoot_uveitis,
+  cyt
+  #pqtl_fdr=pqtl_fdr,
+  #eqtlgen_fdr=eqtlgen_fdr
 ) %>% rbindlist(.,fill=TRUE)
 all.proj[,n:=n1+n0]
 
@@ -466,7 +472,7 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/23_07_19_0619_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/02_08_19_0619_primary_summary_results.RDS')
 
 if(FALSE){
   all.DT <- readRDS("~/share/as_basis/GWAS/RESULTS/23_07_19_0619_summary_results.RDS")

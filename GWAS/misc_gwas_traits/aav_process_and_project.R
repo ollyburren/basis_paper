@@ -81,7 +81,6 @@ all.vasc <- mclapply(seq_along(samples.DT),function(i){
   tra <- unique(M$trait)
   pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",tra))
   saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
-  return()
   ## where snp is missing make it zero
   tra <- unique(M$trait)
   tmp[is.na(metric),c('metric','trait'):=list(0,tra)]
