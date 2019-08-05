@@ -2,7 +2,7 @@ library(data.table)
 library(annotSnpStats)
 library(optparse)
 
-TEST<-TRUE
+TEST<-FALSE
 option_list = list(
         make_option(c("-f", "--fname"), type="character", default=NULL,
               help="CEDAR file to process", metavar="character")
