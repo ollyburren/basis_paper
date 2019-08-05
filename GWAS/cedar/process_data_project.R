@@ -34,8 +34,17 @@ sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 pc.emp <- readRDS(BASIS_FILE)
 
+if(FALSE){
+    filez.500 <- list.files(path='/home/ob219/share/as_basis/cedar_eqtl',pattern="*.gz",full.names=TRUE)
+    cmds <- lapply(filez.500,function(f){
+      cmd <- sprintf("Rscript /home/ob219/git/basis_paper/GWAS/cedar/process_data_project.R -f %s",f)
+    })
+    write(unlist(cmds),"~/tmp/qstuff/cedar.txt")
+}
 
-#filez <- list.files(path=DATA.DIR,pattern="*.gz",full.names=TRUE)
+#filez.1mb <- list.files(path='/home/ob219/share/as_basis/cedar_eqtl_1mb',pattern="*.gz",full.names=TRUE)
+
+#setdiff(basename(filez.500),basename(filez.1mb))
 
 #f <- filez[1]
 f <- args$fname
