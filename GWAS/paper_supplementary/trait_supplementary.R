@@ -52,7 +52,7 @@ rare.out[category %in% c('astle_blood','tian_infectious_disease'),missing:=0]
 
 rare.out[category=='ahola-olli_cytokine',trait:=gsub("CK:","",trait)]
 rare.out[,c('fa','tr'):=tstrsplit(category,'_')]
-rare.out <- rare.out[,.(Trait=trait,`First Author`=fa,Reference='unpublished',N0=n0,N1=n1,sdY=sdy)]
+rare.out <- rare.out[,.(Trait=trait,`First Author`=fa,Reference='unpublished',N0=n0,N1=n1,sdY=sdy,missing)]
 
 
 rare.out[Trait=='jia_ERA_19',Trait:='enthesitis_related_jia']
@@ -120,7 +120,8 @@ rare.out[`First Author`=='astle',Reference:='27863252']
 
 ## how many snps are dropped from each trait when projecting
 
-
+rare.out[Trait=='psoriatic_arthritis_spanish',`First Author`:='aterido']
+rare.out[Trait=='psoriatic_arthritis_spanish',`First Author`:='psoriatic_arthritis_north_america']
 
 
 rare.out <- rare.out[order(N1+N0),.(Trait,`First Author`,Reference,N0,N1,`Missing SNPs`=missing),by=`First Author`]

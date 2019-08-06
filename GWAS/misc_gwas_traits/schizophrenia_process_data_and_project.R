@@ -45,6 +45,9 @@ tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 ## where snp is missing make it zero
 tmp[is.na(metric),metric:=0]
 tmp[,trait:= 'SCZ']
+tra <- 'SCZ'
+pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",tra))
+saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
 B <- dcast(tmp,pid ~ trait,value.var='metric')
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()
