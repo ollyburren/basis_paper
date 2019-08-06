@@ -121,8 +121,8 @@ rare.out[`First Author`=='astle',Reference:='27863252']
 ## how many snps are dropped from each trait when projecting
 
 rare.out[Trait=='psoriatic_arthritis_spanish',`First Author`:='aterido']
-rare.out[Trait=='psoriatic_arthritis_spanish',`First Author`:='psoriatic_arthritis_north_america']
+rare.out[Trait=='psoriatic_arthritis_north_america',`First Author`:='aterido']
 
 
-rare.out <- rare.out[order(N1+N0),.(Trait,`First Author`,Reference,N0,N1,`Missing SNPs`=missing),by=`First Author`]
+rare.out <- rare.out[order(N1+N0),.(Trait,Reference,N0,N1,`Missing SNPs`=missing),by=`First Author`]
 write.xlsx(rare.out,file=file.path(OUT_DIR,'supplementary_tables_1_4.xlsx'),sheet='Other',row.names=FALSE,append=TRUE)
