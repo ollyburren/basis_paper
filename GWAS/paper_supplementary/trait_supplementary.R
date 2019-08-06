@@ -123,5 +123,5 @@ rare.out[`First Author`=='astle',Reference:='27863252']
 
 
 
-rare.out <- rare.out[order(N1+N0),.(Trait,`First Author`,Reference,N0,N1),by=`First Author`]
+rare.out <- rare.out[order(N1+N0),.(Trait,`First Author`,Reference,N0,N1,`Missing SNPs`=missing),by=`First Author`]
 write.xlsx(rare.out,file=file.path(OUT_DIR,'supplementary_tables_1_4.xlsx'),sheet='Other',row.names=FALSE,append=TRUE)
