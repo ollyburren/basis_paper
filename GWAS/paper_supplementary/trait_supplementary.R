@@ -1,7 +1,6 @@
 library(xlsx)
 OUT_DIR <- '/home/ob219/share/as_basis/supp_tables/'
 
-
 ### this code creates supplementary tables
 
 ## supp table 1 - basis traits
@@ -36,6 +35,21 @@ write.xlsx(ga.out,file=file.path(OUT_DIR,'supplementary_tables_1_4.xlsx'),sheet=
 ## supp table 4 All other projected traits and studies
 
 rare.out <- res.DT[!category %in% c(keep.cat,'geneatlas_icd'),]
+
+fs <- list.files(path='/home/ob219/share/as_basis/GWAS/for_fdr',pattern='*.RDS',full.names=TRUE)
+miss.dt <- lapply(fs,function(f){
+  missing <- readRDS(f)[is.na(p.value),] %>% nrow
+  data.table(trait=basename(f) %>% gsub("\\_source.RDS","",.),missing)
+}) %>% rbindlist
+
+miss.dt[trait=='li_ankspond',trait:='li_as']
+
+rare.out <- merge(rare.out,miss.dt,by.x='trait',by.y='trait',all.x=TRUE)
+## tian and ferreira and astle have no SNPs missing I checked
+rare.out[category %in% c('astle_blood','tian_infectious_disease'),missing:=0]
+
+
+
 rare.out[category=='ahola-olli_cytokine',trait:=gsub("CK:","",trait)]
 rare.out[,c('fa','tr'):=tstrsplit(category,'_')]
 rare.out <- rare.out[,.(Trait=trait,`First Author`=fa,Reference='unpublished',N0=n0,N1=n1,sdY=sdy)]
@@ -103,6 +117,9 @@ rare.out[`First Author`=='taylor',Reference:='29795407']
 rare.out[`First Author`=='ferreira',Reference:='29083406']
 rare.out[`First Author`=='tian',Reference:='28928442']
 rare.out[`First Author`=='astle',Reference:='27863252']
+
+## how many snps are dropped from each trait when projecting
+
 
 
 
