@@ -6,12 +6,13 @@ DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 OUT_FILE <- '/home/ob219/share/as_basis/GWAS/psych/scz_0619.RDS'
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 
 scz.DT <- fread("zcat /home/ob219/share/Data/GWAS-summary/psyc_traits/SCZvsCONT.sumstats.gz")
 scz.DT[,pid:=paste(CHR,BP,sep=':')]
 ## note OR are with respect to A1
 man.DT <- fread(SNP_MANIFEST)
-M <- merge(scz.DT[,.(pid,a1=A1,a2=A2,or=OR)],man.DT,by='pid')
+M <- merge(scz.DT[,.(pid,a1=A1,a2=A2,or=OR,p.value=P)],man.DT,by='pid')
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
 #alleles <- alleles[!duplicated(pid),]
 #alleles <- M[,list(al.x=paste(uk10_A1,uk10_A2,sep='/'),al.y=paste(a1,a2,sep='/')),by='pid']

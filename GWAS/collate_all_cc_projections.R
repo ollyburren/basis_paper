@@ -469,10 +469,18 @@ all.DT[!is.na(sdy),variance:=(log(sdy^2/n) + log(mfactor)) %>% exp]
 ## add in control loading
 all.DT[,Z:=(value-control.loading)/sqrt(variance)]
 all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
-all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
+#all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/02_08_19_0619_primary_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/02_08_19_0619_summary_results.RDS')
+
+## primary results
+
+primary.DT <- all.DT[!category %in% c('astle','wong_aav','geneatlas_srd','geneatlas_cancer')]
+primary.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
+
+saveRDS(primary.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/02_08_19_0619_primary_results.RDS')
+
 
 if(FALSE){
   all.DT <- readRDS("~/share/as_basis/GWAS/RESULTS/23_07_19_0619_summary_results.RDS")

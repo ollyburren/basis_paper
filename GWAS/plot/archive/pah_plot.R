@@ -34,12 +34,12 @@ res.DT <- res.DT[category!='geneatlas_srd',]
 res.DT[,p.adj:=p.adjust(p.value,method='BH')]
 
 #res.DT[category %in% c('brown_as','li_as'),category:='all_as']
-res.DT[category %in% c('cousminer_lada','mahajan_t2d','GA:E10.Insulin.dependent.diabetes.mellitus','GA:E11.Non.insulin.dependent.diabetes.mellitus','Unspecified.diabetes.mellitus'),category:='all_diabetes']
-category.foc <- 'all_diabetes'
-#category.foc <- 'bowes_psa'
-category.foc <- 'estrada_NMO'
-#category.foc <- 'myogen'
 #category.foc <- 'all_as'
+#res.DT[category %in% c('cousminer_lada','mahajan_t2d') | trait %in% c('GA:E10.Insulin.dependent.diabetes.mellitus','GA:E11.Non.insulin.dependent.diabetes.mellitus','Unspecified.diabetes.mellitus'),category:='all_diabetes']
+#category.foc <- 'all_diabetes'
+#category.foc <- 'bowes_psa'
+#category.foc <- 'estrada_NMO'
+#category.foc <- 'myogen'
 #category.foc <- 'mahajan_t2d'
 #category.foc <- 'cousminer_lada'
 #category.foc <- 'kuiper_bs'
@@ -49,6 +49,9 @@ category.foc <- 'estrada_NMO'
 #category.foc <- 'taylor_mtx'
 #category.foc <- 'kiryluk_iga_neph'
 #category.foc <- 'astle_blood'
+category.foc <- 'lee_CD_prognosis'
+#res.DT[grepl("^GA:.*respi",trait,ignore.case=TRUE) | category=='ferreira_asthma',category:='asthma']
+#category.foc <- 'asthma'
 
 all.traits <- traits<-split(res.DT$trait,res.DT$category) %>% lapply(.,unique)
 talk.DT <- res.DT[category %in% c('bb_disease',category.foc),]
@@ -121,8 +124,20 @@ forest_plot_focal_merge <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,c
 PADJ_THRESH <- 0.05
 
 talk.DT[category==category.foc & p.adj<PADJ_THRESH,]$variable
-pc <- 'PC8'
+pc <- 'PC5'
 forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=PADJ_THRESH)
+
+
+
+talk.DT[,significant:=p.adj<PADJ_THRESH]
+talk.DT[,pc:=factor(variable,levels=paste('PC',1:12,sep=''))]
+talk.DT[,is.sig:='']
+talk.DT[p.adj<PADJ_THRESH,is.sig:='*']
+talk.DT[,trait.label:=sprintf("%s (%d)",trait,n1)]
+pp1 <- ggplot(talk.DT[category==category.foc & pc!='PC12',],aes(x=pc,y=trait.label,fill=delta,label=is.sig)) + geom_tile() +
+geom_text(size=10) +
+scale_fill_gradient2("Difference\nfrom control") + xlab("Principal Component") +
+ylab("Disease/Subtype") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
 
 

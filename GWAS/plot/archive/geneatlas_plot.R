@@ -97,7 +97,7 @@ forest_plot_focal_merge <- function(proj.dat,basis.dat=basis.DT,pc,focal,title,c
 }
 
 #only for blood traits where lots of things are significant !
-talk.DT<-talk.DT[(category==category.foc & p.adj<0.05) | category!=category.foc,]
+talk.DT<-talk.DT[(category==category.foc & p.adj<0.01) | category!=category.foc,]
 talk.DT[,trait:=strtrim(trait, 50)]
 all.traits <- traits<-split(talk.DT$trait,talk.DT$category) %>% lapply(.,unique)
 #pc<-'PC1'
@@ -105,9 +105,57 @@ all.traits <- traits<-split(talk.DT$trait,talk.DT$category) %>% lapply(.,unique)
 
 pdf(file="~/tmp/geneatlas_160719_fdr01.pdf",paper="a4r",onefile=TRUE)
 lapply(paste('PC',1:11,sep=''),function(pc){
-  forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=0.05)
+  forest_plot_focal_merge(talk.DT,pc=pc,focal=all.traits[category.foc] %>% unlist,title=pc,cat_levels=cols,fdr_thresh=0.01)
 })
 dev.off()
+
+## create a summary heatmap that is clustered
+
+RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/17_07_19_0619_summary_results.RDS'
+#RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/25_01_19_summary_results.RDS'
+res.DT <- readRDS(RESULTS.FILE)[category=='geneatlas_icd',]
+## only use single category icd codes at this stage
+library(stringr)
+pat <- "[A-Z][0-9]{2}"
+res.DT[,icd.count:=str_count(trait,pat)]
+leaf.DT <- res.DT[str_count(trait,pat)==1,]
+node.DT <- res.DT[str_count(trait,pat)>1,]
+fail.DT <- res.DT[str_count(trait,pat)<1,]
+
+
+#keep <- leaf.DT[p.adj<0.01,]$trait %>% unique %>% as.character()
+keep <- leaf.DT[p.adj<0.05,]$trait %>% unique %>% as.character()
+leaf.DT <- leaf.DT[trait %in% keep,]
+mat.dt <- melt(leaf.DT[,.(pc=variable,trait,delta)],measure.vars='delta') %>% dcast(.,trait~pc)
+mat <- as.matrix(mat.dt[,-1])
+rownames(mat) <- mat.dt$trait
+hc.mat <- dist(mat) %>% hclust
+leaf.DT[,trait:=factor(trait,levels=hc.mat$labels[hc.mat$order])]
+leaf.DT[,variable:=factor(variable,levels=paste0('PC',1:11))]
+
+leaf.DT[,is.sig:='']
+leaf.DT[p.adj<0.05,is.sig:='*']
+pp1 <- ggplot(leaf.DT[category==category.foc & variable!='PC12',],aes(x=variable,y=trait,fill=delta,label=is.sig)) + geom_tile() +
+geom_text(size=6) +
+scale_fill_gradient2("Difference\nfrom control") + xlab("Principal Component") +
+ylab("Disease/Subtype") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+
+keep <- node.DT[p.adj<0.05,]$trait %>% unique %>% as.character()
+node.DT <- node.DT[trait %in% keep,]
+mat.dt <- melt(node.DT[,.(pc=variable,trait,delta)],measure.vars='delta') %>% dcast(.,trait~pc)
+mat <- as.matrix(mat.dt[,-1])
+rownames(mat) <- mat.dt$trait
+hc.mat <- dist(mat) %>% hclust
+node.DT[,trait:=factor(trait,levels=hc.mat$labels[hc.mat$order])]
+node.DT[,variable:=factor(variable,levels=paste0('PC',1:11))]
+
+node.DT[,is.sig:='']
+node.DT[p.adj<0.05,is.sig:='*']
+pp1 <- ggplot(node.DT[category==category.foc & variable!='PC12',],aes(x=variable,y=trait,fill=delta,label=is.sig)) + geom_tile() +
+geom_text(size=6) +
+scale_fill_gradient2("Difference\nfrom control") + xlab("Principal Component") +
+ylab("Disease/Subtype") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
 ### comparing neale et al self reported disease with
 
@@ -125,9 +173,10 @@ M[,label:='NONE']
 #M[abs(neale.Z)>2.8 & abs(ga.Z)<2.8,label:='NEALE']
 #M[abs(neale.Z)<2.8 & abs(ga.Z)>2.8,label:='GA']
 #M[abs(neale.Z)>2.8 & abs(ga.Z)>2.8,label:='BOTH']
-M[neale.p.adj<0.05 & ga.p.adj>0.05, label:='NEALE']
-M[neale.p.adj>0.05 & ga.p.adj<0.05, label:='GA']
-M[neale.p.adj<0.05 & ga.p.adj<0.05, label:='BOTH']
+thresh <- 0.01
+M[neale.p.adj<thresh & ga.p.adj>thresh, label:='NEALE']
+M[neale.p.adj>thresh & ga.p.adj<thresh, label:='GA']
+M[neale.p.adj<thresh & ga.p.adj<thresh, label:='BOTH']
 
 ## compare cases
 
@@ -144,6 +193,10 @@ Mall <- merge(ga.srd,neale.srd,by=c('trait','pc'),all=TRUE)[trait!='unclassifiab
 Mall[is.na(ga.cases),.(trait,neale.cases)] %>% unique
 Mall[is.na(neale.cases),.(trait,ga.cases)] %>% unique
 
-ggplot(M,aes(x=neale.Z,y=ga.Z,col=label)) +
+library(ggrepel)
+M[,dl:='']
+M[label!='NONE',dl:=trait]
+
+ggplot(M,aes(x=neale.Z,y=ga.Z,col=label,label=dl)) +
 geom_point() + geom_abline(a=0,b=1,col='black',lty=2,alpha=0.3) +
-theme_bw() + facet_wrap(~pc)
+theme_bw() + facet_wrap(~pc,scales='free') + geom_text_repel()

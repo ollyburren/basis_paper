@@ -218,17 +218,18 @@ compute_t_no_share <- function(tg,pc,covM){
 scovM <- compute_t(tg=list(g1='pr3_meta',g2='mpo_meta'),pc='PC1')$covM
 pcs <- paste('PC',1:11,sep='')
 
-
+pcs <- res.DT[trait %in% c('bb_SRD:type.1.diabetes','cousminer_lada') & p.adj<0.05,]$variable %>% unique
 dat.ladavst1d <- lapply(pcs,function(pc){
   compute_t(tg=list(g1='bb_SRD:type.1.diabetes',g2='cousminer_lada'),pc=pc,scovM)$t
 }) %>% rbindlist
 
-dat.ladavst1d[,bonf.p:=p.adjust(p.value,method="bonferroni")]
-
+#dat.ladavst1d[,bonf.p:=p.adjust(p.value,method="bonferroni")]
+pcs <- res.DT[trait %in% c('mpo_Pos','anca_Neg') & p.adj<0.05,]$variable %>% unique
 dat.egpa <- lapply(pcs,function(pc){
   compute_t(tg=list(g1='mpo_Pos',g2='anca_Neg'),pc=pc,scovM)$t
 }) %>% rbindlist
 
+pcs <- res.DT[trait %in% c('pr3_meta','mpo_meta') & p.adj<0.05,]$variable %>% unique
 dat.aav <- lapply(pcs,function(pc){
   compute_t(tg=list(g1='pr3_meta',g2='mpo_meta'),pc=pc,scovM)$t
 }) %>% rbindlist
@@ -253,10 +254,12 @@ theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
 save_plot(file="~/tmp/smith_090719_vasc_barplot.pdf",pp2,base_width=11)
 
+pcs <- res.DT[trait %in% c('mpo_Pos','mpo_meta') & p.adj<0.05,]$variable %>% unique
 dat.egpampovsaavmpo <- lapply(pcs,function(pc){
   compute_t(tg=list(g1=c('mpo_Pos'),g2=c('mpo_meta')),pc=pc,scovM)$t
 }) %>% rbindlist
 
+pcs <- res.DT[trait %in% c('anca_Neg','mpo_meta') & p.adj<0.05,]$variable %>% unique
 dat.egpaancavsaavmpo <- lapply(pcs,function(pc){
   compute_t(tg=list(g1=c('anca_Neg'),g2=c('mpo_meta')),pc=pc,scovM)$t
 }) %>% rbindlist
@@ -281,27 +284,36 @@ theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 save_plot(file="~/tmp/smith_090719_egpavsaavmpo_barplot.pdf",pp3,base_width=11)
 
 
+
+pcs <- res.DT[trait %in% c('mpo_Pos','anca_Neg','pr3_meta','mpo_meta') & p.adj<0.05,]$variable %>% unique
 dat.egpavsaav <- lapply(pcs,function(pc){
   compute_t(tg=list(g1=c('mpo_Pos','anca_Neg'),g2=c('pr3_meta','mpo_meta')),pc=pc,scovM)$t
 }) %>% rbindlist
 
 
+pcs <- res.DT[trait %in% c('jdm_myogen','pm_myogen') & p.adj<0.05,]$variable %>% unique
+dat.myo.sys <- lapply(pcs,function(pc){
+  compute_t(tg=list(g1='jdm_myogen',g2=c('pm_myogen')),pc=pc,scovM)$t
+}) %>% rbindlist
 
+
+pcs <- res.DT[trait %in% c('jia_sys_19','jia_EO_19','jia_PO_19','jia_PsA_19','jia_RFneg_19','jia_RFpos_19','jia_undiff_19') & p.adj<0.05,]$variable %>% unique
 dat.jia.sys <- lapply(pcs,function(pc){
   compute_t(tg=list(g1='jia_sys_19',g2=c('jia_EO_19','jia_PO_19','jia_PsA_19','jia_RFneg_19','jia_RFpos_19','jia_undiff_19')),pc=pc,scovM)$t
 }) %>% rbindlist
 
+pcs <- res.DT[trait %in% c('jia_ERA_19','jia_EO_19','jia_PO_19','jia_PsA_19','jia_RFneg_19','jia_RFpos_19','jia_undiff_19') & p.adj<0.05,]$variable %>% unique
 dat.jia.era <- lapply(pcs,function(pc){
   compute_t(tg=list(g1='jia_ERA_19',g2=c('jia_EO_19','jia_PO_19','jia_PsA_19','jia_RFneg_19','jia_RFpos_19','jia_undiff_19')),pc=pc,scovM)$t
 }) %>% rbindlist
 
+pcs <- res.DT[trait %in% c('NMO_IgGNeg','NMO_IgGPos') & p.adj<0.05,]$variable %>% unique
 dat.nmo <- lapply(pcs,function(pc){
   compute_t(tg=list(g1='NMO_IgGNeg',g2='NMO_IgGPos'),pc=pc,scovM)$t
 }) %>% rbindlist
 
-dat.myo <- lapply(pcs,function(pc){
-  compute_t(tg=list(g1='pm_myogen',g2=c('dm_myogen','jdm_myogen')),pc=pc,scovM)$t
-}) %>% rbindlist
+
+
 
 
 res <- rbindlist(list(
@@ -311,7 +323,7 @@ aav = dat.aav,
 sys=dat.jia.sys,
 era=dat.jia.era,
 nmo=dat.nmo,
-myo = dat.myo
+myo = dat.myo.sys
 ))
 
 res[,p.adj:=p.adjust(p.value,method="bonferroni")]

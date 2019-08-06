@@ -6,13 +6,14 @@ DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 OUT_FILE <- '/home/ob219/share/as_basis/GWAS/psych/adhd_0619.RDS'
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 
 
 adhd.DT <- fread("zcat /home/ob219/share/Data/GWAS-summary/psyc_traits/adhd_eur_jun2017.gz")
 adhd.DT[,pid:=paste(CHR,BP,sep=':')]
 ## note OR are with respect to A1
 man.DT <- fread(SNP_MANIFEST)
-M <- merge(adhd.DT[,.(pid,a1=A1,a2=A2,or=OR)],man.DT,by='pid')
+M <- merge(adhd.DT[,.(pid,a1=A1,a2=A2,or=OR,p.value=P)],man.DT,by='pid')
 alleles <- data.table(pid=M$pid,al.x = paste(M$ref_a1,M$ref_a2,sep='/'),al.y=paste(M$a1,M$a2,sep='/'))
 #alleles <- alleles[!duplicated(pid),]
 #alleles <- M[,list(al.x=paste(uk10_A1,uk10_A2,sep='/'),al.y=paste(a1,a2,sep='/')),by='pid']
@@ -45,7 +46,9 @@ tmp$metric <- tmp[['ws_emp_shrinkage']] * log(tmp$or)
 ## where snp is missing make it zero
 tmp[is.na(metric),metric:=0]
 tmp[,trait:= 'ADHD']
-saveRDS(tmp,file='/home/ob219/share/as_basis/GWAS/psych/adhd_source.RDS')
+tra <- 'ADHD'
+pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",tra))
+saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
 B <- dcast(tmp,pid ~ trait,value.var='metric')
 snames <- B[,1]$pid
 mat.emp <- as.matrix(B[,-1]) %>% t()

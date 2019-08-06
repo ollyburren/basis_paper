@@ -6,6 +6,7 @@ DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 OUT_FILE <- "/home/ob219/share/as_basis/GWAS/tian_projections/tian_infectious_disease_0619.RDS"
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 
 ## Tian
 anno.file <- '/home/ob219/share/Data/GWAS-summary/23andme/annotation/all_snp_info-4.1.txt'
@@ -46,6 +47,11 @@ alleles <- alleles[-idx,]
 M <- merge(M,alleles[,.(pid,g.class)],by='pid',all.x=TRUE)
 tian.anno <- M[,.(all.data.id,pid,g.class,alleles)]
 
+
+pfile <- file.path(SRC_OUT_DIR,sprintf("%s_source.RDS",trait))
+tmp <- merge(topr,stmp,by='pid',all.y=TRUE)
+#tmp<-all.DT[stmp]
+saveRDS(tmp[,.(pid,or,p.value,ws_emp_shrinkage)],file=pfile)
 
 DATA_DIR <- '/home/ob219/share/Data/GWAS-summary/23andme/tian/'
 files <- list.files(path=DATA_DIR,pattern="*.gz",full.names=TRUE)
