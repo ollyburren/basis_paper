@@ -1,5 +1,5 @@
 library(xlsx)
-OUT_DIR <- '/home/ob219/share/as_basis/supp_tables/'
+OUT_FILE <- '/home/ob219/share/as_basis/supp_tables/supplementary_tables_1_4_v2.xlsx'
 
 ### this code creates supplementary tables
 
@@ -9,7 +9,7 @@ trait.manifest <- fread(TRAIT_MANIFEST)[basis_trait==1,]
 trait.manifest[,c('dtr','first_author'):=tstrsplit(disease,'_')]
 trait.manifest <- trait.manifest[order(cases+controls),]
 basis.out <- trait.manifest[,.(Trait=dtr,`First Author`=first_author,Reference=pmid,N0=controls,N1=cases)]
-write.xlsx(basis.out,file=file.path(OUT_DIR,'supplementary_tables_1_4.xlsx'),sheet='Basis',row.names=FALSE)
+write.xlsx(basis.out,file=OUT_FILE,sheet='Basis',row.names=FALSE)
 
 
 ## supp table 2 - Neale traits
@@ -22,7 +22,7 @@ neale.out[,c('pre','suf'):=tstrsplit(trait,':')]
 neale.out[,trait:=suf]
 neale.out <- neale.out[order(n1),.(Trait=trait,N0=n0,N1=n1),by=category]
 
-write.xlsx(neale.out,file=file.path(OUT_DIR,'supplementary_tables_1_4.xlsx'),sheet='UKBB Neale',row.names=FALSE,append=TRUE)
+write.xlsx(neale.out,file=OUT_FILE,sheet='UKBB Neale',row.names=FALSE,append=TRUE)
 
 ## supp table 3 - GeneAtlas traits - these are the ICDs at the moment but could add in srd if required for paper
 
@@ -30,7 +30,7 @@ ga.out <- res.DT[category=='geneatlas_icd',]
 ga.out[,c('pre','suf'):=tstrsplit(trait,':')]
 ga.out[,trait:=suf]
 ga.out <- ga.out[order(n1),.(Trait=trait,N0=n0,N1=n1)]
-write.xlsx(ga.out,file=file.path(OUT_DIR,'supplementary_tables_1_4.xlsx'),sheet='UKBB HESS GeneATLAS',row.names=FALSE,append=TRUE)
+write.xlsx(ga.out,file=OUT_FILE,sheet='UKBB HESS GeneATLAS',row.names=FALSE,append=TRUE)
 
 ## supp table 4 All other projected traits and studies
 
@@ -38,7 +38,7 @@ rare.out <- res.DT[!category %in% c(keep.cat,'geneatlas_icd'),]
 
 fs <- list.files(path='/home/ob219/share/as_basis/GWAS/for_fdr',pattern='*.RDS',full.names=TRUE)
 miss.dt <- lapply(fs,function(f){
-  missing <- readRDS(f)[is.na(p.value),] %>% nrow
+  missing <- readRDS(f)[is.na(or),] %>% nrow
   data.table(trait=basename(f) %>% gsub("\\_source.RDS","",.),missing)
 }) %>% rbindlist
 
@@ -122,7 +122,5 @@ rare.out[`First Author`=='astle',Reference:='27863252']
 
 rare.out[Trait=='psoriatic_arthritis_spanish',`First Author`:='aterido']
 rare.out[Trait=='psoriatic_arthritis_north_america',`First Author`:='aterido']
-
-
 rare.out <- rare.out[order(N1+N0),.(Trait,Reference,N0,N1,`Missing SNPs`=missing),by=`First Author`]
-write.xlsx(rare.out,file=file.path(OUT_DIR,'supplementary_tables_1_4.xlsx'),sheet='Other',row.names=FALSE,append=TRUE)
+write.xlsx(rare.out,file=OUT_FILE,sheet='Other',row.names=FALSE,append=TRUE)
