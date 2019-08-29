@@ -89,5 +89,7 @@ am[,Z.res:=(residuals)/sd(residuals),by=pc]
 am[,label:='']
 am[abs(Z.res)>1.96,label:=trait]
 
-ggplot(am,aes(x=abs(fdelta),y=abs(tdelta),color=log10(missing),label=label)) + geom_point() + facet_wrap(~pc) +
-geom_abline(col='red',lty=2) + geom_text_repel() + xlab("Full basis delta") + ylab("Tailored basis delta") + labs(color = "log10(#missing SNPs)")
+pg <- ggplot(am,aes(x=abs(fdelta),y=abs(tdelta),color=log10(missing),label=label)) + geom_point() + facet_wrap(~pc,scale='free') +
+geom_abline(col='red',lty=2) + geom_text_repel() + xlab("Full basis delta") + ylab("Tailored basis delta") + labs(color = "log10(#missing SNPs)") +
+theme(legend.position="none")
+save_plot("~/tmp/missing.pdf",pg,base_height=8,base_aspect=1.2)

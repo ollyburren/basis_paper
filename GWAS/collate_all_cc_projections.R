@@ -201,6 +201,13 @@ myogen <- melt(myogen,id.var='trait')
 myogen[,c('n0','n1'):=list(4724,1711)]
 myogen[,category:='myogen']
 
+## myogen_myositis ssimp [IMPUTED]
+myogen_ss <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis_ssimp_0619.RDS')
+myogen_ss <- data.table(trait=rownames(myogen_ss),myogen_ss)
+myogen_ss <- melt(myogen_ss,id.var='trait')
+myogen_ss[,c('n0','n1'):=list(4724,1711)]
+myogen_ss[,category:='myogen']
+
 ## jdm
 
 jdm <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/jdm_myositis_0619.RDS')
@@ -221,7 +228,7 @@ pm <- melt(pm,id.var='trait')
 pm[,c('n0','n1'):=list(4724,533)]
 pm[,category:='myogen']
 
-myogen <- rbindlist(list(myogen,jdm,dm,pm))
+myogen <- rbindlist(list(myogen,myogen_ss,jdm,dm,pm))
 
 ## myogen_myositis
 # myogen.flip <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis_flip.RDS')
@@ -472,14 +479,14 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 #all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
 
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/02_08_19_0619_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/28_08_19_0619_summary_results.RDS')
 
 ## primary results
 
 primary.DT <- all.DT[!category %in% c('astle','wong_aav','geneatlas_srd','geneatlas_cancer')]
 primary.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 
-saveRDS(primary.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/02_08_19_0619_primary_results.RDS')
+saveRDS(primary.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/28_08_19_0619_primary_results.RDS')
 
 
 if(FALSE){
