@@ -13,6 +13,8 @@ N_FILE <- '/home/ob219/rds/hpc-work/roederer/twinr-ftp.kcl.ac.uk/ImmuneCellScien
 
 all.files <- list.files(path=DATA_DIR,pattern="txt.gz",full.names=TRUE)
 
+
+
 for(file in all.files){
   ## use this for traitname
   tra <- basename(file) %>% gsub(".txt.gz","",.) %>% sprintf("roederer_%s",.)
@@ -22,10 +24,13 @@ for(file in all.files){
     next
   }
   sprintf("Reading in %s ",file) %>% message
-  dat <- fread(sprintf("zcat %s",file),select=c('name','chromosome','position','allele1','allele2','effallele','build','n','beta','sebeta','p'))
+  dat <- fread(sprintf("zcat %s",file),select=c('name','chromosome','position','allele1','allele2','effallele','build','n','beta','sebeta','p','effallelefreq'))
   message("Done")
+  dat[,maf:=ifelse(effallelefreq>0.5,1-effallelefreq,effallelefreq)]
+  sdy <- dat[,sdY.est(sebeta,maf,n=max(M$n,na.rm=TRUE))]
   ## note at least in this example effect allele is a2 !
   ## first remap to b37
+  ##estimate sdY
 
   dat[,pid:=paste(chromosome,position,sep=':')]
   dat <- dat[!pid %in% dat[duplicated(pid),],]
@@ -63,6 +68,12 @@ for(file in all.files){
   ## check direction which is the effect allele ? It appears that a2 is the effect allele
   M <- merge(M,alleles[,.(pid,g.class)],by='pid',all.x=TRUE)
   M <- M[g.class %in% c('rev','revcomp'),beta:=beta*-1]
+  M[,maf:=ifelse(ref_a1.af>0.5,1-ref_a1.af,ref_a1.af)]
+  ## estimate varbeta (although can do from original)
+  M[,var.beta:=beta/qnorm(p.value/2,lower.tail=FALSE)]
+  sdy <- M[,sdY.est(var.beta,maf,n=max(M$n,na.rm=TRUE))]
+
+
   sDT <- readRDS(SHRINKAGE_FILE)
   stmp<-sDT[,.(pid,ws_emp_shrinkage)]
   setkey(M,pid)
@@ -82,3 +93,28 @@ for(file in all.files){
   all.proj <- predict(pc.emp,newdata=mat.emp)
   saveRDS(all.proj,file=outfile)
 }
+
+## get sdY for all traits
+
+sdY.est <- function(vbeta, maf, n) {
+    oneover <- 1/vbeta
+    nvx <- 2 * n * maf * (1-maf)
+    m <- lm(nvx ~ oneover - 1)
+    cf <- coef(m)[['oneover']]
+    if(cf < 0)
+        stop("estimated sdY is negative - this can happen with small datasets, or those with errors.  A reasonable estimate of sdY is required to continue.")
+    return(sqrt(cf))
+}
+
+res <- mclapply(all.files,function(file){
+  tra <- basename(file) %>% gsub(".txt.gz","",.) %>% sprintf("roederer_%s",.)
+  message(tra)
+  sprintf("Reading in %s ",file) %>% message
+  dat <- fread(sprintf("zcat %s",file),select=c('name','chromosome','position','allele1','allele2','effallele','build','n','beta','sebeta','p','effallelefreq'))
+  message("Done")
+  dat[,maf:=ifelse(effallelefreq>0.5,1-effallelefreq,effallelefreq)]
+  data.table(trait=tra,sdY=dat[,sdY.est(sebeta^2,maf,n=max(M$n,na.rm=TRUE))])
+},mc.cores=8)
+
+sdy.var.estimates <- rbindlist(res)
+saveRDS(sdy.var.estimates,file='/home/ob219/rds/hpc-work/roederer/twinr-ftp.kcl.ac.uk/ImmuneCellScience/2-GWASResults/sdy.estimate.RDS')

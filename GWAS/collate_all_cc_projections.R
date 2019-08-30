@@ -201,34 +201,38 @@ myogen <- melt(myogen,id.var='trait')
 myogen[,c('n0','n1'):=list(4724,1711)]
 myogen[,category:='myogen']
 
-## myogen_myositis ssimp [IMPUTED]
-myogen_ss <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis_ssimp_0619.RDS')
-myogen_ss <- data.table(trait=rownames(myogen_ss),myogen_ss)
-myogen_ss <- melt(myogen_ss,id.var='trait')
-myogen_ss[,c('n0','n1'):=list(4724,1711)]
-myogen_ss[,category:='myogen']
+
 
 ## jdm
+#not imputed
 
-jdm <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/jdm_myositis_0619.RDS')
-jdm <- data.table(trait=rownames(jdm),jdm)
-jdm <- melt(jdm,id.var='trait')
-jdm[,c('n0','n1'):=list(4724,473)]
-jdm[,category:='myogen']
+n_controls <- 4724
+cases <- list(dm=705,jdm=473,pm=533,myogen=1711)
+all.myo <- lapply(names(cases),function(trait){
+  in.file <- file.path('/home/ob219/share/as_basis/GWAS/myogen_myositis/',sprintf("%s_myositis_0619.RDS",trait))
+  myogen_ss <- readRDS(in.file)
+  myogen_ss <- data.table(trait=rownames(myogen_ss),myogen_ss)
+  myogen_ss <- melt(myogen_ss,id.var='trait')
+  n_cases <- cases[[trait]]
+  myogen_ss[,c('n0','n1'):=list(n_controls,n_cases)]
+  myogen_ss[,category:='myogen']
+}) %>% rbindlist
 
-dm <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/dm_myositis_0619.RDS')
-dm <- data.table(trait=rownames(dm),dm)
-dm <- melt(dm,id.var='trait')
-dm[,c('n0','n1'):=list(4724,705)]
-dm[,category:='myogen']
+## imputed
+n_controls <- 4724
+cases <- list(dm=705,jdm=473,pm=533,dmjdmpm=1711)
+all.myo.ssimp <- lapply(names(cases),function(trait){
+  in.file <- file.path('/home/ob219/share/as_basis/GWAS/myogen_myositis/',sprintf("gwas_%s_new_ssimp_0619.RDS",trait))
+  myogen_ss <- readRDS(in.file)
+  myogen_ss <- data.table(trait=rownames(myogen_ss),myogen_ss)
+  myogen_ss <- melt(myogen_ss,id.var='trait')
+  n_cases <- cases[[trait]]
+  myogen_ss[,c('n0','n1'):=list(n_controls,n_cases)]
+  myogen_ss[,category:='myogen']
+}) %>% rbindlist
 
-pm <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/pm_myositis_0619.RDS')
-pm <- data.table(trait=rownames(pm),pm)
-pm <- melt(pm,id.var='trait')
-pm[,c('n0','n1'):=list(4724,533)]
-pm[,category:='myogen']
+myogen <- rbindlist(list(all.myo,all.myo.ssimp))
 
-myogen <- rbindlist(list(myogen,myogen_ss,jdm,dm,pm))
 
 ## myogen_myositis
 # myogen.flip <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis_flip.RDS')
@@ -384,9 +388,22 @@ ss.cyt[,label:=paste('CK',label,sep=':')]
 cyt<-merge(cyt,ss.cyt[,.(trait=label,n0=n,n1=0,sdy=1)],by='trait',all.x=TRUE)
 cyt[,category:='ahola-olli_cytokine']
 
+## roederer immunophenotype data
 
-
-
+ROE_DIR <- '/home/ob219/share/as_basis/GWAS/roederer/'
+ROE_SS_FILE <- '/home/ob219/rds/hpc-work/roederer/twinr-ftp.kcl.ac.uk/ImmuneCellScience/2-GWASResults/sample_size.txt'
+ss.roe <- fread(ROE_SS_FILE)
+setnames(ss.roe,c('trait','mean','max'))
+roe.files <- list.files(path=ROE_DIR,pattern="*.RDS",full.names=TRUE)
+roe <- lapply(roe.files,function(f){
+  dat <- readRDS(f)
+  data.table(trait=rownames(dat),dat)
+}) %>% rbindlist
+roe <- melt(roe,id.var='trait') %>% data.table
+roe<-merge(roe,ss.roe[,.(trait,n0=max,n1=0)],by='trait',all.x=TRUE)
+roe.sdy <- readRDS('/home/ob219/rds/hpc-work/roederer/twinr-ftp.kcl.ac.uk/ImmuneCellScience/2-GWASResults/sdy.estimate.RDS')
+roe <- merge(roe,roe.sdy[,.(trait,sdy=sdY)],by='trait')
+roe[,category:='roederer_immunophenotypes']
 
 ## for some reason we swapped from n1 to n0 halfway through to n0 n1
 ## we need to fix otherwise everything gets swapped and case
@@ -449,7 +466,8 @@ all.proj <- list(
   t2d_mahajan=t2d_mahajan,
   psa_aterido=psa_aterido,
   hasnoot_uveitis=hasnoot_uveitis,
-  cyt
+  cyt,
+  roe
   #pqtl_fdr=pqtl_fdr,
   #eqtlgen_fdr=eqtlgen_fdr
 ) %>% rbindlist(.,fill=TRUE)
@@ -473,20 +491,30 @@ all.DT <- merge(all.proj,var.DT,by.x='variable',by.y='pc')
 all.DT <- merge(all.DT,control.DT,by.x='variable',by.y='PC')
 all.DT[is.na(sdy),variance:=((log(n)-(log(n1) + log(n-n1)))+ log(mfactor)) %>% exp]
 all.DT[!is.na(sdy),variance:=(log(sdy^2/n) + log(mfactor)) %>% exp]
+## add in the imputation variance for myogen
+myogen.ssimp.var <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_empirical_variances_0619.RDS')
+ssimp.id <- which(grepl("_ssimp$",all.DT$trait) & all.DT$category == 'myogen')
+keep <- all.DT[ssimp.id,]
+keep <- merge(keep,myogen.ssimp.var[,.(trait,variable,new.variance=value)],by=c('trait','variable'))
+keep[,variance:=new.variance]
+keep$new.variance <- NULL
+all.DT <- rbind(all.DT[-ssimp.id,],keep)
+
+
 ## add in control loading
 all.DT[,Z:=(value-control.loading)/sqrt(variance)]
 all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
-#all.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
 all.DT[,delta:=value-control.loading]
-
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/28_08_19_0619_summary_results.RDS')
+## correct imputed variances
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/30_08_19_0619_summary_results.RDS')
 
 ## primary results
+rm.categories <- c("bb_medications","ad-pid","tachmazidou_osteo",
+"mahajan_t2d","Ig.titre","rhodes_pah",'astle','wong_aav','geneatlas_srd','geneatlas_cancer')
 
-primary.DT <- all.DT[!category %in% c('astle','wong_aav','geneatlas_srd','geneatlas_cancer')]
+primary.DT <- all.DT[!category %in% rm.categories]
 primary.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
-
-saveRDS(primary.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/28_08_19_0619_primary_results.RDS')
+saveRDS(primary.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/30_08_19_0619_primary_results.RDS')
 
 
 if(FALSE){

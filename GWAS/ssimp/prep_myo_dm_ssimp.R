@@ -67,8 +67,8 @@ write.table(myo.filt[!is.na(Z),],file='/home/ob219/rds/hpc-work/ssimp/myo_dm_gwa
 
 ## check imputed vs input ?
 
- imp<-fread("/home/ob219/rds/hpc-work/ssimp/myogwas_imputed.txt")
- input <- fread("/home/ob219/rds/hpc-work/ssimp/myogwas_with_or.txt")
+ imp<-fread("/home/ob219/rds/hpc-work/ssimp/myo_dm_gwas_imputed.txt",select=c('SNP','source','r2.pred','z_imp','Allele1','Allele2','maf','N.imp'))
+ input <- fread("/home/ob219/rds/hpc-work/ssimp/myo_dm_gwas_with_or.txt")
 
  M<-merge(input[,.(SNP=MarkerName,orig.z=Z,in.a1=Allele1,in.a2=Allele2,OR)],imp[,.(SNP,source,r2.pred,z_imp,out.a1=Allele1,out.a2=Allele2,maf,N.imp)],by='SNP')
  alleles <- data.table(al.x = paste(M$out.a1,M$out.a2,sep='/'),al.y=paste(M$in.a1,M$in.a2,sep='/'))
@@ -88,7 +88,7 @@ write.table(myo.filt[!is.na(Z),],file='/home/ob219/rds/hpc-work/ssimp/myo_dm_gwa
  ggplot(M,aes(x=orig.z,y=z_imp,color=r2.pred)) + geom_point()
  ## next compute the OR derived from the imputed score
 M[,imp_beta_linear:=z_imp/sqrt(2 * N.imp * maf * (1-maf))]
-M[,imp_beta_cc:=z_imp/sqrt(2 * ((1711 * 4724)/(1711+4724)) * r2.pred * maf * (1-maf))]
+M[,imp_beta_cc:=z_imp/sqrt(2 * ((705 * 4724)/(705+4724)) * r2.pred * maf * (1-maf))]
 aa <- ggplot(M,aes(x=log(OR),y=imp_beta_linear,color=r2.pred)) + geom_point() + geom_abline()
 bb <- ggplot(M,aes(x=log(OR),y=imp_beta_cc,color=r2.pred)) + geom_point() + geom_abline()
 

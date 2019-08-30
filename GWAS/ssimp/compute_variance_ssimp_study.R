@@ -63,5 +63,21 @@ compute_ssimp_var <- function(DT,N0,N1,ref_gt_dir,quiet=FALSE){
 
 ## example
 
-imp.DT <- fread("~/share/Data/GWAS-summary/MYOGEN/imputed_summary_stats/gwas_dmjdmpm_new_ssimp.meta.txt",select=c('chr','pos','z_imp','maf','r2.pred'))
-compute_ssimp_var(imp.DT,N0=4724,N1=1711,ref_gt_dir=REF_GT_DIR,quiet=FALSE)
+#imp.DT <- fread("~/share/Data/GWAS-summary/MYOGEN/imputed_summary_stats/gwas_dmjdmpm_new_ssimp.meta.txt",select=c('chr','pos','z_imp','maf','r2.pred'))
+#compute_ssimp_var(imp.DT,N0=4724,N1=1711,ref_gt_dir=REF_GT_DIR,quiet=FALSE)
+
+## run on all subtypes
+DATA_DIR <- '~/share/Data/GWAS-summary/MYOGEN/imputed_summary_stats/'
+OUT_FILE <- '/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_empirical_variances_0619.RDS'
+n_controls <- 4724
+cases <- list(dm=705,jdm=473,pm=533,dmjdmpm=1711)
+library(parallel)
+variances <- mclapply(names(cases),function(trait){
+  in.file <- sprintf("gwas_%s_new_ssimp.meta.txt",trait) %>% file.path(DATA_DIR,.)
+  imp.DT <- fread("~/share/Data/GWAS-summary/MYOGEN/imputed_summary_stats/gwas_dmjdmpm_new_ssimp.meta.txt",select=c('chr','pos','z_imp','maf','r2.pred'))
+  compute_ssimp_var(imp.DT,N0=4724,N1=cases[[trait]],ref_gt_dir=REF_GT_DIR,quiet=FALSE)
+},mc.cores=8)
+
+traits <- names(cases) %>% sprintf("gwas_%s_new_ssimp",.)
+variances.dt <- do.call('rbind',variances) %>% data.table(trait=traits,.) %>% melt(.,id.vars='trait')
+saveRDS(variances.dt,file=OUT_FILE)
