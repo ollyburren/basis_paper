@@ -39,15 +39,15 @@ merged.pid <- merged.pid[!g.class %in% c('impossible','ambig')]
 sw <- merged.pid$g.class %in% c("comp","match")
 merged.pid[sw,beta:=beta * -1]
 
-nmo.filt <- merged.pid[,.(MarkerName=SNP,Allele1=REF,Allele2=ALT,Z=qnorm(P/2,lower.tail=FALSE) * sign(beta),n=N,P,OR=exp(beta))]
+nmo.filt <- merged.pid[,.(MarkerName=kg.SNP,Allele1=REF,Allele2=ALT,Z=qnorm(P/2,lower.tail=FALSE) * sign(beta),n=N,P,OR=exp(beta))]
 write.table(nmo.filt[!is.na(Z),],file='/home/ob219/rds/hpc-work/ssimp/nmo_IgNeg_with_or.txt',row.names=FALSE,sep=" ",quote=FALSE)
-nmo.filt <- merged.pid[,.(MarkerName=SNP,Allele1=REF,Allele2=ALT,Z=qnorm(P/2,lower.tail=FALSE) * sign(beta),n=N)]
+nmo.filt <- merged.pid[,.(MarkerName=kg.SNP,Allele1=REF,Allele2=ALT,Z=qnorm(P/2,lower.tail=FALSE) * sign(beta),n=N)]
 write.table(nmo.filt[!is.na(Z),],file='/home/ob219/rds/hpc-work/ssimp/nmo_IgNeg.txt',row.names=FALSE,sep=" ",quote=FALSE)
 
 #NEED ALL THIS FOR IT TO WORK
 #export LC_ALL=C; unset LANGUAGE
 if(FALSE){
-/home/ob219/git/ssimp_software/compiled/ssimp-linux-0.5.6 --gwas /home/ob219/rds/hpc-work/ssimp/nmo_IgNeg.txt --ref 1KG/EUR --out /home/ob219/rds/hpc-work/ssimp/nmo_IgNeg_imputed.txt --impute.maf 0.01
+#/home/ob219/git/ssimp_software/compiled/ssimp-linux-0.5.6 --gwas /home/ob219/rds/hpc-work/ssimp/nmo_IgNeg.txt --ref 1KG/EUR --out /home/ob219/rds/hpc-work/ssimp/nmo_IgNeg_imputed.txt --impute.maf 0.01
 
 
 ## check imputed vs input ?
