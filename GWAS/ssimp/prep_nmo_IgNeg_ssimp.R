@@ -17,7 +17,7 @@ setnames(nmo.DT,make.names(names(nmo.DT)))
 #merged <- merge(nmo.DT,all.1kg[,.(kg.CHR=V1,kg.BP=V2,SNP=V3,REF=V4,ALT=V5)],by='SNP',all.x=TRUE)
 #missing 1289
 all.1kg[,pid:=paste(V1,V2,sep=":")]
-merged.pid <- merge(nmo.DT,all.1kg[,.(kg.CHR=V1,kg.BP=V2,kg.SNP=V3,REF=V4,ALT=V5,pid)],by='pid',all.x=TRUE)
+merged.pid <- merge(nmo.DT,all.1kg[,.(kg.CHR=V1,kg.BP=V2,kg.SNP=V3,REF=V4,ALT=V5,pid)],by='pid')
 ## missing 598333
 merged.pid<- merged.pid[!is.na(kg.SNP),.(CHR=Chr,BP=Pos,SNP=rsID,A1=toupper(Allele1),A2=toupper(Allele2),P,beta=Effect,kg.SNP,REF,ALT,N)]
 ## for impss it seems as if effect allele is a2
