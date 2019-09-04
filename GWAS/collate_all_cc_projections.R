@@ -242,15 +242,43 @@ myogen <- rbindlist(list(all.myo,all.myo.ssimp))
 # myogen.flip[,category:='myogen']
 
 ## NMO - Neuromyelitis Optica
-files <- list.files(path="/home/ob219/share/as_basis/GWAS/nmo/",pattern="*0619.RDS",full.names=TRUE)
-nmo <- lapply(files,readRDS) %>% do.call('rbind',.)
-#nmo <- readRDS('/home/ob219/share/as_basis/GWAS/nmo/nmo.RDS')
-nmo <- data.table(trait=rownames(nmo),nmo)
-nmo <- melt(nmo,id.var='trait')
-nmo[trait=='NMO_combined',c('n0','n1'):=list(1244,215)]
-nmo[trait=='NMO_IgGPos',c('n0','n1'):=list(1244,66+66)]
-nmo[trait=='NMO_IgGNeg',c('n0','n1'):=list(1244,20+63)]
-nmo[,category:='estrada_NMO']
+n_controls <- 1244
+cases <- list(IgPos=132,IgNeg=83,combined=215)
+all.nmo <- lapply(names(cases),function(trait){
+  in.file <- file.path('/home/ob219/share/as_basis/GWAS/nmo',sprintf("NMO_%s_0619.RDS",trait))
+  nmo_ni <- readRDS(in.file)
+  nmo_ni <- data.table(trait=rownames(nmo_ni),nmo_ni)
+  nmo_ni <- melt(nmo_ni,id.var='trait')
+  n_cases <- cases[[trait]]
+  nmo_ni[,c('n0','n1'):=list(n_controls,n_cases)]
+  nmo_ni[,category:='estrada_NMO']
+}) %>% rbindlist
+
+
+all.nmo.ssimp <- lapply(names(cases),function(trait){
+  in.file <- file.path('/home/ob219/share/as_basis/GWAS/nmo',sprintf("NMO_%s_ssimp_0619.RDS",trait))
+  nmo_ni <- readRDS(in.file)
+  nmo_ni <- data.table(trait=rownames(nmo_ni),nmo_ni)
+  nmo_ni <- melt(nmo_ni,id.var='trait')
+  n_cases <- cases[[trait]]
+  nmo_ni[,c('n0','n1'):=list(n_controls,n_cases)]
+  nmo_ni[,category:='estrada_NMO']
+}) %>% rbindlist
+
+nmo <- rbind(all.nmo,all.nmo.ssimp)
+
+
+# files <- list.files(path="/home/ob219/share/as_basis/GWAS/nmo/",pattern="*0619.RDS",full.names=TRUE)
+# nmo <- lapply(files,readRDS) %>% do.call('rbind',.)
+# #nmo <- readRDS('/home/ob219/share/as_basis/GWAS/nmo/nmo.RDS')
+# nmo <- data.table(trait=rownames(nmo),nmo)
+# nmo <- melt(nmo,id.var='trait')
+# nmo[trait=='NMO_combined',c('n0','n1'):=list(1244,215)]
+# nmo[trait=='NMO_IgGPos',c('n0','n1'):=list(1244,66+66)]
+# nmo[trait=='NMO_IgGNeg',c('n0','n1'):=list(1244,20+63)]
+# nmo[,category:='estrada_NMO']
+
+
 
 ## load in egpa vasc
 
@@ -312,11 +340,28 @@ psa <- melt(psa,id.var='trait')
 psa[,c('n0','n1','category'):=list(4596,1805,'bowes_psa')]
 
 ## psa aterido one north american and one spanish cohort
+
+n_controls <- 1454
+cases <- list(span=744,na=1430)
+all.psa_aterido.ssimp <- lapply(names(cases),function(trait){
+  in.file <- file.path('/home/ob219/share/as_basis/GWAS/psa_aterido',sprintf("%s_psa_ssimp_0619.RDS",trait))
+  psa_art <- readRDS(in.file)
+  psa_art <- data.table(trait=rownames(psa_art),psa_art)
+  psa_art <- melt(psa_art,id.var='trait')
+  n_cases <- cases[[trait]]
+  psa_art[,c('n0','n1'):=list(n_controls,n_cases)]
+  psa_art[,category:='psa_aterido']
+}) %>% rbindlist
+all.psa_aterido.ssimp[trait=='na_psa_ssimp',n0:=1417]
+
+
 psa_aterido <- readRDS('/home/ob219/share/as_basis/GWAS/psa_aterido/psa_aterido_0619.RDS')
 psa_aterido <- melt(psa_aterido,id.var='trait') %>% data.table
 setnames(psa_aterido,c('trait','variable','value'))
 psa_aterido[trait=='na_psa',c('n0','n1','category'):=list(1417,1430,'psa_aterido')]
 psa_aterido[trait=='span_psa',c('n0','n1','category'):=list(1454,744,'psa_aterido')]
+
+psa_aterido <- rbind(all.psa_aterido.ssimp,psa_aterido)
 
 
 ## this is from Mark Toshner - I was unable to find evidence of immune-mediated component
@@ -491,11 +536,30 @@ all.DT <- merge(all.proj,var.DT,by.x='variable',by.y='pc')
 all.DT <- merge(all.DT,control.DT,by.x='variable',by.y='PC')
 all.DT[is.na(sdy),variance:=((log(n)-(log(n1) + log(n-n1)))+ log(mfactor)) %>% exp]
 all.DT[!is.na(sdy),variance:=(log(sdy^2/n) + log(mfactor)) %>% exp]
+
 ## add in the imputation variance for myogen
 myogen.ssimp.var <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_empirical_variances_0619.RDS')
 ssimp.id <- which(grepl("_ssimp$",all.DT$trait) & all.DT$category == 'myogen')
 keep <- all.DT[ssimp.id,]
 keep <- merge(keep,myogen.ssimp.var[,.(trait,variable,new.variance=value)],by=c('trait','variable'))
+keep[,variance:=new.variance]
+keep$new.variance <- NULL
+all.DT <- rbind(all.DT[-ssimp.id,],keep)
+
+## add in the imputation variance for arterido
+psa_arterido.ssimp.var <- readRDS('/home/ob219/share/as_basis/GWAS/psa_aterido/psa_aterido_empirical_variances_0619.RDS')
+ssimp.id <- which(grepl("_ssimp$",all.DT$trait) & all.DT$category == 'psa_aterido')
+keep <- all.DT[ssimp.id,]
+keep <- merge(keep,psa_arterido.ssimp.var[,.(trait,variable,new.variance=value)],by=c('trait','variable'))
+keep[,variance:=new.variance]
+keep$new.variance <- NULL
+all.DT <- rbind(all.DT[-ssimp.id,],keep)
+
+## add in the imputation variance for nmo
+nmo.ssimp.var <- readRDS('/home/ob219/share/as_basis/GWAS/nmo/nmo_empirical_variances_0619.RDS')
+ssimp.id <- which(grepl("_ssimp$",all.DT$trait) & all.DT$category == 'estrada_NMO')
+keep <- all.DT[ssimp.id,]
+keep <- merge(keep,nmo.ssimp.var[,.(trait,variable,new.variance=value)],by=c('trait','variable'))
 keep[,variance:=new.variance]
 keep$new.variance <- NULL
 all.DT <- rbind(all.DT[-ssimp.id,],keep)
@@ -506,7 +570,7 @@ all.DT[,Z:=(value-control.loading)/sqrt(variance)]
 all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,delta:=value-control.loading]
 ## correct imputed variances
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/30_08_19_0619_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/04_09_19_0619_summary_results.RDS')
 
 ## primary results
 rm.categories <- c("bb_medications","ad-pid","tachmazidou_osteo",
@@ -514,7 +578,7 @@ rm.categories <- c("bb_medications","ad-pid","tachmazidou_osteo",
 
 primary.DT <- all.DT[!category %in% rm.categories]
 primary.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
-saveRDS(primary.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/30_08_19_0619_primary_results.RDS')
+saveRDS(primary.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/04_09_19_0619_primary_results.RDS')
 
 
 if(FALSE){

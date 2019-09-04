@@ -51,12 +51,18 @@ if(FALSE){
 
 
 ## check imputed vs input ?
+library(parallel)
+n0 <- 1244
+n1 <- 83
 
-n0 <-
-n1 <-
+ #imp<-fread("/home/ob219/rds/hpc-work/ssimp/nmo/chr22_nmo_IgNeg_imputed.txt",select=c('SNP','source','r2.pred','z_imp','Allele1','Allele2','maf','N.imp'))
 
- imp<-fread("/home/ob219/rds/hpc-work/ssimp/nmo_combined.txt",select=c('SNP','source','r2.pred','z_imp','Allele1','Allele2','maf','N.imp'))
- input <- fread("/home/ob219/rds/hpc-work/ssimp/nmo_combined_with_or.txt")
+ all.files <- list.files(path='/home/ob219/rds/hpc-work/ssimp/nmo',pattern='*.IgNeg_imputed.txt',full.names=TRUE)
+ imp <- mclapply(all.files,function(f){
+   fread(f,select=c('chr','pos','SNP','source','r2.pred','z_imp','Allele1','Allele2','maf','N.imp'))
+ },mc.cores=8) %>% rbindlist
+
+ input <- fread("/home/ob219/rds/hpc-work/ssimp/nmo_IgNeg_with_or.txt")
 
  M<-merge(input[,.(SNP=MarkerName,orig.z=Z,in.a1=Allele1,in.a2=Allele2,OR)],imp[,.(SNP,source,r2.pred,z_imp,out.a1=Allele1,out.a2=Allele2,maf,N.imp)],by='SNP')
  alleles <- data.table(al.x = paste(M$out.a1,M$out.a2,sep='/'),al.y=paste(M$in.a1,M$in.a2,sep='/'))
@@ -79,4 +85,5 @@ M[,imp_beta_linear:=z_imp/sqrt(2 * N.imp * maf * (1-maf))]
 M[,imp_beta_cc:=z_imp/sqrt(2 * ((n1 * n0)/(n1+n0)) * r2.pred * maf * (1-maf))]
 aa <- ggplot(M,aes(x=log(OR),y=imp_beta_linear,color=r2.pred)) + geom_point() + geom_abline()
 bb <- ggplot(M,aes(x=log(OR),y=imp_beta_cc,color=r2.pred)) + geom_point() + geom_abline()
+plot_grid(aa,bb)
 }

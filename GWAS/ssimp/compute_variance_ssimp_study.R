@@ -1,3 +1,5 @@
+library(parallel)
+
 ## compute variance for projection of ssimp imputed myogen gwas
 
 ## this file contains the driver SNP information from Chris it has to be
@@ -61,23 +63,56 @@ compute_ssimp_var <- function(DT,N0,N1,ref_gt_dir,quiet=FALSE){
   colSums(do.call('rbind',all.chr))
 }
 
-## example
 
-#imp.DT <- fread("~/share/Data/GWAS-summary/MYOGEN/imputed_summary_stats/gwas_dmjdmpm_new_ssimp.meta.txt",select=c('chr','pos','z_imp','maf','r2.pred'))
-#compute_ssimp_var(imp.DT,N0=4724,N1=1711,ref_gt_dir=REF_GT_DIR,quiet=FALSE)
-
-## run on all subtypes
+## run on all myositis subtypes
 DATA_DIR <- '~/share/Data/GWAS-summary/MYOGEN/imputed_summary_stats/'
 OUT_FILE <- '/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_empirical_variances_0619.RDS'
 n_controls <- 4724
 cases <- list(dm=705,jdm=473,pm=533,dmjdmpm=1711)
-library(parallel)
+
 variances <- mclapply(names(cases),function(trait){
   in.file <- sprintf("gwas_%s_new_ssimp.meta.txt",trait) %>% file.path(DATA_DIR,.)
-  imp.DT <- fread("~/share/Data/GWAS-summary/MYOGEN/imputed_summary_stats/gwas_dmjdmpm_new_ssimp.meta.txt",select=c('chr','pos','z_imp','maf','r2.pred'))
-  compute_ssimp_var(imp.DT,N0=4724,N1=cases[[trait]],ref_gt_dir=REF_GT_DIR,quiet=FALSE)
+  imp.DT <- fread(in.file,select=c('chr','pos','z_imp','maf','r2.pred'))
+  compute_ssimp_var(imp.DT,N0=n_controls,N1=cases[[trait]],ref_gt_dir=REF_GT_DIR,quiet=TRUE)
 },mc.cores=8)
 
 traits <- names(cases) %>% sprintf("gwas_%s_new_ssimp",.)
 variances.dt <- do.call('rbind',variances) %>% data.table(trait=traits,.) %>% melt(.,id.vars='trait')
+saveRDS(variances.dt,file=OUT_FILE)
+
+## run on nmo
+DATA_DIR <- '~/share/Data/GWAS-summary/estrada_nmo/imputed_summary_stats/'
+OUT_FILE <- '/home/ob219/share/as_basis/GWAS/nmo/nmo_empirical_variances_0619.RDS'
+n_controls <- 1244
+cases <- list(IgPos=132,IgNeg=83,combined=215)
+variances.nmo <- lapply(names(cases),function(trait){
+  message(trait)
+  pattern <- sprintf("*.%s_imputed.txt",trait)
+  all.files <- list.files(path=DATA_DIR,pattern=pattern,full.names=TRUE)
+  imp.DT <- mclapply(all.files,function(f){
+    fread(f,select=c('chr','pos','Allele1','Allele2','maf','z_imp','P.imp','bst.imp','N.imp','r2.pred','source'))
+  },mc.cores=8) %>% rbindlist
+  compute_ssimp_var(imp.DT,N0=n_controls,N1=cases[[trait]],ref_gt_dir=REF_GT_DIR,quiet=TRUE)
+})
+
+traits <- names(cases) %>% sprintf("NMO_%s_ssimp",.)
+variances.dt <- do.call('rbind',variances.nmo) %>% data.table(trait=traits,.) %>% melt(.,id.vars='trait')
+saveRDS(variances.dt,file=OUT_FILE)
+
+## aterido_psa
+
+DATA_DIR <- '/home/ob219/share/Data/GWAS-summary/psa-aterido/ssimp_imputed'
+OUT_FILE <- '/home/ob219/share/as_basis/GWAS/psa_aterido/psa_aterido_empirical_variances_0619.RDS'
+n_controls <- 1454 ## slight cheat as n controls slightly different unlikely to make huge difference
+cases <- list(span_psa=744,na_psa=1430)
+
+variances.psa <- mclapply(names(cases),function(trait){
+  message(trait)
+  in.file <- sprintf("%s_imputed.txt",trait) %>% file.path(DATA_DIR,.)
+  imp.DT <- fread(in.file,select=c('chr','pos','z_imp','maf','r2.pred'))
+  compute_ssimp_var(imp.DT,N0=n_controls,N1=cases[[trait]],ref_gt_dir=REF_GT_DIR,quiet=TRUE)
+},mc.cores=8)
+
+traits <- names(cases) %>% sprintf("%s_ssimp",.)
+variances.dt <- do.call('rbind',variances.psa) %>% data.table(trait=traits,.) %>% melt(.,id.vars='trait')
 saveRDS(variances.dt,file=OUT_FILE)
