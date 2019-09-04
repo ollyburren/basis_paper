@@ -590,7 +590,7 @@ all.DT[,Z:=(value-control.loading)/sqrt(variance)]
 all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,delta:=value-control.loading]
 ## correct imputed variances
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/04_09_19_0619_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/04b_09_19_0619_summary_results.RDS')
 
 ## primary results
 rm.categories <- c("bb_medications","ad-pid","tachmazidou_osteo",
@@ -598,7 +598,7 @@ rm.categories <- c("bb_medications","ad-pid","tachmazidou_osteo",
 
 primary.DT <- all.DT[!category %in% rm.categories]
 primary.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
-saveRDS(primary.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/04_09_19_0619_primary_results.RDS')
+saveRDS(primary.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/04b_09_19_0619_primary_results.RDS')
 
 
 if(FALSE){
