@@ -290,6 +290,25 @@ egpa.samp <- readRDS('/home/ob219/share/as_basis/GWAS/lyons_egpa/sample.RDS')
 egpa <- merge(egpa,egpa.samp,by='trait')
 egpa[,category:='lyons_egpa']
 
+## MyastheniaGravis_Renton_JAMA_Neurol_2015
+
+mg <- readRDS("/home/ob219/share/as_basis/GWAS/renton_mg/projections/renton_mg_0619.RDS")
+mg <- data.table(trait=rownames(mg),mg)
+mg <- melt(mg,id.var='trait')
+mg[trait=='renton_mg',c('n0','n1'):=c(1977,972)]
+mg[trait=='renton_mg_late',c('n0','n1'):=c(1977,737)]
+mg[trait=='renton_mg_early',c('n0','n1'):=c(1977,235)]
+mg[trait=='renton_mg',trait:='renton_mg_combined']
+mg[,category:='renton_mg']
+
+files <- list.files(path="/home/ob219/share/as_basis/GWAS/lyons_egpa/projections",pattern="*0619.RDS",full.names=TRUE)
+egpa <- lapply(files,readRDS) %>% do.call('rbind',.)
+egpa <- data.table(trait=rownames(egpa),egpa)
+egpa <- melt(egpa,id.var='trait')
+egpa.samp <- readRDS('/home/ob219/share/as_basis/GWAS/lyons_egpa/sample.RDS')
+egpa <- merge(egpa,egpa.samp,by='trait')
+egpa[,category:='lyons_egpa']
+
 
 ## load in aav (vasculitis) from Limy Wong
 
@@ -512,7 +531,8 @@ all.proj <- list(
   psa_aterido=psa_aterido,
   hasnoot_uveitis=hasnoot_uveitis,
   cyt,
-  roe
+  roe,
+  mg=mg
   #pqtl_fdr=pqtl_fdr,
   #eqtlgen_fdr=eqtlgen_fdr
 ) %>% rbindlist(.,fill=TRUE)
