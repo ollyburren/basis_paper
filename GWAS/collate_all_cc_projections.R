@@ -295,9 +295,9 @@ egpa[,category:='lyons_egpa']
 mg <- readRDS("/home/ob219/share/as_basis/GWAS/renton_mg/projections/renton_mg_0619.RDS")
 mg <- data.table(trait=rownames(mg),mg)
 mg <- melt(mg,id.var='trait')
-mg[trait=='renton_mg',c('n0','n1'):=c(1977,972)]
-mg[trait=='renton_mg_late',c('n0','n1'):=c(1977,737)]
-mg[trait=='renton_mg_early',c('n0','n1'):=c(1977,235)]
+mg[trait=='renton_mg',c('n0','n1'):=list(1977,972)]
+mg[trait=='renton_mg_late',c('n0','n1'):=list(1977,737)]
+mg[trait=='renton_mg_early',c('n0','n1'):=list(1977,235)]
 mg[trait=='renton_mg',trait:='renton_mg_combined']
 mg[,category:='renton_mg']
 
