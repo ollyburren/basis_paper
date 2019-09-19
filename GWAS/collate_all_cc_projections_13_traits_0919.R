@@ -96,9 +96,9 @@ all.DT[is.na(sdy),variance:=((log(n)-(log(n1) + log(n-n1)))+ log(mfactor)) %>% e
 all.DT[!is.na(sdy),variance:=(log(sdy^2/n) + log(mfactor)) %>% exp]
 
 ## need Chris' basis-sparse-0.999.RData file to do this
-if(FALSE){
+
 ## add in the imputation variance for myogen
-myogen.ssimp.var <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_empirical_variances_0619.RDS')
+myogen.ssimp.var <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_empirical_variances_13_traits_0919.RDS')
 ssimp.id <- which(grepl("_ssimp$",all.DT$trait) & all.DT$category == 'myogen')
 keep <- all.DT[ssimp.id,]
 keep <- merge(keep,myogen.ssimp.var[,.(trait,variable,new.variance=value)],by=c('trait','variable'))
@@ -107,7 +107,7 @@ keep$new.variance <- NULL
 all.DT <- rbind(all.DT[-ssimp.id,],keep)
 
 ## add in the imputation variance for arterido
-psa_arterido.ssimp.var <- readRDS('/home/ob219/share/as_basis/GWAS/psa_aterido/psa_aterido_empirical_variances_0619.RDS')
+psa_arterido.ssimp.var <- readRDS('/home/ob219/share/as_basis/GWAS/psa_aterido/psa_aterido_empirical_variances_13_traits_0919.RDS')
 ssimp.id <- which(grepl("_ssimp$",all.DT$trait) & all.DT$category == 'psa_aterido')
 keep <- all.DT[ssimp.id,]
 keep <- merge(keep,psa_arterido.ssimp.var[,.(trait,variable,new.variance=value)],by=c('trait','variable'))
@@ -116,14 +116,14 @@ keep$new.variance <- NULL
 all.DT <- rbind(all.DT[-ssimp.id,],keep)
 
 ## add in the imputation variance for nmo
-nmo.ssimp.var <- readRDS('/home/ob219/share/as_basis/GWAS/nmo/nmo_empirical_variances_0619.RDS')
+nmo.ssimp.var <- readRDS('/home/ob219/share/as_basis/GWAS/nmo/nmo_empirical_variances_13_traits_0919.RDS')
 ssimp.id <- which(grepl("_ssimp$",all.DT$trait) & all.DT$category == 'estrada_NMO')
 keep <- all.DT[ssimp.id,]
 keep <- merge(keep,nmo.ssimp.var[,.(trait,variable,new.variance=value)],by=c('trait','variable'))
 keep[,variance:=new.variance]
 keep$new.variance <- NULL
 all.DT <- rbind(all.DT[-ssimp.id,],keep)
-}
+
 
 ## add in control loading
 all.DT[,Z:=(value-control.loading)/sqrt(variance)]
@@ -131,7 +131,7 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,delta:=value-control.loading]
 all.DT <- all.DT[!trait %in% c('cousminer_lada','IgA_nephropathy'),]
 ## correct imputed variances
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/13_traits_0919_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/18_09_13_traits_0919_summary_results.RDS')
 
 if(FALSE){
   rm.categories <- c("bb_medications","ad-pid","tachmazidou_osteo",

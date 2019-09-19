@@ -23,10 +23,10 @@ if(!TEST){
 FILTER_FILE <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/archive/all_by_chr_fdr0.05.RDS'
 filter.DT <- readRDS(FILTER_FILE)
 
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/fdr_0.05_by_chr_filtered'
+OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/13_traits_0919_fdr_0.05_by_chr_filtered'
 
 if(FALSE){
-  OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/fdr_0.05_by_chr_filtered'
+  OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/13_traits_0919_fdr_0.05_by_chr_filtered'
   PQTL_DIR <- '/home/ob219/share/as_basis/sun_pqtl/gwas_basis_june10k_pqtl'
   ## remove dirs that we have already processed
   ## only bother doing those with at least one pQTL
@@ -53,7 +53,7 @@ processPQTL <- function(dir,filter){
   }) %>% rbindlist
   setnames(p.DT,c('snpid','chr','pos','a1','a2','effect','se','lp'))
 
-  SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
+  SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_13_traits_0919.tab'
   man.DT <- fread(SNP_MANIFEST)
   p.DT[,pid:=paste(chr,pos,sep=':')]
   p.DT <- p.DT[,.(pid,a1=toupper(a1),a2=toupper(a2),or=exp(effect),p.value=exp(lp))]
@@ -85,7 +85,7 @@ processPQTL <- function(dir,filter){
   M <- M[g.class=='match',or:=1/or]
   M[,trait:= basename(dir)]
 
-  SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
+  SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_13_traits_0919.RDS'
   sDT <- readRDS(SHRINKAGE_FILE)
   stmp<-sDT[,.(pid,ws_emp_shrinkage)]
   setkey(M,pid)
@@ -98,7 +98,7 @@ processPQTL <- function(dir,filter){
   snames <- B[,1]$pid
   mat.emp <- as.matrix(B[,-1]) %>% t()
   colnames(mat.emp) <- snames
-  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
+  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_13_traits_0919.RDS'
   pc.emp <- readRDS(BASIS_FILE)
   if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
   stop("Something wrong basis and projection matrix don't match")
