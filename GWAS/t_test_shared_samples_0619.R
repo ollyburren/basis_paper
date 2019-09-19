@@ -1,7 +1,7 @@
 ### use pooled variance to do t-test taking into account sharing between control for studies.
 
 #RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/03_07_19_0619_summary_results.RDS'
-RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/17_07_19_0619_summary_results.RDS'
+RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/04b_09_19_0619_summary_results.RDS'
 res.DT <- readRDS(RESULTS.FILE)
 
 ## pooled variance
@@ -217,6 +217,12 @@ compute_t_no_share <- function(tg,pc,covM){
 ## compute the covariance matrix so that we can do use and save a lot of effort
 scovM <- compute_t(tg=list(g1='pr3_meta',g2='mpo_meta'),pc='PC1')$covM
 pcs <- paste('PC',1:11,sep='')
+
+#for myasthenia gravis
+
+dat.mg <- lapply(paste('PC',1:11,sep=''),function(pc){
+  compute_t(tg=list(g1='renton_mg_early',g2='renton_mg_late'),pc=pc,scovM)$t
+}) %>% rbindlist
 
 pcs <- res.DT[trait %in% c('bb_SRD:type.1.diabetes','cousminer_lada') & p.adj<0.05,]$variable %>% unique
 dat.ladavst1d <- lapply(pcs,function(pc){

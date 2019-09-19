@@ -4,12 +4,15 @@ library(parallel)
 
 ## this file contains the driver SNP information from Chris it has to be
 ## paired with the correct shrinkage file and basis !
-DRIVER_SNP_FILE <- '~/share/as_basis/sparse-basis/basis-sparse-0.999.RData'
+#DRIVER_SNP_FILE <- '~/share/as_basis/sparse-basis/basis-sparse-0.999.RData'
+## new basis
+DRIVER_SNP_FILE <- '~/share/as_basis/sparse-basis/basis-sparse-13-0.999.RData'
 SHRINKAGE_METHOD<-'ws_emp_shrinkage'
 ## location of genotypes for LD computation filtered by basis SNPs for speed.
 REF_GT_DIR <- '/home/ob219/share/as_basis/GWAS/ctrl_gt/by.chr'
 ## basis shrinkage metrics
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
+#SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_13_traits_0919.RDS'
 load(DRIVER_SNP_FILE)
 ## the only SNPs we care about are in use.pca
 keep.snps.dt <- strsplit(rownames(rot.pca),':') %>% do.call('rbind',.) %>% data.table
@@ -28,7 +31,8 @@ compute_ssimp_var <- function(DT,N0,N1,ref_gt_dir,quiet=FALSE){
   ## standard error of the beta is computed like so
   imp.filt[,seb:=1/sqrt(2 * ((N0*N1)/(N0+N1)) * r2.pred * maf * (1-maf))]
   ## where seb is NA i.e. the SNP is missing from the dataset set its seb to 0 as it cannot contribute to the variance
-  imp.filt[is.na(seb),seb:=0]
+  ## infinite happens if the snp cannot be imputed at all
+  imp.filt[is.na(seb) | !is.finite(seb),seb:=0]
   rot.pca.dt <- data.table(pid=rownames(rot.pca),rot.pca)
   M <- merge(imp.filt[,.(pid,seb)],data.table(pid=rownames(rot.pca),rot.pca),by='pid')
   ## add in the shrinkage
@@ -66,7 +70,7 @@ compute_ssimp_var <- function(DT,N0,N1,ref_gt_dir,quiet=FALSE){
 
 ## run on all myositis subtypes
 DATA_DIR <- '~/share/Data/GWAS-summary/MYOGEN/imputed_summary_stats/'
-OUT_FILE <- '/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_empirical_variances_0619.RDS'
+OUT_FILE <- '/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_empirical_variances_13_traits_0919.RDS'
 n_controls <- 4724
 cases <- list(dm=705,jdm=473,pm=533,dmjdmpm=1711)
 
@@ -82,7 +86,7 @@ saveRDS(variances.dt,file=OUT_FILE)
 
 ## run on nmo
 DATA_DIR <- '~/share/Data/GWAS-summary/estrada_nmo/imputed_summary_stats/'
-OUT_FILE <- '/home/ob219/share/as_basis/GWAS/nmo/nmo_empirical_variances_0619.RDS'
+OUT_FILE <- '/home/ob219/share/as_basis/GWAS/nmo/nmo_empirical_variances_13_traits_0919.RDS'
 n_controls <- 1244
 cases <- list(IgPos=132,IgNeg=83,combined=215)
 variances.nmo <- lapply(names(cases),function(trait){
@@ -102,7 +106,7 @@ saveRDS(variances.dt,file=OUT_FILE)
 ## aterido_psa
 
 DATA_DIR <- '/home/ob219/share/Data/GWAS-summary/psa-aterido/ssimp_imputed'
-OUT_FILE <- '/home/ob219/share/as_basis/GWAS/psa_aterido/psa_aterido_empirical_variances_0619.RDS'
+OUT_FILE <- '/home/ob219/share/as_basis/GWAS/psa_aterido/psa_aterido_empirical_variances_13_traits_0919.RDS'
 n_controls <- 1454 ## slight cheat as n controls slightly different unlikely to make huge difference
 cases <- list(span_psa=744,na_psa=1430)
 

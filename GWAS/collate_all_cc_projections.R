@@ -230,9 +230,7 @@ all.myo.ssimp <- lapply(names(cases),function(trait){
   myogen_ss[,c('n0','n1'):=list(n_controls,n_cases)]
   myogen_ss[,category:='myogen']
 }) %>% rbindlist
-
 myogen <- rbindlist(list(all.myo,all.myo.ssimp))
-
 
 ## myogen_myositis
 # myogen.flip <- readRDS('/home/ob219/share/as_basis/GWAS/myogen_myositis/myogen_myositis_flip.RDS')

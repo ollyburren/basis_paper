@@ -2,11 +2,10 @@ library(annotSnpStats)
 library(optparse)
 library(cupcake)
 
-SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
-DATA.DIR <- '/home/ob219/share/Data/GWAS-summary/aav_limy_wong'
-SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
-BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/astle/0619/'
+SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_13_traits_0919.tab'
+SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_13_traits_0919.RDS'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_13_traits_0919.RDS'
+OUT_DIR <- '/home/ob219/share/as_basis/GWAS/astle/13_traits_9019/'
 
 TEST<-FALSE
 option_list = list(

@@ -1,4 +1,5 @@
-RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/02_08_19_0619_primary_results.RDS'
+#RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/02_08_19_0619_primary_results.RDS'
+RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/13_traits_0919_primary_results.RDS'
 res.DT <- readRDS(RESULTS.FILE)
 keep.cat <- c('bowes_jia_2019',
   'bb_disease',
@@ -102,4 +103,4 @@ res.DT[trait.label=='psoriatic_arthritis_spanish',first.author:='aterido']
 res.DT[trait.label=='psoriatic_arthritis_north_america',first.author:='aterido']
 res.DT[,shiny.label:=trait.label]
 res.DT[shiny.category!='UKBB Self-reported Disease',shiny.label:=paste(first.author,trait.label,sep=':')]
-saveRDS(res.DT,"~/tmp/02_08_19_0619_primary_results_shiny.RDS")
+saveRDS(res.DT,"~/tmp/13_traits_0919_primary_results_shiny.RDS")
