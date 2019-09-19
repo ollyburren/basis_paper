@@ -20,10 +20,10 @@ if(!TEST){
   args <- list(file='/home/ob219/tmp/qstuff/pqtl/chunk1.txt')
 }
 
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/unfiltered/'
+OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/13_traits_0919_unfiltered/'
 
 if(FALSE){
-  OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/unfiltered/'
+  OUT_DIR <- '/home/ob219/share/as_basis/GWAS/sun_pqtl/13_traits_0919_unfiltered/'
   PQTL_DIR <- '/home/ob219/share/as_basis/sun_pqtl/gwas_basis_june10k_pqtl'
   ## remove dirs that we have already processed
   all.dirs <- list.dirs(path=PQTL_DIR,recursive = FALSE)
@@ -48,7 +48,7 @@ processPQTL <- function(dir){
     sprintf("zcat %s",f) %>%  fread
   }) %>% rbindlist
   setnames(p.DT,c('snpid','chr','pos','a1','a2','effect','se','lp'))
-  SNP_MANIFEST <- '/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
+  SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_13_traits_0919.tab'
   man.DT <- fread(SNP_MANIFEST)
   p.DT[,pid:=paste(chr,pos,sep=':')]
   p.DT <- p.DT[,.(pid,a1=toupper(a1),a2=toupper(a2),or=exp(effect),p.value=exp(lp))]
@@ -77,7 +77,7 @@ processPQTL <- function(dir){
   M <- M[g.class=='match',or:=1/or]
   M[,trait:= basename(dir)]
 
-  SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
+  SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_13_traits_0919.RDS'
   sDT <- readRDS(SHRINKAGE_FILE)
   stmp<-sDT[,.(pid,ws_emp_shrinkage)]
   setkey(M,pid)
@@ -90,7 +90,7 @@ processPQTL <- function(dir){
   snames <- B[,1]$pid
   mat.emp <- as.matrix(B[,-1]) %>% t()
   colnames(mat.emp) <- snames
-  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/noweight_basis_gwas_0619.RDS'
+  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_13_traits_0919.RDS'
   pc.emp <- readRDS(BASIS_FILE)
   if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
   stop("Something wrong basis and projection matrix don't match")
@@ -99,16 +99,15 @@ processPQTL <- function(dir){
   saveRDS(all.proj,file=ofile)
 }
 
-
 #dirlist <- scan(args$file,"character") %>% head(.,n=5)
 dirlist <- scan(args$file,"character")
-for(d in dirlist){
+for(d in head(dirlist,n=5)){
   ofile <- file.path(OUT_DIR,sprintf("%s.RDS",basename(d)))
   if(file.exists(ofile)){
-    sprintf("Directory %s already exists skipping",d) %>% message
+    sprintf("Directory %s already exists skipping",ofile) %>% message
   }else{
     tryCatch({
       processPQTL(d)
-    }, error=function(e){sprintf("Error %s with %s",e,d) %>% message})
+    }, error=function(e){sprintf("Error %s with %s",e,ofile) %>% message})
   }
 }
