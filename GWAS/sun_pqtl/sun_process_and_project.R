@@ -101,7 +101,7 @@ processPQTL <- function(dir){
 
 #dirlist <- scan(args$file,"character") %>% head(.,n=5)
 dirlist <- scan(args$file,"character")
-for(d in head(dirlist,n=5)){
+for(d in dirlist){
   ofile <- file.path(OUT_DIR,sprintf("%s.RDS",basename(d)))
   if(file.exists(ofile)){
     sprintf("Directory %s already exists skipping",ofile) %>% message
