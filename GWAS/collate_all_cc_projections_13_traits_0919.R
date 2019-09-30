@@ -77,6 +77,32 @@ nonukbb[trait=='renton_mg',trait:='renton_mg_combined']
 nonukbb<-merge(nonukbb,pr,by='trait',nonukbb.x=TRUE)
 all.proj <- rbind(ukbb[,n:=n0+n1],nonukbb,fill=TRUE)
 
+## add in astle
+
+ASTLE_DIR <- '/home/ob219/share/as_basis/GWAS/astle/13_traits_9019/'
+astle <- lapply(list.files(path=ASTLE_DIR,pattern="*.RDS",full.names=TRUE),readRDS) %>% do.call('rbind',.)
+astle <- data.table(trait=rownames(astle),astle)
+astle <- melt(astle,id.var='trait')
+
+## for analysis we will stick to just the 13 main blood types mentioned in Astle et al.
+keep <- c('pdw','mpv','plt','irf','ret','rdw','hct','mch','mono','baso','eo','neut','lymph')
+astle <- astle[trait %in% keep,]
+DATA_DIR <- '/home/ob219/share/Data/GWAS-summary/blood-ukbiobank-2016-12-12'
+afiles <- list.files(path=DATA_DIR,pattern="*.gz$",full.names=FALSE)
+#astle_samples <- data.table(trait = gsub("(.*)\\_build37\\_[0-9]+\\_20161212.tsv.gz","\\1",afiles),
+#ss = as.numeric(gsub("(.*)\\_build37\\_([0-9]+)\\_20161212.tsv.gz","\\2",afiles)))
+#astle_samples[,c('n0','n1','ss'):=list(round(ss/2),round(ss/2),NULL)]
+## here we assume that the trait outcome has been standardised such that sdY==1.
+astle_samples <- data.table(trait = gsub("(.*)\\_build37\\_[0-9]+\\_20161212.tsv.gz","\\1",afiles),
+n0 = as.numeric(gsub("(.*)\\_build37\\_([0-9]+)\\_20161212.tsv.gz","\\2",afiles)),
+n1 = 0, sdy=1)
+astle <- merge(astle,astle_samples)
+astle[,category:='astle_blood']
+astle[,n:=n0]
+
+all.proj <- rbind(all.proj,astle,fill=TRUE)
+
+
 VARIANCE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_gwas_13_traits_0919.RDS'
 var.DT <- readRDS(VARIANCE_FILE)
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_13_traits_0919.RDS'
@@ -131,7 +157,7 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,delta:=value-control.loading]
 all.DT <- all.DT[!trait %in% c('cousminer_lada','IgA_nephropathy'),]
 ## correct imputed variances
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/18_09_13_traits_0919_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/19_09_13_traits_0919_summary_results.RDS')
 
 if(FALSE){
   rm.categories <- c("bb_medications","ad-pid","tachmazidou_osteo",

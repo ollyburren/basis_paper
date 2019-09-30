@@ -19,7 +19,8 @@ if(!TEST){
   args <- list(phenotypes = '/home/ob219/tmp/qstuff/geneatlas/file48cf2588d1f17')
 }
 
-OUT.DIR <- '/home/ob219/share/as_basis/GWAS/geneatlas/0619'
+OUT.DIR <- '/home/ob219/share/as_basis/GWAS/geneatlas/13_traits_0919'
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr_13_traits_0919'
 if(FALSE){
   ## create a list of phenotype ids
   BLOCK.SIZE<-25
@@ -148,14 +149,16 @@ mainfunc <- function(id){
   }) %>% rbindlist
   unlink(tmp.file)
   setnames(all.results,c('SNP','ALLELE','iscores','beta','seb','pval','pid'))
-  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
+  BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_no_weight_gwas_13_traits_0919.RDS'
   pc.emp <- readRDS(BASIS_FILE)
   convertORscale <- function(x,cp) x/(cp * (1-cp))
   all.results[,c('beta.log','se.beta.log'):=list(convertORscale(beta,meta.dt$prop[i]),convertORscale(seb,meta.dt$prop[i]))]
-  SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_0619.RDS'
+  SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_13_traits_0919.RDS'
   sDT <- readRDS(SHRINKAGE_FILE)
   stmp<-sDT[,.(pid,ws_emp_shrinkage)]
   tmp <- merge(all.results,stmp,by='pid',all.y=TRUE)
+  pfile <- file.path(SRC_OUT_DIR,sprintf("GA:%s_source.RDS",meta.dt$Description[i] %>% make.names))
+  saveRDS(tmp[,.(pid,or=exp(beta),p.value=pval,ws_emp_shrinkage)],file=pfile)
   tmp$metric <- tmp[['ws_emp_shrinkage']] * tmp$beta.log
   ## where snp is missing make it zero
   tmp[,trait:=meta.dt$Description[i] %>% make.names]

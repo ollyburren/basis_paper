@@ -7,16 +7,13 @@ SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_061
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_0619.RDS'
 SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
 
-
+library(rtracklayer)
 myo.DT <- fread("zcat ~/share/Data/GWAS-summary/MYOGEN/Sep2018_summary_meta.txt.gz")
 snps.DT <- fread('/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab')
 myo.DT[,pid:=paste(CHR,BP,sep=':')]
 myo.DT <- myo.DT[!pid %in% myo.DT[duplicated(pid),],]
 myo.DT[,id:=1:.N]
 setnames(myo.DT,make.names(names(myo.DT)))
-
-
-
 myo.36.gr <- with(myo.DT,GRanges(seqnames=Rle(paste0('chr',CHR)),ranges=IRanges(start=BP,width=1L),id=id))
 c<-import.chain('/home/ob219/rds/hpc-work/DATA/LIFTOVER/hg18ToHg19.over.chain') ## e.g. hg19ToHg18.over.chain
 myo.37.gr<-unlist(liftOver(myo.36.gr,c))
