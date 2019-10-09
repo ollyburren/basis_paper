@@ -69,7 +69,7 @@ if(FALSE){
 if(FALSE){
   snp.DT <- fread(SNP_MANIFEST_FILE)
   bb.snps.DT <- fread('/home/ob219/rds/hpc-work/as_basis/bb/summary_stats_20180731/variants.tsv')
-  tmp <- bb.snps.DT[,.(pid=paste(chr,pos,sep=':'),varid,rsid,bb_ref=ref,bb_alt=alt)]
+  tmp <- bb.snps.DT[,.(pid=paste(chr,pos,sep=':'),varid,rsid,bb_ref=ref,bb_alt=alt,info)]
   tmp[,lookup:=paste(pid,bb_ref,bb_alt,sep=':')]
   M<-merge(snp.DT,tmp,by.x='pid',by.y='pid',all.x=TRUE)
 

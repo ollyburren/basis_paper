@@ -1,13 +1,13 @@
 ## what about missing SNPs ?
 library(cupcake)
-SOURCE_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr'
+SOURCE_DIR <- '//home/ob219/share/as_basis/GWAS/for_fdr_13_traits_0919'
 files <- list.files(path=SOURCE_DIR,pattern='*.RDS',full.names=TRUE)
 
 SHRINKAGE_METHOD<-'ws_emp_shrinkage'
 GWAS_DATA_DIR <- '/home/ob219/share/as_basis/GWAS/sum_stats'
-SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_june_19_w_vitiligo.tab'
-TRAIT_MANIFEST <- '/home/ob219/share/as_basis/GWAS/trait_manifest/as_manifest_gwas.tab'
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/missing_snp_effect'
+SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_13_traits_0919.tab'
+TRAIT_MANIFEST <- '/home/ob219/share/as_basis/GWAS/trait_manifest/as_manifest_gwas_13_traits_0919.tab'
+OUT_DIR <- '/home/ob219/share/as_basis/GWAS/missing_snp_effect_13_traits_0919'
 man.DT <- fread(SNP_MANIFEST_FILE)
 
 #f<-files[12]
@@ -27,6 +27,9 @@ foo<-mclapply(files,function(f){
     return()
   }
   keep.pids <- DT[!is.na(or),]$pid
+  ## the imputed data can have or==1 or or==0 this causes NaN problems
+  ## we can either set these to zero or set these as missing data
+  keep.pids <- DT[is.finite(log(or)),]$pid
   shared.basis.pids <- intersect(keep.pids,man.DT$pid)
   missing <- nrow(man.DT) - length(shared.basis.pids)
   if(length(shared.basis.pids)==nrow(man.DT)){
@@ -34,6 +37,7 @@ foo<-mclapply(files,function(f){
     return()
   }
   stitle <-  length(shared.basis.pids) %>% sprintf("%s:Retained %d/%d, missing %d (%.2f%%)",trait.label,.,nrow(man.DT),nrow(man.DT)-.,((nrow(man.DT)-.)/nrow(man.DT)*100))
+  message(stitle)
   ## create a temporary manifest file
   tfile <- tempfile(pattern=sprintf("%s_",trait.label),fileext = ".tab")
   write.table(man.DT[pid %in% keep.pids,],file=tfile,row.names=FALSE,quote=FALSE,sep="\t")
@@ -78,18 +82,22 @@ controls <- tailored.basis.res.DT[trait=='control',.(trait=ptrait,cv=value,pc=va
 M <- merge(tailored.basis.res.DT[,.(trait,missing,pc=variable,pv=value)],controls,by=c('trait','pc'))
 M <- M[,.(trait,pc,missing,tdelta=pv-cv)]
 
-RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/02_08_19_0619_primary_results.RDS'
+RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/24_09_13_traits_0919_summary_results.RDS'
 full.basis.res.DT <- readRDS(RESULTS.FILE)
 
 am <- merge(full.basis.res.DT[,.(trait,fdelta=delta,pc=variable)],M,by=c('trait','pc'))
-am[,pc:=factor(pc,levels=paste0('PC',1:12))]
+am[,pc:=factor(pc,levels=paste0('PC',1:14))]
+am<-am[-grep("ssimp$",trait),]
 ## quick and dirty labelling of outliers
+am <- am[!is.na(tdelta)]
 am[,residuals:=abs(fdelta)-abs(tdelta),by=pc]
 am[,Z.res:=(residuals)/sd(residuals),by=pc]
 am[,label:='']
-am[abs(Z.res)>1.96,label:=trait]
+#am[abs(Z.res)>2,label:=trait]
+am[abs(Z.res)>3,label:=trait]
 
-pg <- ggplot(am,aes(x=abs(fdelta),y=abs(tdelta),color=log10(missing),label=label)) + geom_point() + facet_wrap(~pc,scale='free') +
-geom_abline(col='red',lty=2) + geom_text_repel() + xlab("Full basis delta") + ylab("Tailored basis delta") + labs(color = "log10(#missing SNPs)") +
+
+pg <- ggplot(am[pc!='PC14',],aes(x=abs(fdelta),y=abs(tdelta),label=label)) + geom_point() + facet_wrap(~pc,scale='free') +
+geom_abline(col='red',lty=2) + geom_text_repel(point.padding=0,box.padding=0.5) + xlab("Full basis delta") + ylab("Tailored basis delta") + labs(color = "log10(#missing SNPs)") +
 theme(legend.position="none")
-save_plot("~/tmp/missing.pdf",pg,base_height=8,base_aspect=1.2)
+save_plot("~/share/as_basis/figures/suppfig_missing_snp_effect.pdf",pg,base_height=10,base_aspect=1.2)

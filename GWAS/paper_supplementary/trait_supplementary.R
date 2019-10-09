@@ -1,5 +1,5 @@
 library(xlsx)
-OUT_FILE <- '/home/ob219/share/as_basis/supp_tables/supplementary_tables_1_4_v2.xlsx'
+OUT_FILE <- '/home/ob219/share/as_basis/supp_tables/supplementary_tables_1_4_v3.xlsx'
 
 ### this code creates supplementary tables
 
@@ -14,7 +14,7 @@ write.xlsx(basis.out,file=OUT_FILE,sheet='Basis',row.names=FALSE)
 
 ## supp table 2 - Neale traits
 
-RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/02_08_19_0619_primary_results.RDS'
+RESULTS.FILE <- '/home/ob219/share/as_basis/GWAS/RESULTS/24_09_13_traits_0919_summary_results.RDS'
 res.DT <- readRDS(RESULTS.FILE)[,.(trait,category,n0,n1,sdy)] %>% unique
 keep.cat <- c('bb_disease','bb_medications','bb_cancer')
 neale.out <- res.DT[category %in% keep.cat,]

@@ -39,10 +39,9 @@ anno.bb[clade=='20003',top.node:='bb_medications']
 ukbb <- merge(ukbb,anno.bb[,.(phe,n1,n0,category=top.node)],by.x='trait',by.y='phe')
 ukbb <- ukbb[,trait:=paste('bb',trait,sep='_')]
 
-## have not currently done this
-if(FALSE){
+
 ## read in roslin geneatlas results
-GENEATLAS <- '/home/ob219/share/as_basis/GWAS/geneatlas/0619'
+GENEATLAS <- '/home/ob219/share/as_basis/GWAS/geneatlas/13_traits_0919_tmp'
 ga <- lapply(list.files(path=GENEATLAS,pattern="*.RDS",full.names=TRUE),readRDS) %>% rbindlist
 ga <- melt(ga,id.var='trait')
 ga[,trait:=paste('GA',trait,sep=':')]
@@ -57,7 +56,7 @@ ga.cancer <- merge(ga,meta.dt[cancer.idx,.(Description,n1=Cases,n0=Controls,cate
 #lefthandedness etc.
 #ga.other <- merge(ga,meta.dt[-(c(srd.idx,icd.idx,cancer.idx)),.(Description,n1=Cases,n0=Controls,category='geneatlas_other')],by.x='trait',by.y='Description')
 ga <- rbindlist(list(ga.srd,ga.icd,ga.cancer))
-}
+ga[,n:=n0+n1]
 
 ## get sample counts etc from previous results
 
@@ -74,8 +73,10 @@ nonukbb[trait=='li_ankspond',trait:='li_as']
 nonukbb[trait=='myositis_myogen_ssimp',trait:='gwas_dmjdmpm_new_ssimp']
 nonukbb[trait=='renton_mg',trait:='renton_mg_combined']
 
+
+
 nonukbb<-merge(nonukbb,pr,by='trait',nonukbb.x=TRUE)
-all.proj <- rbind(ukbb[,n:=n0+n1],nonukbb,fill=TRUE)
+all.proj <- rbindlist(list(ukbb[,n:=n0+n1],nonukbb,ga),fill=TRUE)
 
 ## add in astle
 
@@ -101,6 +102,18 @@ astle[,category:='astle_blood']
 astle[,n:=n0]
 
 all.proj <- rbind(all.proj,astle,fill=TRUE)
+
+## add in tian
+
+tian <- readRDS("/home/ob219/share/as_basis/GWAS/tian_projections/tian_infectious_disease_13_traits_0919.RDS")
+## get sample counts and merge
+tian_samples <- readRDS("/home/ob219/share/as_basis/GWAS/tian_projections/sample_size.RDS")
+tian <- melt(tian,id.var='trait')
+tian <- merge(tian,tian_samples,by='trait')
+tian[,category:='tian_infectious_disease']
+tian[,n:=n0 + n1]
+
+all.proj <- rbind(all.proj,tian,fill=TRUE)
 
 
 VARIANCE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_gwas_13_traits_0919.RDS'
@@ -157,8 +170,9 @@ all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
 all.DT[,delta:=value-control.loading]
 all.DT <- all.DT[!trait %in% c('cousminer_lada','IgA_nephropathy'),]
 ## correct imputed variances
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/19_09_13_traits_0919_summary_results.RDS')
-
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/03_10_13_traits_0919_summary_results.RDS')
+## obtain a summary
+all.DT[,.(trait,category),by=c('trait','category')][,list(count=.N),by='category'][order(count),]
 if(FALSE){
   rm.categories <- c("bb_medications","ad-pid","tachmazidou_osteo",
       "mahajan_t2d","Ig.titre","rhodes_pah",'astle','wong_aav','geneatlas_srd',

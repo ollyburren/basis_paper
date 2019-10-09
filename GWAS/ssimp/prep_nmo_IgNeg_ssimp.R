@@ -86,4 +86,3 @@ M[,imp_beta_cc:=z_imp/sqrt(2 * ((n1 * n0)/(n1+n0)) * r2.pred * maf * (1-maf))]
 aa <- ggplot(M,aes(x=log(OR),y=imp_beta_linear,color=r2.pred)) + geom_point() + geom_abline()
 bb <- ggplot(M,aes(x=log(OR),y=imp_beta_cc,color=r2.pred)) + geom_point() + geom_abline()
 plot_grid(aa,bb)
-}

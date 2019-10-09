@@ -28,7 +28,7 @@ if(FALSE){
   meta.dt <- meta.dt[Category=='Binary',.(ID,Description=make.names(Description),Cases,Controls=round(Cases/Sample)-Cases,prop=Sample)]
   ## get a list of traits already done
   done <- list.files(path=OUT.DIR,pattern='*.RDS') %>% gsub("\\.RDS","",.)
-  meta.dt[!Description %in% done,]
+  meta.dt <- meta.dt[!Description %in% done,]
   lout <- '/home/ob219/tmp/qstuff/geneatlas/'
   foo<-lapply(split(meta.dt$ID,ceiling(seq_along(meta.dt$ID)/BLOCK.SIZE)),function(ids){
     tfile <- tempfile(tmpdir=lout)
@@ -181,4 +181,40 @@ mainfunc <- function(id){
 
 for(id in phids){
   tryCatch(mainfunc(id),error=function(e){print(sprintf("Error=%s fread phen=%d",e,id));return(NA)})
+}
+
+if(FALSE){
+## run quickly when we have the results downloaded aligned and filtered.
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr_13_traits_0919'
+BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_13_traits_0919.RDS'
+OUT.DIR <- '/home/ob219/share/as_basis/GWAS/geneatlas/13_traits_0919_tmp'
+pc.emp <- readRDS(BASIS_FILE)
+sDT <- readRDS(SHRINKAGE_FILE)
+## get a list of all the files for gene atlas that we have stored.
+filez <- list.files(path=SRC_OUT_DIR,pattern="^GA:*",full.names=TRUE)
+library(parallel)
+convertORscale <- function(x,cp) x/(cp * (1-cp))
+meta.dt <- fread("~/tmp/41588_2018_248_MOESM3_ESM.csv")
+meta.dt <- meta.dt[Category=='Binary',.(ID,Description,Cases,Controls=round(Cases/Sample)-Cases,prop=Sample,trait=make.names(Description))]
+foo <- mclapply(filez,function(f){
+  strait <- gsub("GA:(.*)_source.RDS","\\1",basename(f))
+  prop <- meta.dt[trait==trait,]
+  tmp <- readRDS(f)
+  tmp[,beta.log:=convertORscale(log(or),meta.dt[trait==strait,]$prop)]
+  tmp$metric <- tmp[['ws_emp_shrinkage']] * tmp$beta.log
+  ## where snp is missing make it zero
+  tmp[,trait:=strait]
+  tmp[is.na(metric),metric:=0]
+  B <- dcast(tmp,pid ~ trait,value.var='metric')
+  snames <- B[,1]$pid
+  mat.emp <- as.matrix(B[,-1]) %>% t()
+  colnames(mat.emp) <- snames
+  if(!identical(colnames(mat.emp),rownames(pc.emp$rotation)))
+    stop("Something wrong basis and projection matrix don't match")
+  all.proj <- predict(pc.emp,newdata=mat.emp)
+  out.DT <- data.table(trait=rownames(all.proj),all.proj)
+  saveRDS(out.DT,sprintf("%s/%s.RDS",OUT.DIR,unique(out.DT$trait)))
+  sprintf("Saved %s/%s.RDS",OUT.DIR,unique(out.DT$trait)) %>% message()
+  out.DT
+},mc.cores=8)
 }
