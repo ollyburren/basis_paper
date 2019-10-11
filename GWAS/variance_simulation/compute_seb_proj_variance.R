@@ -17,7 +17,7 @@ if(!TEST){
 	    stop("Supply a file containing a list of files to process", call.=FALSE)
     }
 }else{
-  args <- list(files = '/home/ob219/tmp/qstuff/avar/file2e5282c2cac68')
+  args <- list(files = '/home/ob219/tmp/qstuff/avar/file38b6177f9fceb')
 }
 
 
@@ -34,9 +34,12 @@ OUT_DIR <- '/home/ob219/share/as_basis/GWAS/seb_proj_var_13_traits_0919'
 
 
 if(FALSE){
-  CHUNK_SIZE <- 10
+  CHUNK_SIZE <- 1
   lout <- '/home/ob219/tmp/qstuff/avar/'
   all.files <- list.files(path=SRC_DIR,pattern="*.RDS",full.names=TRUE)
+  #all.files <- list.files(path=SRC_DIR,pattern="*egpa*",full.names=TRUE)
+  all.files <- list.files(path=SRC_DIR,pattern="ASTLE*",full.names=TRUE)
+  #all.files <- all.files[grep("lmm",all.files)]
   foo <- lapply(split(all.files,ceiling(seq_along(all.files)/CHUNK_SIZE)),function(fs){
     tfile <- tempfile(tmpdir=lout)
     write(fs,file=tfile)
@@ -44,7 +47,7 @@ if(FALSE){
   })
   rscript <- '/home/ob219/git/basis_paper/GWAS/variance_simulation/compute_seb_proj_variance.R'
   cmds <- sapply(foo,function(x){
-    sprintf("Rscript %s -p %s",rscript,x)
+    sprintf("Rscript %s -f %s",rscript,x)
   })
   write(cmds,file="~/tmp/qstuff/variance.txt")
 }
@@ -52,7 +55,6 @@ if(FALSE){
 
 
 files <- scan(args$files,"character")
-
 for(f in files){
   trait <- basename(f) %>% gsub("^(.*)\\_source\\.RDS","\\1",.)
   message(trait)
