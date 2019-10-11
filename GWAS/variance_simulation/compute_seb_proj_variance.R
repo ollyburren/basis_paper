@@ -38,7 +38,7 @@ if(FALSE){
   lout <- '/home/ob219/tmp/qstuff/avar/'
   all.files <- list.files(path=SRC_DIR,pattern="*.RDS",full.names=TRUE)
   #all.files <- list.files(path=SRC_DIR,pattern="*egpa*",full.names=TRUE)
-  all.files <- list.files(path=SRC_DIR,pattern="ASTLE*",full.names=TRUE)
+  all.files <- list.files(path=SRC_DIR,pattern="ssimp*",full.names=TRUE)
   #all.files <- all.files[grep("lmm",all.files)]
   foo <- lapply(split(all.files,ceiling(seq_along(all.files)/CHUNK_SIZE)),function(fs){
     tfile <- tempfile(tmpdir=lout)

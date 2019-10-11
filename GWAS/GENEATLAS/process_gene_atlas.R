@@ -3,7 +3,7 @@
 
 library(optparse)
 
-TEST<-FALSE
+TEST<-TRUE
 option_list = list(
         make_option(c("-p", "--phenotypes"), type="character", default=NULL,
               help="file containing list of phenotypes to process", metavar="character")
@@ -16,7 +16,7 @@ if(!TEST){
 	    stop("Supply a file containing a list of phenotypes to process", call.=FALSE)
     }
 }else{
-  args <- list(phenotypes = '/home/ob219/tmp/qstuff/geneatlas/file48cf2588d1f17')
+  args <- list(phenotypes = '/home/ob219/tmp/qstuff/geneatlas/file4c8a1775c15f')
 }
 
 OUT.DIR <- '/home/ob219/share/as_basis/GWAS/geneatlas/13_traits_0919'
@@ -28,7 +28,7 @@ if(FALSE){
   meta.dt <- meta.dt[Category=='Binary',.(ID,Description=make.names(Description),Cases,Controls=round(Cases/Sample)-Cases,prop=Sample)]
   ## get a list of traits already done
   done <- list.files(path=OUT.DIR,pattern='*.RDS') %>% gsub("\\.RDS","",.)
-  meta.dt <- meta.dt[!Description %in% done,]
+  #meta.dt <- meta.dt[!Description %in% done,]
   lout <- '/home/ob219/tmp/qstuff/geneatlas/'
   foo<-lapply(split(meta.dt$ID,ceiling(seq_along(meta.dt$ID)/BLOCK.SIZE)),function(ids){
     tfile <- tempfile(tmpdir=lout)

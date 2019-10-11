@@ -78,9 +78,31 @@ nonukbb[trait=='renton_mg',trait:='renton_mg_combined']
 nonukbb<-merge(nonukbb,pr,by='trait',nonukbb.x=TRUE)
 all.proj <- rbindlist(list(ukbb[,n:=n0+n1],nonukbb,ga),fill=TRUE)
 
+## load in lmm egpa results
+n0 <- 6688
+sc <- list(all.egpa=534,
+  anca.negative.egpa=358,
+  mpo.anca.positive.egpa=159)
+
+egpa.lmm <- lapply(names(sc),function(x){
+  ## note that the labelling is wrong these are actually 13 trait basis projections
+  f <- sprintf("%s_0619.RDS",x) %>% file.path('/home/ob219/share/as_basis/GWAS/lyons_egpa_lmm/projections/',.)
+  readRDS(f)
+}) %>% do.call('rbind',.)
+egpa.lmm <- data.table(trait=rownames(egpa.lmm),egpa.lmm)
+egpa.lmm[,trait:=sprintf("%s_lmm",trait)]
+egpa.lmm <- melt(egpa.lmm,id.var='trait')
+
+tpr <- lapply(names(sc),function(x){
+  data.table(trait=sprintf("%s_lmm",x),n0=n0,n1=sc[[x]],sdy=NA,n=sc[[x]]+n0,category='lyons_egpa_lmm')
+}) %>% rbindlist
+egpa.lmm<-merge(egpa.lmm,tpr,by='trait')
+
+all.proj <- rbindlist(list(all.proj,egpa.lmm),fill=TRUE)
+
 ## add in astle
 
-ASTLE_DIR <- '/home/ob219/share/as_basis/GWAS/astle/13_traits_9019/'
+ASTLE_DIR <- '/home/ob219/share/as_basis/GWAS/astle/13_traits_1019/'
 astle <- lapply(list.files(path=ASTLE_DIR,pattern="*.RDS",full.names=TRUE),readRDS) %>% do.call('rbind',.)
 astle <- data.table(trait=rownames(astle),astle)
 astle <- melt(astle,id.var='trait')
@@ -116,6 +138,29 @@ tian[,n:=n0 + n1]
 all.proj <- rbind(all.proj,tian,fill=TRUE)
 
 
+## renton mg imputed
+n_controls <- 1977
+cases <- list(YoungOnset=235,LateOnset=737,Overall=972)
+DATA_DIR <- '/home/ob219/share/as_basis/GWAS/renton_mg/'
+renton_ssimp <- lapply(names(cases),function(trait){
+  file <- sprintf("%s_ssimp_13_traits_0919.RDS",trait) %>% file.path(DATA_DIR,.)
+  tmp <- readRDS(file)
+  tmp <- data.table(trait=trait,tmp)
+  tmp <- tmp[,c('n1','n0'):=list(cases[[trait]],n_controls)]
+}) %>% rbindlist()
+renton_ssimp <- melt(renton_ssimp,id.vars=c('trait','n0','n1'))
+setcolorder(renton_ssimp,c('trait','variable','value','n0','n1'))
+renton_ssimp[,n:=n0+n1]
+renton_ssimp[,category:='renton_mg_ssimp']
+renton_ssimp[,trait:=sprintf("%s_ssimp",trait)]
+
+all.proj <- rbind(all.proj,renton_ssimp,fill=TRUE)
+
+## nmo imputed
+## arterido psa imputed
+## myositis imputed
+
+
 VARIANCE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_gwas_13_traits_0919.RDS'
 var.DT <- readRDS(VARIANCE_FILE)
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_13_traits_0919.RDS'
@@ -128,12 +173,31 @@ basis.DT[,Z:=sign(value)]
 basis.DT[,p.adj:=1]
 basis.DT[,control.loading:=NULL]
 
+
+### new method for computing variance using seb
+variance.dir <- '/home/ob219/share/as_basis/GWAS/seb_proj_var_13_traits_0919'
+files <- list.files(path=variance.dir,pattern='*.RDS',full.names=TRUE)
+all.var <- lapply(files,function(f){
+  tmp <- readRDS(f)
+  ta<- basename(f) %>% gsub("\\.RDS","",.)
+  tmp.dt <- data.table(pc=names(tmp),trait=ta,seb.var=tmp)
+}) %>% rbindlist
+
+all.var[,trait:=gsub("UKBB_NEALE:","bb_",trait)]
+all.var[,trait:=gsub("TIAN:","",trait)]
+all.var[trait=='renton_mg',trait:='renton_mg_combined']
+all.var[trait=='li_ankspond',trait:='li_as']
+all.var[,trait:=gsub("^ASTLE:","",trait)]
+setnames(all.var,'pc','variable')
+
 ## compute the variance of a projection
 all.DT <- merge(all.proj,var.DT,by.x='variable',by.y='pc')
 all.DT <- merge(all.DT,control.DT,by.x='variable',by.y='PC')
 all.DT[is.na(sdy),variance:=((log(n)-(log(n1) + log(n-n1)))+ log(mfactor)) %>% exp]
 all.DT[!is.na(sdy),variance:=(log(sdy^2/n) + log(mfactor)) %>% exp]
 
+##some will be missing need to add these - Limy, mahajan_t2d and all Astle.
+all.DT<-merge(all.DT,all.var,by=c('variable','trait'),all.x=TRUE)
 ## need Chris' basis-sparse-0.999.RData file to do this
 
 ## add in the imputation variance for myogen
@@ -166,11 +230,13 @@ all.DT <- rbind(all.DT[-ssimp.id,],keep)
 
 ## add in control loading
 all.DT[,Z:=(value-control.loading)/sqrt(variance)]
+all.DT[,Z.seb:=(value-control.loading)/sqrt(seb.var)]
 all.DT[,p.value:=pnorm(abs(Z),lower.tail=FALSE) * 2]
+all.DT[,p.value.seb:=pnorm(abs(Z.seb),lower.tail=FALSE) * 2]
 all.DT[,delta:=value-control.loading]
 all.DT <- all.DT[!trait %in% c('cousminer_lada','IgA_nephropathy'),]
 ## correct imputed variances
-saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/03_10_13_traits_0919_summary_results.RDS')
+saveRDS(all.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/10_10_13_traits_0919_summary_results_with_seb_variance.RDS')
 ## obtain a summary
 all.DT[,.(trait,category),by=c('trait','category')][,list(count=.N),by='category'][order(count),]
 if(FALSE){
@@ -179,5 +245,6 @@ if(FALSE){
       'geneatlas_cancer')
 primary.DT <- all.DT[!category %in% rm.categories]
 primary.DT[,p.adj:=p.adjust(p.value,method="fdr"),by='variable']
+primary.DT[,p.adj.seb:=p.adjust(p.value.seb,method="fdr"),by='variable']
 saveRDS(primary.DT,'/home/ob219/share/as_basis/GWAS/RESULTS/13_traits_0919_primary_results.RDS')
 }

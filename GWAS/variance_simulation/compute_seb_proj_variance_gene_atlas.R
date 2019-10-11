@@ -31,7 +31,7 @@ SRC_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr_13_traits_0919'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_13_traits_0919.RDS'
 OUT_DIR <- '/home/ob219/share/as_basis/GWAS/seb_proj_var_13_traits_0919'
 meta.dt <- fread("~/tmp/41588_2018_248_MOESM3_ESM.csv")
-meta.dt <- meta.dt[Category=='Binary',.(ID,Description,Cases,Controls=round(Cases/Sample)-Cases,prop=Sample)]
+meta.dt <- meta.dt[Category=='Binary',.(ID,Description,Cases,Controls=round((Cases/Sample)-Cases),prop=Sample)]
 meta.dt <- meta.dt[,phe:=make.names(Description)]
 convertORscale <- function(x,cp) x/(cp * (1-cp))
 

@@ -6,6 +6,43 @@ VARIANCE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_gwas_13_traits_0919
 SNP_MANIFEST_FILE <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_13_traits_0919.tab'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_13_traits_0919.RDS'
 
+
+
+## why is egpa so out of whack ?
+
+dat <- readRDS('/home/ob219/share/as_basis/GWAS/for_fdr_13_traits_0919/egpa_source.RDS')
+snp.DT <- fread(SNP_MANIFEST_FILE)
+M <- merge(snp.DT,dat,by='pid')
+## finally add the PC rotations
+pc.emp <- readRDS(BASIS_FILE)
+rot <- pc.emp$rotation
+rot.DT <- data.table(pid=rownames(rot),rot)
+M <- merge(M,rot.DT,by='pid')
+M <- M[,maf:=ifelse(ref_a1.af>0.5,1-ref_a1.af,ref_a1.af)]
+n1 <- 542
+n0 <- 6717
+M <- M[,est.seb:=1/sqrt(2 * ((n0*n1)/(n0+n1)) * 1 * maf * (1-maf))]
+M[,an.seb:=abs(log(or)/qnorm(p.value/2,lower.tail=FALSE))]
+
+
+foo<-fread("autosomes.egpa.high-info.gwas")
+test <- foo[CHR==22,]
+test[,est.seb:=1/sqrt(2 * ((controls_total*cases_total)/(controls_total+cases_total)) * info * cntr_maf * (1-cntr_maf))]
+test[,an.seb:=abs(log(OR)/qnorm(P/2,lower.tail=FALSE))]
+plot(log(test$est.seb),log(test$an.seb))
+abline(a=0,b=1,col='red')
+
+foo<-fread("autosomes.anca_Neg.high-info.gwas")
+test <- foo[CHR==22,]
+test[,est.seb:=1/sqrt(2 * ((controls_total*cases_total)/(controls_total+cases_total)) * 1 * cntr_maf * (1-cntr_maf))]
+test[,an.seb:=abs(log(OR)/qnorm(P/2,lower.tail=FALSE))]
+test[,calc.or:=(case_maf/(1-case_maf)) * ((1-cntr_maf)/cntr_maf)]
+plot(log(test$OR),log(test$calc.or))
+plot(test$est.seb,test$an.seb)
+abline(a=0,b=1,col='red')
+
+
+
 bb_phenofile<-'/home/ob219/rds/hpc-work/as_basis/bb/bb_gwas_link_list.20180731.csv'
 pheno <- fread(bb_phenofile)
 setnames(pheno,names(pheno) %>% make.names)
@@ -134,53 +171,8 @@ test[,sparse:=pid %in% keep.snps.dt$pid]
 ggplot(test,aes(x=seb,y=a.seb)) + geom_point(size=0.1) + facet_wrap(~sparse) + geom_abline(col='red',lty=2) + ggtitle(trait)
 
 
-
-
 plot(test$seb,test$a.seb)
 abline(a=0,b=1,col='red',lty=2) ## looks properly scaled if noisy
-
-compute_sigma_comps_var <- function(DT,ref_gt_dir,quiet=FALSE){
-  s.DT <- split(DT,DT$chr)
-  all.chr <- lapply(names(s.DT),function(chr){
-    if(!quiet)
-      message(sprintf("Processing %s",chr))
-    ss.file<-file.path(REF_GT_DIR,sprintf("%s.RDS",chr))
-    message(ss.file)
-    sm <- readRDS(ss.file)
-    ## there are sometimes duplicates that we need to remove
-    pids <- colnames(sm)
-    dup.idx<-which(duplicated(pids))
-    if(length(dup.idx)>0){
-      if(!quiet)
-        message(sprintf("Warning removing %d duplicated SNPs",length(dup.idx)))
-      sm <- sm[,-dup.idx]
-      pids <- pids[-dup.idx]
-    }
-    # by ld block
-    by.ld <- split(s.DT[[chr]],s.DT[[chr]]$ld.block)
-    chr.var <- lapply(by.ld,function(block){
-      if(!quiet)
-        message(sprintf("Processing %s",block$ld.block %>% unique))
-      sm.map <- match(block$pid,pids)
-      if(any(is.na(sm.map))){
-        message("SNPs in manifest that don't have genotypes")
-      }
-      r <- ld(sm[,sm.map],sm[,sm.map],stats="R")
-      if(any(is.na(r)))
-        if(!quiet)
-          message(sprintf("Found %s where R^2 is NA",sum(is.na(r))))
-      r[is.na(r)]<-0
-      out <- block[,.(maf.se*n.se * 1/sqrt(2))]$V1 %*% r
-      #res <- t(as.matrix(block[,.(maf.se,n.se)])) %*% r
-      block[,sigma.seb:=abs(out[1,])]
-      #rownames(res)<-c('sigma.maf','sigma.n')
-      #cbind(block,t(res))
-      block
-    }) %>% rbindlist
-  }) %>% rbindlist
-}
-
-outy <- compute_sigma_comps_var(test,ref_gt_dir=REF_GT_DIR,quiet=TRUE)
 
 
 

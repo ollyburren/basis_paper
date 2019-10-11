@@ -167,4 +167,25 @@ M[,act.se:=log(OR)/orig.z]
 M[,act.se.maf:=(log(OR)/orig.z) * sqrt(2 * ((n1 * n0)/(n1 + n0)) * r2.pred)]
 M[,imp.se.maf:=1/sqrt(maf * (1-maf))]
 ggplot(M,aes(x=act.se,y=imp.se,color=r2.pred)) + geom_point() + geom_abline()
+
+## collate all results into single files
+OUT_DIR <- '/home/ob219/share/Data/GWAS-summary/MyastheniaGravis_Renton_JAMA_Neurol_2015/ssimp_imputed'
+
+early <- lapply(list.files(path='/home/ob219/rds/hpc-work/ssimp/mg',pattern='*renton_mg_early*',full.names=TRUE),function(f){
+  fread(f)
+}) %>% rbindlist
+early <- early[order(chr,pos),]
+write.table(early,file=file.path(OUT_DIR,'MyastheniaGravis_YoungOnset_Renton_JAMA_Neurol_2015_ssimp_imputed.tab'),sep="\t",quote=FALSE,row.names=FALSE)
+library(parallel)
+late <- mclapply(list.files(path='/home/ob219/rds/hpc-work/ssimp/mg',pattern='*renton_mg_late*',full.names=TRUE),function(f){
+  fread(f)
+},mc.cores=8) %>% rbindlist
+late <- late[order(chr,pos),]
+write.table(late,file=file.path(OUT_DIR,'MyastheniaGravis_LateOnset_Renton_JAMA_Neurol_2015_ssimp_imputed.tab'),sep="\t",quote=FALSE,row.names=FALSE)
+combined <- mclapply(list.files(path='/home/ob219/rds/hpc-work/ssimp/mg',pattern='*renton_mg_with_or*',full.names=TRUE),function(f){
+  fread(f)
+},mc.cores=8) %>% rbindlist
+combined <- combined[order(chr,pos),]
+write.table(combined,file=file.path(OUT_DIR,'MyastheniaGravis_Renton_JAMA_Neurol_2015_ssimp_imputed.tab'),sep="\t",quote=FALSE,row.names=FALSE)
+
 }
