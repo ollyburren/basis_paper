@@ -45,7 +45,7 @@ if(FALSE){
     write(fs,file=tfile)
     tfile
   })
-  rscript <- '/home/ob219/git/basis_paper/GWAS/variance_simulation/compute_seb_proj_variance.R'
+  rscript <- '/home/ob219/git/basis_paper/GWAS/variance_simulation/compute_seb_proj_variance_gene_atlas.R'
   cmds <- sapply(foo,function(x){
     sprintf("Rscript %s -p %s",rscript,x)
   })

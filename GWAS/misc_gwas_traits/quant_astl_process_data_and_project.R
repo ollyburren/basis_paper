@@ -5,7 +5,8 @@ library(cupcake)
 SNP_MANIFEST <-'/home/ob219/share/as_basis/GWAS/snp_manifest/gwas_13_traits_0919.tab'
 SHRINKAGE_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_shrinkage_gwas_13_traits_0919.RDS'
 BASIS_FILE <- '/home/ob219/share/as_basis/GWAS/support/ss_basis_gwas_13_traits_0919.RDS'
-OUT_DIR <- '/home/ob219/share/as_basis/GWAS/astle/13_traits_9019/'
+OUT_DIR <- '/home/ob219/share/as_basis/GWAS/astle/13_traits_1019/'
+SRC_OUT_DIR <- '/home/ob219/share/as_basis/GWAS/for_fdr_13_traits_0919'
 
 TEST<-FALSE
 option_list = list(
@@ -79,7 +80,9 @@ M[,trait:= basename(f) %>% sub("(*.)_build37.*","\\1",.)]
 sDT <- readRDS(SHRINKAGE_FILE)
 stmp<-sDT[,.(pid,ws_emp_shrinkage)]
 setkey(M,pid)
-tmp<-M[stmp]
+tmp <- merge(M,stmp,by='pid',all.y=TRUE)
+pfile <- file.path(SRC_OUT_DIR,sprintf("ASTLE:%s_source.RDS", trait))
+saveRDS(tmp[,.(pid,beta=EFFECT,seb=SE,p.value=P,ws_emp_shrinkage)],file=pfile)
 tmp$metric <- tmp[['ws_emp_shrinkage']] * (tmp$EFFECT)
 B <- dcast(tmp,pid ~ trait,value.var='metric',fill=0)
 snames <- B[,1]$pid
